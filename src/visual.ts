@@ -326,7 +326,11 @@ export class Visual implements IVisual {
             nodesPerLevel[level] = (nodesPerLevel[level] || 0) + 1;
             const label = this.nodeLabel(n);
             const key = parentKey + "\u001f" + label;
-            const isLeaf = level >= lastLevel;
+            // Hoja = último nivel que Power BI manda Y sin poder expandirse. Si el host dejó la jerarquía en un nivel
+            // intermedio (los niveles de abajo no vienen en la consulta), el nodo sigue siendo expandible: canBeExpanded
+            // del nivel o isCollapsed === true. Antes se trataba como hoja y no salía el ▸.
+            const canExpand = n.isCollapsed === true || !!(levels[level] && (levels[level] as any).canBeExpanded);
+            const isLeaf = level >= lastLevel && !canExpand && !(n.children && n.children.length);
             let series: (number | null)[][] | null;
             let src: Row["subtotalSource"] = "";
             if (isLeaf) {
@@ -344,7 +348,7 @@ export class Visual implements IVisual {
             let id: ISelectionId | null = null;
             try { id = this.host.createSelectionIdBuilder().withMatrixNode(n, levels).createSelectionId(); } catch { id = null; }
             const row: Row = {
-                key, index: rows.length, node: n, level, label, isLeaf, collapsed: isLeaf ? undefined : n.isCollapsed,
+                key, index: rows.length, node: n, level, label, isLeaf, collapsed: isLeaf ? undefined : (n.isCollapsed === undefined ? !(n.children && n.children.length) : n.isCollapsed),
                 series: series || [new Array(nP).fill(null)], subtotalSource: src, parent, leafCount: 0,
                 path: "", lastX: -1, lastY: -1, id
             };
