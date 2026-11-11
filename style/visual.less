@@ -1,0 +1,29 @@
+// Sparkline Table by TCViz — estilos de la prueba de viabilidad (importado en src/visual.ts).
+
+.st-root {
+    position: absolute; inset: 0; display: flex; flex-direction: column; overflow: hidden; outline: none;
+    font-family: "Segoe UI", wf_segoe-ui_normal, helvetica, arial, sans-serif; font-size: 12px; color: #252423; background: #fff;
+}
+.st-diag { flex: 0 0 auto; max-height: 45%; display: flex; flex-direction: column; border-bottom: 1px solid #c8c6c4; background: #faf9f8; }
+.st-diag-bar { flex: 0 0 auto; padding: 2px 6px; cursor: pointer; font-weight: 600; color: #1F4E79; user-select: none; }
+.st-diag-body { overflow: auto; padding: 0 8px 4px; font-family: Consolas, "Courier New", monospace; font-size: 11px; line-height: 1.35; white-space: pre-wrap; }
+.st-diag-title { font-weight: bold; color: #1F4E79; }
+.st-diag-h { font-weight: bold; }
+.st-diag-warn { font-weight: bold; color: #C00000; }
+.st-header, .st-row { display: flex; align-items: center; height: 24px; box-sizing: border-box; }
+.st-header { flex: 0 0 auto; font-weight: 600; border-bottom: 1px solid #8a8886; background: #fff; }
+.st-scroller { flex: 1 1 auto; position: relative; overflow-y: auto; overflow-x: hidden; }
+.st-spacer { width: 1px; }
+.st-layer { position: absolute; top: 0; left: 0; right: 0; }
+.st-row { position: absolute; left: 0; right: 0; top: 0; border-bottom: 1px solid #f3f2f1; cursor: pointer; will-change: transform; }
+.st-row:hover { background: #f3f2f1; }
+.st-row.st-subtotal { font-weight: 600; background: #faf9f8; }
+.st-row.st-selected { background: #deecf9; }
+.st-c-name { flex: 1 1 auto; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; padding-left: 4px; }
+.st-c-val { flex: 0 0 90px; text-align: right; padding-right: 6px; font-variant-numeric: tabular-nums; }
+.st-c-delta { flex: 0 0 64px; text-align: right; padding-right: 6px; color: #605e5c; font-variant-numeric: tabular-nums; }
+.st-c-spark { flex: 0 0 140px; }
+.st-toggle { display: inline-block; width: 14px; color: #605e5c; }
+.st-line { fill: none; stroke: #8a8886; stroke-width: 1.25; }
+.st-last { fill: #1F6FB2; }
+.st-stamp { position: absolute; right: 4px; bottom: 2px; font-size: 9px; color: #a19f9d; pointer-events: none; }

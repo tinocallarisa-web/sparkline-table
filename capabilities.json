@@ -1,0 +1,92 @@
+{
+  "dataRoles": [
+    {
+      "displayName": "Rows",
+      "name": "rows",
+      "kind": "Grouping",
+      "description": "Row hierarchy: up to three fields, outermost first."
+    },
+    {
+      "displayName": "Period",
+      "name": "period",
+      "kind": "Grouping",
+      "description": "Time axis of the sparklines (month, week, date)."
+    },
+    {
+      "displayName": "Values",
+      "name": "values",
+      "kind": "Measure",
+      "description": "One to three measures."
+    }
+  ],
+  "dataViewMappings": [
+    {
+      "conditions": [
+        { "rows": { "max": 3 }, "period": { "max": 1 }, "values": { "max": 3 } }
+      ],
+      "matrix": {
+        "rows": {
+          "for": { "in": "rows" },
+          "dataReductionAlgorithm": { "window": { "count": 1000 } }
+        },
+        "columns": {
+          "for": { "in": "period" },
+          "dataReductionAlgorithm": { "top": { "count": 400 } }
+        },
+        "values": {
+          "select": [ { "for": { "in": "values" } } ]
+        }
+      }
+    }
+  ],
+  "subtotals": {
+    "matrix": {
+      "rowSubtotals": {
+        "propertyIdentifier": { "objectName": "subTotals", "propertyName": "rowSubtotals" },
+        "defaultValue": true
+      },
+      "rowSubtotalsPerLevel": {
+        "propertyIdentifier": { "objectName": "subTotals", "propertyName": "perRowLevel" },
+        "defaultValue": false
+      },
+      "columnSubtotals": {
+        "propertyIdentifier": { "objectName": "subTotals", "propertyName": "columnSubtotals" },
+        "defaultValue": false
+      },
+      "columnSubtotalsPerLevel": {
+        "propertyIdentifier": { "objectName": "subTotals", "propertyName": "perColumnLevel" },
+        "defaultValue": false
+      },
+      "levelSubtotalEnabled": {
+        "propertyIdentifier": { "objectName": "subTotals", "propertyName": "levelSubtotalEnabled" },
+        "defaultValue": true
+      },
+      "rowSubtotalsType": {
+        "propertyIdentifier": { "objectName": "subTotals", "propertyName": "rowSubtotalsType" },
+        "defaultValue": "Top"
+      }
+    }
+  },
+  "expandCollapse": {
+    "roles": ["rows"],
+    "addDataViewFlags": { "defaultValue": true }
+  },
+  "sorting": { "default": {} },
+  "objects": {
+    "subTotals": {
+      "properties": {
+        "rowSubtotals": { "type": { "bool": true } },
+        "perRowLevel": { "type": { "bool": true } },
+        "columnSubtotals": { "type": { "bool": true } },
+        "perColumnLevel": { "type": { "bool": true } },
+        "levelSubtotalEnabled": { "type": { "bool": true } },
+        "rowSubtotalsType": {
+          "type": { "enumeration": [ { "value": "Top", "displayName": "Top" }, { "value": "Bottom", "displayName": "Bottom" } ] }
+        }
+      }
+    }
+  },
+  "supportsKeyboardFocus": true,
+  "supportsMultiVisualSelection": true,
+  "privileges": []
+}
