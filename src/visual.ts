@@ -312,7 +312,7 @@ export class Visual implements IVisual {
         let grandTotal: (number | null)[][] | null = null;
         const lastLevel = levels.length - 1;
 
-        const walk = (n: DataViewMatrixNode, parent: Row | null, parentKey: string) => {
+        const walk = (n: DataViewMatrixNode, parent: Row | null, parentKey: string, path: DataViewMatrixNode[] = []) => {
             const kids = n.children || [];
             const subChild = kids.find(c => c.isSubtotal);
             const real = kids.filter(c => !c.isSubtotal);
@@ -346,14 +346,20 @@ export class Visual implements IVisual {
             if (n.isCollapsed === true) collapsedPerLevel[level]++;
             if (n.isCollapsed === false) expandedPerLevel[level]++;
             let id: ISelectionId | null = null;
-            try { id = this.host.createSelectionIdBuilder().withMatrixNode(n, levels).createSelectionId(); } catch { id = null; }
+            // La identidad lleva TODA la ruta (provincia › comercial › …): con solo el nodo, "KAM-01" de Barcelona era el
+            // mismo que el de Girona y Tarragona (selección de los tres y expandir que no sabía cuál).
+            try {
+                const b = this.host.createSelectionIdBuilder();
+                for (const a of path) b.withMatrixNode(a, levels);
+                id = b.withMatrixNode(n, levels).createSelectionId();
+            } catch { id = null; }
             const row: Row = {
                 key, index: rows.length, node: n, level, label, isLeaf, collapsed: isLeaf ? undefined : (n.isCollapsed === undefined ? !(n.children && n.children.length) : n.isCollapsed),
                 series: series || [new Array(nP).fill(null)], subtotalSource: src, parent, leafCount: 0,
                 path: "", lastX: -1, lastY: -1, id
             };
             rows.push(row);
-            real.forEach(c => walk(c, row, key));
+            real.forEach(c => walk(c, row, key, path.concat([n])));
             if (isLeaf) { for (let p = parent; p; p = p.parent) p.leafCount++; }
         };
         walk(mx.rows.root, null, "");
