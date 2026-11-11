@@ -2,39 +2,137 @@
   "dataRoles": [
     {
       "displayName": "Rows",
+      "displayNameKey": "Role_Rows",
       "name": "rows",
       "kind": "Grouping",
-      "description": "Row hierarchy: up to three fields, outermost first."
+      "description": "Row hierarchy: up to three fields, outermost first.",
+      "descriptionKey": "Role_Rows_Desc"
     },
     {
       "displayName": "Period",
+      "displayNameKey": "Role_Period",
       "name": "period",
       "kind": "Grouping",
-      "description": "Time axis of the sparklines (month, week, date)."
+      "description": "Time axis of the sparklines: a month, week or date field.",
+      "descriptionKey": "Role_Period_Desc"
     },
     {
       "displayName": "Values",
+      "displayNameKey": "Role_Values",
       "name": "values",
       "kind": "Measure",
-      "description": "One to three measures."
+      "description": "One to three measures. The first one draws the sparkline.",
+      "descriptionKey": "Role_Values_Desc"
+    },
+    {
+      "displayName": "Target",
+      "displayNameKey": "Role_Target",
+      "name": "target",
+      "kind": "Measure",
+      "description": "Measure drawn as a target line on every sparkline.",
+      "descriptionKey": "Role_Target_Desc"
+    },
+    {
+      "displayName": "Plan (Pro)",
+      "displayNameKey": "Role_Plan",
+      "name": "plan",
+      "kind": "Measure",
+      "description": "Planned or budgeted figure. Shown in the tooltip; variance columns are part of the Pro plan.",
+      "descriptionKey": "Role_Plan_Desc"
+    },
+    {
+      "displayName": "Prior year (Pro)",
+      "displayNameKey": "Role_PreviousYear",
+      "name": "previousYear",
+      "kind": "Measure",
+      "description": "The same figure for the prior year. Shown in the tooltip; variance columns are part of the Pro plan.",
+      "descriptionKey": "Role_PreviousYear_Desc"
+    },
+    {
+      "displayName": "Tooltips",
+      "displayNameKey": "Role_Tooltips",
+      "name": "tooltips",
+      "kind": "Measure",
+      "description": "Extra measures shown in the tooltip.",
+      "descriptionKey": "Role_Tooltips_Desc"
     }
   ],
   "dataViewMappings": [
     {
       "conditions": [
-        { "rows": { "max": 3 }, "period": { "max": 1 }, "values": { "max": 3 } }
+        {
+          "rows": {
+            "max": 3
+          },
+          "period": {
+            "max": 1
+          },
+          "values": {
+            "max": 3
+          },
+          "target": {
+            "max": 1
+          },
+          "plan": {
+            "max": 1
+          },
+          "previousYear": {
+            "max": 1
+          },
+          "tooltips": {
+            "max": 5
+          }
+        }
       ],
       "matrix": {
         "rows": {
-          "for": { "in": "rows" },
-          "dataReductionAlgorithm": { "window": { "count": 1000 } }
+          "for": {
+            "in": "rows"
+          },
+          "dataReductionAlgorithm": {
+            "window": {
+              "count": 5000
+            }
+          }
         },
         "columns": {
-          "for": { "in": "period" },
-          "dataReductionAlgorithm": { "top": { "count": 400 } }
+          "for": {
+            "in": "period"
+          },
+          "dataReductionAlgorithm": {
+            "top": {
+              "count": 400
+            }
+          }
         },
         "values": {
-          "select": [ { "for": { "in": "values" } } ]
+          "select": [
+            {
+              "for": {
+                "in": "values"
+              }
+            },
+            {
+              "for": {
+                "in": "target"
+              }
+            },
+            {
+              "for": {
+                "in": "plan"
+              }
+            },
+            {
+              "for": {
+                "in": "previousYear"
+              }
+            },
+            {
+              "for": {
+                "in": "tooltips"
+              }
+            }
+          ]
         }
       }
     }
@@ -42,51 +140,564 @@
   "subtotals": {
     "matrix": {
       "rowSubtotals": {
-        "propertyIdentifier": { "objectName": "subTotals", "propertyName": "rowSubtotals" },
+        "propertyIdentifier": {
+          "objectName": "subTotals",
+          "propertyName": "rowSubtotals"
+        },
         "defaultValue": true
       },
       "rowSubtotalsPerLevel": {
-        "propertyIdentifier": { "objectName": "subTotals", "propertyName": "perRowLevel" },
+        "propertyIdentifier": {
+          "objectName": "subTotals",
+          "propertyName": "perRowLevel"
+        },
         "defaultValue": false
       },
       "columnSubtotals": {
-        "propertyIdentifier": { "objectName": "subTotals", "propertyName": "columnSubtotals" },
-        "defaultValue": false
+        "propertyIdentifier": {
+          "objectName": "subTotals",
+          "propertyName": "columnSubtotals"
+        },
+        "defaultValue": true
       },
       "columnSubtotalsPerLevel": {
-        "propertyIdentifier": { "objectName": "subTotals", "propertyName": "perColumnLevel" },
+        "propertyIdentifier": {
+          "objectName": "subTotals",
+          "propertyName": "perColumnLevel"
+        },
         "defaultValue": false
       },
       "levelSubtotalEnabled": {
-        "propertyIdentifier": { "objectName": "subTotals", "propertyName": "levelSubtotalEnabled" },
+        "propertyIdentifier": {
+          "objectName": "subTotals",
+          "propertyName": "levelSubtotalEnabled"
+        },
         "defaultValue": true
       },
       "rowSubtotalsType": {
-        "propertyIdentifier": { "objectName": "subTotals", "propertyName": "rowSubtotalsType" },
+        "propertyIdentifier": {
+          "objectName": "subTotals",
+          "propertyName": "rowSubtotalsType"
+        },
         "defaultValue": "Top"
       }
     }
   },
   "expandCollapse": {
-    "roles": ["rows"],
-    "addDataViewFlags": { "defaultValue": true }
+    "roles": [
+      "rows"
+    ],
+    "addDataViewFlags": {
+      "defaultValue": true
+    }
   },
-  "sorting": { "default": {} },
+  "sorting": {
+    "default": {}
+  },
+  "tooltips": {
+    "supportedTypes": {
+      "default": true,
+      "canvas": true
+    },
+    "roles": [
+      "tooltips"
+    ]
+  },
+  "supportsHighlight": true,
+  "supportsLandingPage": true,
+  "supportsKeyboardFocus": true,
+  "supportsMultiVisualSelection": true,
+  "privileges": [],
   "objects": {
+    "general": {
+      "properties": {
+        "formatString": {
+          "type": {
+            "formatting": {
+              "formatString": true
+            }
+          }
+        }
+      }
+    },
     "subTotals": {
       "properties": {
-        "rowSubtotals": { "type": { "bool": true } },
-        "perRowLevel": { "type": { "bool": true } },
-        "columnSubtotals": { "type": { "bool": true } },
-        "perColumnLevel": { "type": { "bool": true } },
-        "levelSubtotalEnabled": { "type": { "bool": true } },
+        "rowSubtotals": {
+          "type": {
+            "bool": true
+          }
+        },
+        "perRowLevel": {
+          "type": {
+            "bool": true
+          }
+        },
+        "columnSubtotals": {
+          "type": {
+            "bool": true
+          }
+        },
+        "perColumnLevel": {
+          "type": {
+            "bool": true
+          }
+        },
+        "levelSubtotalEnabled": {
+          "type": {
+            "bool": true
+          }
+        },
         "rowSubtotalsType": {
-          "type": { "enumeration": [ { "value": "Top", "displayName": "Top" }, { "value": "Bottom", "displayName": "Bottom" } ] }
+          "type": {
+            "enumeration": [
+              {
+                "value": "Top",
+                "displayName": "Top"
+              },
+              {
+                "value": "Bottom",
+                "displayName": "Bottom"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "style": {
+      "displayName": "Style template",
+      "displayNameKey": "Obj_style",
+      "properties": {
+        "template": {
+          "displayName": "Template",
+          "displayNameKey": "Prop_style_template",
+          "type": {
+            "enumeration": [
+              {
+                "value": "report",
+                "displayName": "Report theme",
+                "displayNameKey": "Enum_template_report"
+              },
+              {
+                "value": "classic",
+                "displayName": "Classic",
+                "displayNameKey": "Enum_template_classic"
+              }
+            ]
+          }
+        },
+        "guide": {
+          "displayName": "Setup guide",
+          "displayNameKey": "Prop_style_guide",
+          "type": {
+            "bool": true
+          }
+        }
+      }
+    },
+    "values": {
+      "displayName": "Values",
+      "displayNameKey": "Obj_values",
+      "properties": {
+        "valueMode": {
+          "displayName": "Value shows",
+          "displayNameKey": "Prop_values_valueMode",
+          "type": {
+            "enumeration": [
+              {
+                "value": "last",
+                "displayName": "Last period",
+                "displayNameKey": "Enum_valueMode_last"
+              },
+              {
+                "value": "total",
+                "displayName": "Total of the range",
+                "displayNameKey": "Enum_valueMode_total"
+              }
+            ]
+          }
+        },
+        "compare": {
+          "displayName": "Change vs",
+          "displayNameKey": "Prop_values_compare",
+          "type": {
+            "enumeration": [
+              {
+                "value": "previous",
+                "displayName": "Previous period",
+                "displayNameKey": "Enum_compare_previous"
+              },
+              {
+                "value": "lastYear",
+                "displayName": "Same period last year",
+                "displayNameKey": "Enum_compare_lastYear"
+              }
+            ]
+          }
+        },
+        "showDelta": {
+          "displayName": "Show change (Δ)",
+          "displayNameKey": "Prop_values_showDelta",
+          "type": {
+            "bool": true
+          }
+        },
+        "showDeltaPct": {
+          "displayName": "Show change % (Δ%)",
+          "displayNameKey": "Prop_values_showDeltaPct",
+          "type": {
+            "bool": true
+          }
+        },
+        "invert": {
+          "displayName": "A decrease is good",
+          "displayNameKey": "Prop_values_invert",
+          "type": {
+            "bool": true
+          }
+        },
+        "upColor": {
+          "displayName": "Increase color",
+          "displayNameKey": "Prop_values_upColor",
+          "type": {
+            "fill": {
+              "solid": {
+                "color": true
+              }
+            }
+          }
+        },
+        "downColor": {
+          "displayName": "Decrease color",
+          "displayNameKey": "Prop_values_downColor",
+          "type": {
+            "fill": {
+              "solid": {
+                "color": true
+              }
+            }
+          }
+        },
+        "smallBase": {
+          "displayName": "Dim Δ% on small bases (% of level median)",
+          "displayNameKey": "Prop_values_smallBase",
+          "type": {
+            "numeric": true
+          }
+        },
+        "fontSize": {
+          "displayName": "Text size",
+          "displayNameKey": "Prop_values_fontSize",
+          "type": {
+            "numeric": true
+          }
+        }
+      }
+    },
+    "sparkline": {
+      "displayName": "Sparkline",
+      "displayNameKey": "Obj_sparkline",
+      "properties": {
+        "type": {
+          "displayName": "Type",
+          "displayNameKey": "Prop_sparkline_type",
+          "type": {
+            "enumeration": [
+              {
+                "value": "line",
+                "displayName": "Line",
+                "displayNameKey": "Enum_type_line"
+              },
+              {
+                "value": "area",
+                "displayName": "Area",
+                "displayNameKey": "Enum_type_area"
+              },
+              {
+                "value": "column",
+                "displayName": "Column",
+                "displayNameKey": "Enum_type_column"
+              },
+              {
+                "value": "winloss",
+                "displayName": "Win/loss",
+                "displayNameKey": "Enum_type_winloss"
+              },
+              {
+                "value": "bullet",
+                "displayName": "Bullet",
+                "displayNameKey": "Enum_type_bullet"
+              }
+            ]
+          }
+        },
+        "scale": {
+          "displayName": "Scale",
+          "displayNameKey": "Prop_sparkline_scale",
+          "type": {
+            "enumeration": [
+              {
+                "value": "level",
+                "displayName": "Shared by level",
+                "displayNameKey": "Enum_scale_level"
+              },
+              {
+                "value": "row",
+                "displayName": "Per row",
+                "displayNameKey": "Enum_scale_row"
+              }
+            ]
+          }
+        },
+        "zero": {
+          "displayName": "Start at zero",
+          "displayNameKey": "Prop_sparkline_zero",
+          "type": {
+            "bool": true
+          }
+        },
+        "width": {
+          "displayName": "Line width",
+          "displayNameKey": "Prop_sparkline_width",
+          "type": {
+            "numeric": true
+          }
+        },
+        "color": {
+          "displayName": "Color",
+          "displayNameKey": "Prop_sparkline_color",
+          "type": {
+            "fill": {
+              "solid": {
+                "color": true
+              }
+            }
+          }
+        },
+        "accent": {
+          "displayName": "Last point color",
+          "displayNameKey": "Prop_sparkline_accent",
+          "type": {
+            "fill": {
+              "solid": {
+                "color": true
+              }
+            }
+          }
+        },
+        "showLast": {
+          "displayName": "Show last value",
+          "displayNameKey": "Prop_sparkline_showLast",
+          "type": {
+            "bool": true
+          }
+        },
+        "target": {
+          "displayName": "Show target line",
+          "displayNameKey": "Prop_sparkline_target",
+          "type": {
+            "bool": true
+          }
+        },
+        "targetColor": {
+          "displayName": "Target color",
+          "displayNameKey": "Prop_sparkline_targetColor",
+          "type": {
+            "fill": {
+              "solid": {
+                "color": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "markers": {
+      "displayName": "Markers",
+      "displayNameKey": "Obj_markers",
+      "properties": {
+        "last": {
+          "displayName": "Last point",
+          "displayNameKey": "Prop_markers_last",
+          "type": {
+            "bool": true
+          }
+        },
+        "first": {
+          "displayName": "First point",
+          "displayNameKey": "Prop_markers_first",
+          "type": {
+            "bool": true
+          }
+        },
+        "max": {
+          "displayName": "Maximum",
+          "displayNameKey": "Prop_markers_max",
+          "type": {
+            "bool": true
+          }
+        },
+        "min": {
+          "displayName": "Minimum",
+          "displayNameKey": "Prop_markers_min",
+          "type": {
+            "bool": true
+          }
+        },
+        "negative": {
+          "displayName": "Negative points",
+          "displayNameKey": "Prop_markers_negative",
+          "type": {
+            "bool": true
+          }
+        },
+        "size": {
+          "displayName": "Marker size",
+          "displayNameKey": "Prop_markers_size",
+          "type": {
+            "numeric": true
+          }
+        }
+      }
+    },
+    "rows": {
+      "displayName": "Rows",
+      "displayNameKey": "Obj_rows",
+      "properties": {
+        "density": {
+          "displayName": "Density",
+          "displayNameKey": "Prop_rows_density",
+          "type": {
+            "enumeration": [
+              {
+                "value": "compact",
+                "displayName": "Compact",
+                "displayNameKey": "Enum_density_compact"
+              },
+              {
+                "value": "standard",
+                "displayName": "Standard",
+                "displayNameKey": "Enum_density_standard"
+              },
+              {
+                "value": "comfortable",
+                "displayName": "Comfortable",
+                "displayNameKey": "Enum_density_comfortable"
+              }
+            ]
+          }
+        },
+        "fontSize": {
+          "displayName": "Text size",
+          "displayNameKey": "Prop_rows_fontSize",
+          "type": {
+            "numeric": true
+          }
+        },
+        "indent": {
+          "displayName": "Indent per level",
+          "displayNameKey": "Prop_rows_indent",
+          "type": {
+            "numeric": true
+          }
+        },
+        "grandTotal": {
+          "displayName": "Grand total",
+          "displayNameKey": "Prop_rows_grandTotal",
+          "type": {
+            "bool": true
+          }
+        },
+        "sortBy": {
+          "displayName": "Sort by",
+          "displayNameKey": "Prop_rows_sortBy",
+          "type": {
+            "enumeration": [
+              {
+                "value": "host",
+                "displayName": "Power BI order",
+                "displayNameKey": "Enum_sortBy_host"
+              },
+              {
+                "value": "name",
+                "displayName": "Name",
+                "displayNameKey": "Enum_sortBy_name"
+              },
+              {
+                "value": "value",
+                "displayName": "Value",
+                "displayNameKey": "Enum_sortBy_value"
+              },
+              {
+                "value": "value2",
+                "displayName": "Value 2",
+                "displayNameKey": "Enum_sortBy_value2"
+              },
+              {
+                "value": "value3",
+                "displayName": "Value 3",
+                "displayNameKey": "Enum_sortBy_value3"
+              },
+              {
+                "value": "delta",
+                "displayName": "Change (Δ)",
+                "displayNameKey": "Enum_sortBy_delta"
+              },
+              {
+                "value": "deltaPct",
+                "displayName": "Change % (Δ%)",
+                "displayNameKey": "Enum_sortBy_deltaPct"
+              }
+            ]
+          }
+        },
+        "sortDir": {
+          "displayName": "Sort direction",
+          "displayNameKey": "Prop_rows_sortDir",
+          "type": {
+            "enumeration": [
+              {
+                "value": "desc",
+                "displayName": "Descending",
+                "displayNameKey": "Enum_sortDir_desc"
+              },
+              {
+                "value": "asc",
+                "displayName": "Ascending",
+                "displayNameKey": "Enum_sortDir_asc"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "header": {
+      "displayName": "Column headers",
+      "displayNameKey": "Obj_header",
+      "properties": {
+        "show": {
+          "displayName": "Show column headers",
+          "displayNameKey": "Prop_header_show",
+          "type": {
+            "bool": true
+          }
+        },
+        "fontSize": {
+          "displayName": "Text size",
+          "displayNameKey": "Prop_header_fontSize",
+          "type": {
+            "numeric": true
+          }
+        },
+        "context": {
+          "displayName": "Show period line",
+          "displayNameKey": "Prop_header_context",
+          "type": {
+            "bool": true
+          }
         }
       }
     }
   },
-  "supportsKeyboardFocus": true,
-  "supportsMultiVisualSelection": true,
-  "privileges": []
+  "supportsOnObjectFormatting": true,
+  "enablePointerEventsFormatMode": true
 }

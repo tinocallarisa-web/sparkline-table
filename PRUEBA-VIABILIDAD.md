@@ -1,3 +1,5 @@
+> **Histórico (11-11-2026):** prueba superada. El diagnóstico se sustituyó por el visual real en el bloque 1; lo que se prueba ahora está en `PRUEBA-BLOQUE1.md`.
+
 # Sparkline Table by TCViz — prueba de viabilidad (días 1-2)
 
 Objetivo: demostrar en Power BI Desktop, antes de construir el visual, que el mapeo **matrix** aguanta lo que promete
