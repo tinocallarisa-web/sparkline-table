@@ -3,12 +3,12 @@ Sparkline Table by TCViz 1.0.0.0 - GUID matrixSparklinesFAB7608B939348B490060433
 SOURCE CODE
 https://github.com/tinocallarisa-web/sparkline-table, branch "certification". Public.
 
-SAMPLE REPORT: SparklineTable_sample.pbix, 5 pages
-[PENDIENTE - lista provisional: revisar contra el .pbix real y borrar esta linea]
-1. Scorecard by region: 3-level hierarchy, engine subtotals, variance vs plan.
-2. Sparkline types: line, area, column, win/loss, bullet, horizon.
-3. Bullet with bands: per-row target, bands, % of target.
-4. Row images and levels: Base64 flags, formatting per level.
+SAMPLE REPORT: SparklineTable_sample.pbix (fictitious retailer), 5 pages
+1. Scorecard by region: Region > Store > Category, engine subtotals, variance vs plan
+and status; buttons 1 2 3 open the levels. Click a row: the native table filters.
+2. Sparkline types: line, column, win/loss, area and horizon.
+3. Bullet with bands: each store vs its target, % of target.
+4. Row images and levels: Base64 badges, per-level format, gridlines, a Pro style.
 5. Hints & tips.
 
 TESTING PRO - NO KEY NEEDED
