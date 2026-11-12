@@ -38,6 +38,19 @@ OBJECTS = [
         ("dataBars", "Data bars behind the value", "bool", False, {}),
         ("barColor", "Data bar color", "fill", "", {}),
     ]),
+    # Bloque 2 (Pro): columnas de referencia (Plan / Prior year / Forecast) y varianza contra la base, con barra en celda.
+    # El lector sin licencia ve las columnas de referencia en gris; la varianza es Pro (vista previa editando).
+    ("variance", "Variance (Pro)", [
+        ("show", "Show variance", "bool", True, {}),
+        ("base", "Compare with", "enum", "auto", {"items": [("auto", "Plan, else prior year"), ("plan", "Plan"),
+                                                            ("previousYear", "Prior year"), ("forecast", "Forecast")]}),
+        ("showReference", "Reference columns", "bool", True, {}),
+        ("showAbs", "Variance (Δ)", "bool", True, {}),
+        ("showPct", "Variance % (Δ%)", "bool", True, {}),
+        ("showBar", "Variance bar", "bool", True, {}),
+        ("goodColor", "Favourable color", "fill", "", {}),
+        ("badColor", "Unfavourable color", "fill", "", {}),
+    ]),
     ("sparkline", "Sparkline", [
         ("type", "Type", "enum", "line", {"items": [("line", "Line"), ("area", "Area"), ("column", "Column"),
                                                    ("winloss", "Win/loss"), ("bullet", "Bullet")]}),
@@ -90,7 +103,8 @@ OBJECTS = [
         # value/value2/value3: el visual pone en el panel el nombre de cada medida y quita las que no están.
         ("sortBy", "Sort by", "enum", "host", {"items": [("host", "Power BI order"), ("name", "Name"), ("value", "Value"),
                                                         ("value2", "Value 2"), ("value3", "Value 3"),
-                                                        ("delta", "Change (Δ)"), ("deltaPct", "Change % (Δ%)")]}),
+                                                        ("delta", "Change (Δ)"), ("deltaPct", "Change % (Δ%)"),
+                                                        ("varAbs", "Variance (Δ)"), ("varPct", "Variance % (Δ%)")]}),
         ("sortDir", "Sort direction", "enum", "desc", {"items": [("desc", "Descending"), ("asc", "Ascending")]}),
     ]),
     ("header", "Column headers", [
@@ -128,6 +142,7 @@ OBJECTS = [
 PANE = [
     ("style", "Style template", [("style", None, None)]),
     ("values", "Values", [("values", None, None)]),
+    ("variance", "Variance (Pro)", [("variance", None, "show")]),
     ("sparkline", "Sparkline", [("sparkline", None, None)]),
     ("bands", "Qualitative bands", [("bands", None, "showBands")]),
     ("markers", "Markers", [("markers", None, None)]),

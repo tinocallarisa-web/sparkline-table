@@ -76,8 +76,18 @@ const CLASSIC: Look = {
     down: "#C4314B", target: "#252423", sub: "#F7F7F7", sel: "#DEECF9", hover: "#F3F2F1", band: "#EDEBE9",
 };
 
-type ColId = "name" | "val" | "delta" | "pct" | "m2" | "m3" | "spark";
+type ColId = "name" | "val" | "delta" | "pct" | "pl" | "py" | "fc" | "vabs" | "vbar" | "vpct" | "stat" | "m2" | "m3" | "spark" | "spark2" | "spark3";
 interface Col { id: ColId; w: number; sortKey: string | null; }
+/** Orden de las columnas = orden de las celdas en el DOM (la rejilla las coloca por orden; las ocultas no ocupan). */
+const COL_ORDER: ColId[] = ["name", "val", "delta", "pct", "pl", "py", "fc", "vabs", "vbar", "vpct", "stat", "m2", "m3", "spark", "spark2", "spark3"];
+const OPTIONAL_COLS: ColId[] = COL_ORDER.filter(c => c !== "name" && c !== "spark");
+/** Columnas de referencia: [Plan, Prior year, Forecast] en el mismo orden que Row.refs. */
+const REF_COLS: ColId[] = ["pl", "py", "fc"];
+/** Letras de escenario (notación habitual en las cuentas de gestión; no se rotula ningún estándar). */
+const REF_CODES = ["PL", "PY", "FC"];
+
+/** Funciones Pro (bloque 2), con su nombre para la marca de agua y el aviso de Power BI. */
+type ProFeature = "variance" | "status" | "sparklines" | "styles" | "fx" | "images" | "horizon";
 
 interface Geo {
     gen: number; line: string; area: string; pos: string; neg: string; tgt: string; band: string;
@@ -163,7 +173,15 @@ export class Visual implements IVisual {
     private licenseResolved = false;
     private licenseUnsupported = false;
     private proPreview = false;
-    private lastNotice = "";
+    /** Funciones Pro que el informe PIDE ahora (se recalcula en cada render). */
+    private proAsk: { labels: ProFeature[]; sig: string; set: Set<ProFeature> } = { labels: [], sig: "", set: new Set() };
+    private lastBlockedNotice = "";
+    private licenseIconTimer: number | null = null;
+    private licenseIconShown = false;
+    private watermarkTitle: HTMLDivElement | null = null;
+    private watermarkWhy: HTMLDivElement | null = null;
+    /** Varianza: |Δ| máximo por nivel (escala común de la barra). */
+    private varExt = new Map<number, number>();
     private gap = 16;
     /** El alto pedido era menor que el texto y se ha subido (se avisa en el panel). */
     private rowHClamped = false;
@@ -612,7 +630,7 @@ export class Visual implements IVisual {
 
     /** Se dibujan con licencia o, editando y con la licencia ya resuelta, como vista previa con marca de agua. */
     private imagesOn(): boolean {
-        return !!this.model && this.model.imgIdx >= 0 && (this.isPro || this.proPreview);
+        return !!this.model && this.model.imgIdx >= 0 && this.previewOf("images");
     }
 
     private paintImage(name: HTMLElement, d: Row): void {
@@ -637,33 +655,128 @@ export class Visual implements IVisual {
         } else img.removeAttribute("href");
     }
 
-    /** Marca de agua de la vista previa: solo editando sin licencia y con imágenes dibujadas. */
+    // ── Funciones Pro: qué pide el informe, qué se dibuja, marca de agua y avisos de Power BI ─────────────────
+
+    /** Base de la varianza (índice de valueSources) según "Compare with"; Forecast solo si se elige. -1 = sin base. */
+    private varBaseIdx(m: Model | null): number {
+        if (!m) return -1;
+        const b = String(this.settings.variance?.base ?? "auto");
+        if (b === "plan") return m.planIdx;
+        if (b === "previousYear") return m.pyIdx;
+        if (b === "forecast") return m.fcIdx;
+        return m.planIdx >= 0 ? m.planIdx : m.pyIdx;
+    }
+
+    /** Letra de la base (PL / PY / FC) para las cabeceras ΔPL, ΔPL%. */
+    private varCode(m: Model | null): string {
+        const i = this.varBaseIdx(m);
+        if (!m || i < 0) return "";
+        return i === m.planIdx ? REF_CODES[0] : i === m.pyIdx ? REF_CODES[1] : REF_CODES[2];
+    }
+
+    /**
+     * Qué funciones Pro está PIDIENDO el informe ahora (molde de Line Chart): del valor ACTUAL de cada ajuste y de los
+     * pozos. Poner Plan / Prior year ES la petición de la varianza (como Small multiples en Line Chart), salvo que la
+     * tarjeta esté apagada o no quede ninguna columna de varianza: entonces solo hay referencias en gris, que son gratis.
+     */
+    private computeProAsk(): void {
+        const m = this.model, s = this.settings;
+        const groups: [ProFeature, boolean, string][] = [];
+        const v = s.variance || {};
+        const varOn = !!m && this.varBaseIdx(m) >= 0 && v.show !== false && (!!v.showAbs || !!v.showPct || !!v.showBar);
+        groups.push(["variance", varOn, "var=" + this.varCode(m)]);
+        groups.push(["images", !!m && m.imgIdx >= 0, "img"]);
+        const labels: ProFeature[] = [], parts: string[] = [], set = new Set<ProFeature>();
+        for (const [f, on, sig] of groups) if (on) { labels.push(f); set.add(f); parts.push(sig); }
+        this.proAsk = { labels, sig: parts.join("|"), set };
+    }
+
+    /** Lo que se DIBUJA, función a función: con licencia, todo; sin ella, solo la vista previa de lo que se pide. */
+    private previewOf(f: ProFeature): boolean {
+        if (this.isPro) return true;
+        return this.proPreview && this.proAsk.set.has(f);
+    }
+
+    private featName(f: ProFeature): string {
+        switch (f) {
+            case "variance": return this.t("Feat_variance", "variance columns");
+            case "status": return this.t("Feat_status", "status icons");
+            case "sparklines": return this.t("Feat_sparklines", "extra sparkline columns");
+            case "styles": return this.t("Feat_styles", "collection styles");
+            case "fx": return this.t("Feat_fx", "conditional formatting");
+            case "images": return this.t("Feat_images", "row images");
+            case "horizon": return this.t("Feat_horizon", "horizon sparkline");
+        }
+        return f;
+    }
+
+    /** La marca solo editando sin licencia y con una función Pro realmente puesta: una tabla gratis no se ensucia. */
     private updateWatermark(): void {
-        const on = this.proPreview && this.imagesDrawn;
+        const labels = this.proAsk.labels;
+        const on = this.proPreview && labels.length > 0 && !!this.model && this.rows.length > 0;
         if (!this.watermarkEl) {
             if (!on) return;
             this.watermarkEl = this.div("st-watermark", this.root);
             this.watermarkEl.setAttribute("aria-hidden", "true");
+            this.watermarkTitle = this.div("st-wm-title", this.watermarkEl);
+            this.watermarkWhy = this.div("st-wm-why", this.watermarkEl);
         }
         this.watermarkEl.style.display = on ? "flex" : "none";
-        if (!on) return;
-        this.watermarkEl.textContent = this.t("UI_ProPreview", "Pro preview") + " · " + this.t("Feat_images", "row images");
-        this.watermarkEl.style.fontSize = Math.round(Math.max(18, Math.min(56, this.W / 12))) + "px";
+        if (!on || !this.watermarkTitle || !this.watermarkWhy) return;
+        this.watermarkTitle.textContent = this.t("UI_ProPreview", "Pro preview");
+        const names = labels.map(f => this.featName(f));
+        this.watermarkWhy.textContent = (names.length <= 2 ? names : names.slice(0, 2).concat(["+" + (names.length - 2)])).join(" · ");
+        const size = Math.round(Math.max(18, Math.min(64, this.W / 10, this.H / 3.5)));
+        this.watermarkEl.style.fontSize = size + "px";
+        this.watermarkWhy.style.fontSize = Math.round(size * 0.36) + "px";
     }
 
-    /** Aviso de licencia del propio Power BI (sin UI de licencia propia), una vez por cambio. */
+    private cancelLicenseIcon(): void {
+        if (this.licenseIconTimer !== null) { window.clearTimeout(this.licenseIconTimer); this.licenseIconTimer = null; }
+    }
+
+    private clearLicenseNotice(): void {
+        this.lastBlockedNotice = "";
+        this.cancelLicenseIcon();
+        if (!this.licenseIconShown) return;
+        this.licenseIconShown = false;
+        try { (this.host.licenseManager as any)?.clearLicenseNotification?.(); } catch { /* best-effort */ }
+    }
+
+    /**
+     * Avisos de licencia del propio Power BI (sin UI de licencia propia), secuencia de Line Chart / Pareto: quitar lo que
+     * haya, el aviso que nombra las funciones y, ~10 s después, la barra de Upgrade. Solo ante un cambio NUEVO.
+     */
     private notifyPro(): void {
         const lm: any = this.host.licenseManager;
-        if (!lm || !this.licenseResolved || this.licenseUnsupported) return;
-        const want = !this.isPro && !!this.model && this.model.imgIdx >= 0;
-        const sig = want ? "img" : "";
-        if (sig === this.lastNotice) return;
-        this.lastNotice = sig;
-        if (!want) { try { lm.clearLicenseNotification?.(); } catch { /* best-effort */ } return; }
+        if (!lm || !this.licenseResolved) return;
+        if (this.isPro) { this.clearLicenseNotice(); return; }
+        const { labels, sig } = this.proAsk;
+        if (!labels.length) { this.clearLicenseNotice(); return; }
+        // Entorno sin licencias o licencia ilegible: un cliente Pro caería aquí; nunca pedirle que compre.
+        if (this.licenseUnsupported) return;
+        // Al pasar de lectura a edición cambia el texto (bloqueado → vista previa): también es un aviso nuevo.
+        const key = sig + "|pv=" + this.proPreview;
+        if (key === this.lastBlockedNotice) return;
+        this.lastBlockedNotice = key;
+        this.licenseIconShown = true;
+        const list = labels.map(f => this.featName(f)).join(", ");
         const msg = this.proPreview
-            ? this.tf("UI_NoticePreview", "Sparkline Table: {0} — part of the Pro plan, shown here as a watermarked preview. Reading view shows the free table.", this.t("Feat_images", "row images"))
-            : this.tf("UI_NoticeBlocked", "Sparkline Table: {0} — part of the Pro plan. Get a licence to enable it.", this.t("Feat_images", "row images"));
-        try { lm.notifyFeatureBlocked?.(msg.slice(0, 500)); } catch { /* best-effort */ }
+            ? this.tf("UI_NoticePreview", "Sparkline Table: {0} — part of the Pro plan, shown here as a watermarked preview. Reading view shows the free table.", list)
+            : this.tf("UI_NoticeBlocked", "Sparkline Table: {0} — part of the Pro plan. Get a licence to enable it.", list);
+        const show = () => {
+            try { lm.notifyFeatureBlocked?.(msg.slice(0, 500)); } catch { /* best-effort */ }
+            this.cancelLicenseIcon();
+            this.licenseIconTimer = window.setTimeout(() => {
+                this.licenseIconTimer = null;
+                if (this.isPro || !this.licenseIconShown) return;
+                // const enum: TypeScript lo sustituye por 0 (General).
+                try { lm.notifyLicenseRequired?.(powerbi.LicenseNotificationType.General); } catch { /* best-effort */ }
+            }, 10500);
+        };
+        let cleared: any;
+        try { cleared = lm.clearLicenseNotification?.(); } catch { /* best-effort */ }
+        if (cleared && typeof cleared.then === "function") cleared.then(show, show); else show();
     }
 
     /** Un fallo de render se ve en el visual (además de renderingFailed), nunca un spinner eterno. */
@@ -687,6 +800,7 @@ export class Visual implements IVisual {
         this.settings = this.readSettings(dv);
         // Vista previa Pro: solo editando y con la licencia ya resuelta (un cliente Pro nunca ve la marca).
         this.proPreview = !this.isPro && this.editing && this.licenseResolved && !this.licenseUnsupported;
+        this.computeProAsk();
         this.look = this.computeLook();
         this.computeLevelStyles();
         this.W =Math.max(0, options.viewport.width);
@@ -712,6 +826,7 @@ export class Visual implements IVisual {
             this.notice.style.display = "none";
             while (this.header.firstChild) this.header.removeChild(this.header.firstChild);
             this.renderGuide();
+            this.updateWatermark();
             if (m && m.valueIdx.length && m.levels.length && !m.roots.length) {
                 this.message(this.t("UI_NoData", "No data for the current filters."));
             } else {
@@ -767,6 +882,8 @@ export class Visual implements IVisual {
         set("--st-target", L.target); set("--st-sub", L.sub); set("--st-sel", L.sel); set("--st-hover", L.hover);
         set("--st-band", L.band);
         set("--st-vbar", String(this.settings.values.barColor || L.accent));
+        set("--st-vgood", this.hc ? this.hcFg : String(this.settings.variance.goodColor || L.up));
+        set("--st-vbad", this.hc ? this.hcFg : String(this.settings.variance.badColor || L.down));
         const bs = this.settings.bands;
         set("--st-b1", this.hc ? "transparent" : String(bs.band1Color || "#F6CFCB"));
         set("--st-b2", this.hc ? "transparent" : String(bs.band2Color || "#FBE7B5"));
@@ -790,6 +907,19 @@ export class Visual implements IVisual {
         this.periodLabels = m.periods.map((_p, i) => this.periodLabel(i));
         const all = m.total ? m.all.concat([m.total]) : m.all;
         const basesByLevel = new Map<number, number[]>();
+        // Referencias y varianza (bloque 2): la cifra a la vista de cada medida, del MISMO nodo del motor que el valor
+        // (en un subtotal, el subtotal de Plan del motor). Nunca la suma de los hijos. Δ% con base ≤ 0 → vacío.
+        const vb = this.varBaseIdx(m);
+        const at = (r: Row, i: number): Num => i < 0 ? null : this.valueModeUsed === "total" ? r.tot[i] : (last >= 0 ? r.s[i][last] : null);
+        this.varExt.clear();
+        for (const r of all) {
+            r.refs = [at(r, m.planIdx), at(r, m.pyIdx), at(r, m.fcIdx)];
+            r.vref = at(r, vb);
+            const real = this.valueModeUsed === "total" ? r.tot[m0] : (last >= 0 ? r.s[m0][last] : null);
+            r.vabs = real !== null && r.vref !== null ? real - r.vref : null;
+            r.vpct = r.vabs !== null && r.vref !== null && r.vref > 0 ? r.vabs / r.vref : null;
+            if (r.vabs !== null) this.varExt.set(r.level, Math.max(this.varExt.get(r.level) ?? 0, Math.abs(r.vabs)));
+        }
         for (const r of all) {
             r.shown = m.valueIdx.map(i => this.valueModeUsed === "total" ? r.tot[i] : (last >= 0 ? r.s[i][last] : null));
             r.shownFmt = m.valueIdx.map(i => this.valueModeUsed === "total" ? (r.totFmt?.[i] ?? m.sources[i].format)
@@ -863,7 +993,8 @@ export class Visual implements IVisual {
             return (a, b) => sign * coll.compare(a.label, b.label);
         }
         const key = (r: Row): Num => by === "value" ? r.shown[0] : by === "value2" ? (r.shown[1] ?? null) : by === "value3" ? (r.shown[2] ?? null)
-            : by === "delta" ? r.delta : by === "deltaPct" ? r.deltaPct : null;
+            : by === "delta" ? r.delta : by === "deltaPct" ? r.deltaPct
+            : by === "varAbs" ? (this.previewOf("variance") ? r.vabs : null) : by === "varPct" ? (this.previewOf("variance") ? r.vpct : null) : null;
         return (a, b) => {
             const x = key(a), y = key(b);
             if (x === null && y === null) return 0;
@@ -903,16 +1034,22 @@ export class Visual implements IVisual {
         // máximo de todos. Solo se formatean los extremos de cada nivel (no 12.000 valores).
         const all = m.total ? m.all.concat([m.total]) : m.all;
         const nV = m.valueIdx.length;
-        type Ext = { v: [number, number][]; d: [number, number] };
+        type Ext = { v: [number, number][]; d: [number, number]; r: [number, number][]; va: [number, number] };
         const byLv = new Map<number, Ext>();
         const upd = (e: [number, number], x: Num | undefined) => { if (x !== null && x !== undefined) { if (x < e[0]) e[0] = x; if (x > e[1]) e[1] = x; } };
+        const nE = (): [number, number] => [Infinity, -Infinity];
         for (const r of all) {
             const lv = Math.min(r.level, 2);
             let e = byLv.get(lv);
-            if (!e) { e = { v: m.valueIdx.map(() => [Infinity, -Infinity] as [number, number]), d: [Infinity, -Infinity] }; byLv.set(lv, e); }
+            if (!e) { e = { v: m.valueIdx.map(nE), d: nE(), r: [nE(), nE(), nE()], va: nE() }; byLv.set(lv, e); }
             for (let k = 0; k < nV; k++) upd(e.v[k], r.shown[k]);
             upd(e.d, r.delta);
+            for (let k = 0; k < 3; k++) upd(e.r[k], r.refs[k]);
+            upd(e.va, r.vabs);
         }
+        const refIdx = [m.planIdx, m.pyIdx, m.fcIdx];
+        const refW: number[] = [0, 0, 0];
+        let vaText = 0;
         const fmtD = (v: number) => this.signed(v, this.fmtCompact(v, m.sources[m.valueIdx[0]].format));
         const textW: number[] = m.valueIdx.map(() => 0);
         let dText = 0, pText = 0;
@@ -929,6 +1066,8 @@ export class Visual implements IVisual {
             }
             dText = Math.max(dText, ext2(e.d, fmtD, bw === "on"));
             pText = Math.max(pText, this.measure(this.fmtPct(-9.999), size, bw === "on", fam));
+            for (let k = 0; k < 3; k++) if (refIdx[k] >= 0) refW[k] = Math.max(refW[k], ext2(e.r[k], v => this.fmtFull(v, m.sources[refIdx[k]].format), bw === "on"));
+            vaText = Math.max(vaText, ext2(e.va, fmtD, bw === "on"));
         });
         const hFam = s.header.fontFamily ? String(s.header.fontFamily) : FONT;
         const hdrW = (txt: string) => this.measure(txt, Number(s.header.fontSize), s.header.bold !== false, hFam) + gap;
@@ -942,6 +1081,16 @@ export class Visual implements IVisual {
         if (s.values.showDeltaPct) want.push({ id: "pct", w: pW, sortKey: "deltaPct" });
         if (m.valueIdx.length > 1) want.push({ id: "m2", w: valW(1), sortKey: "value2" });
         if (m.valueIdx.length > 2) want.push({ id: "m3", w: valW(2), sortKey: "value3" });
+        // Referencias (gris; también en el gratis: el lector sin licencia las ve, no un hueco) y varianza (Pro).
+        const refOn = s.variance.showReference !== false;
+        REF_COLS.forEach((id, k) => {
+            if (refOn && refIdx[k] >= 0) want.push({ id, w: Math.min(240, Math.max(Math.ceil(refW[k]) + gap, Math.min(150, hdrW(m.sources[refIdx[k]].displayName)))), sortKey: null });
+        });
+        const varOn = this.previewOf("variance") && this.varBaseIdx(m) >= 0 && s.variance.show !== false;
+        const code = this.varCode(m);
+        if (varOn && s.variance.showAbs) want.push({ id: "vabs", w: Math.min(160, Math.max(Math.ceil(vaText) + gap, hdrW("Δ" + code))), sortKey: "varAbs" });
+        if (varOn && s.variance.showBar) want.push({ id: "vbar", w: Math.round(Math.max(56, Math.min(110, this.W * 0.09))) + gap, sortKey: null });
+        if (varOn && s.variance.showPct) want.push({ id: "vpct", w: Math.max(Math.ceil(pText) + gap, hdrW("Δ" + code + "%")), sortKey: "varPct" });
 
         // Último valor dentro del minigráfico
         const fmt0 = m.sources[m.valueIdx[0]].format;
@@ -954,11 +1103,12 @@ export class Visual implements IVisual {
         this.labelW = showLast ? Math.min(72, Math.ceil(lblW) + 6) : 0;
 
         // Primero el minigráfico (lo que define el producto), luego el nombre; los adornos cogen lo que sobra, y se
-        // quitan en este orden: medidas 3 y 2, Δ, Δ%, valor. El minigráfico nunca.
+        // quitan en este orden: minigráficos 3 y 2, medidas 3 y 2, Forecast y Prior year, Δ, Δ%, estado, Plan, la
+        // varianza (barra, Δ, Δ%) y el valor. El primer minigráfico nunca.
         const W = this.W - 2 - (this.scroller.offsetWidth - this.scroller.clientWidth || 0);
         const nameMin = Math.min(150, Math.max(64, this.W * 0.18));
         let spark = Math.max(56, Math.min(220, this.W * 0.3));
-        const dropOrder: ColId[] = ["m3", "m2", "delta", "pct", "val"];
+        const dropOrder: ColId[] = ["spark3", "spark2", "m3", "m2", "fc", "py", "delta", "pct", "stat", "pl", "vbar", "vabs", "vpct", "val"];
         const sum = () => want.reduce((a, c) => a + c.w, 0) + gap + PAD;
         for (const id of dropOrder) {
             if (sum() + nameMin + spark + this.labelW <= W) break;
@@ -971,11 +1121,12 @@ export class Visual implements IVisual {
         }
         this.sparkW = Math.floor(spark);
         want.push({ id: "spark", w: this.sparkW + this.labelW + gap + PAD, sortKey: null });
+        want.sort((a, b) => COL_ORDER.indexOf(a.id) - COL_ORDER.indexOf(b.id));
         this.cols = want;
         const tpl = want.map(c => c.id === "name" ? "minmax(0,1fr)" : c.w.toFixed(0) + "px").join(" ");
         this.root.style.setProperty("--st-cols", tpl);
         const has = (id: ColId) => want.some(c => c.id === id);
-        for (const id of ["val", "delta", "pct", "m2", "m3"] as ColId[]) this.root.classList.toggle("st-hide-" + id, !has(id));
+        for (const id of OPTIONAL_COLS) this.root.classList.toggle("st-hide-" + id, !has(id));
     }
 
     // ── Cabecera ─────────────────────────────────────────────────────────────
@@ -998,6 +1149,8 @@ export class Visual implements IVisual {
         const baseLbl = this.periodLabels[this.baseIdx] ?? "";
         const valCtx = this.valueModeUsed === "total" ? this.t("UI_Total", "Total") : lastLbl;
         const dCtx = this.baseIdx < 0 ? "" : (this.valueModeUsed === "total" ? lastLbl + " " : "") + this.tf("UI_Vs", "vs {0}", baseLbl);
+        const vbi = this.varBaseIdx(m);
+        const varCtx = vbi < 0 ? "" : this.tf("UI_Vs", "vs {0}", m.sources[vbi].displayName);
         const levelNames = m.levels.map(l => l.sources.map(x => x.displayName).join(" + ")).join(" › ");
         const sortName = this.sortName(by);
         const nameCtx = by === "host" ? this.hostSortText() : this.tf("UI_SortedBy", "Sorted by {0} {1}", sortName, dir === "asc" ? "↑" : "↓");
@@ -1019,8 +1172,24 @@ export class Visual implements IVisual {
             m2: [m.valueIdx[1] !== undefined ? m.sources[m.valueIdx[1]].displayName : "", valCtx],
             m3: [m.valueIdx[2] !== undefined ? m.sources[m.valueIdx[2]].displayName : "", valCtx],
             spark: [sparkTitle, sparkCtx],
+            pl: [m.planIdx >= 0 ? m.sources[m.planIdx].displayName : "", valCtx],
+            py: [m.pyIdx >= 0 ? m.sources[m.pyIdx].displayName : "", valCtx],
+            fc: [m.fcIdx >= 0 ? m.sources[m.fcIdx].displayName : "", valCtx],
+            vabs: ["Δ" + this.varCode(m), varCtx],
+            vbar: [this.cols.some(c => c.id === "vabs") ? "" : "Δ" + this.varCode(m), varCtx],
+            vpct: ["Δ" + this.varCode(m) + "%", varCtx],
+            stat: ["", ""],
+            spark2: ["", ""],
+            spark3: ["", ""],
         };
-        const hasD = this.cols.some(c => c.id === "delta"), hasP = this.cols.some(c => c.id === "pct");
+        // Segunda línea compartida: Δ y Δ% (vs el periodo base) y la varianza (vs la referencia) ocupan sus columnas.
+        const group = (id: ColId): string => id === "delta" || id === "pct" ? "chg" : id === "vabs" || id === "vbar" || id === "vpct" ? "var" : id;
+        const span = this.cols.map((c, i) => {
+            if (i > 0 && group(this.cols[i - 1].id) === group(c.id)) return 0;
+            let n = 1;
+            while (i + n < this.cols.length && group(this.cols[i + n].id) === group(c.id)) n++;
+            return n;
+        });
         this.cols.forEach((c, i) => {
             const [t1, t2] = titles[c.id];
             const cell = this.div("st-h st-h-" + c.id, h);
@@ -1030,7 +1199,7 @@ export class Visual implements IVisual {
             const sorted = c.sortKey !== null && c.sortKey === by;
             const label = this.div("st-h1", cell);
             // Una sola línea: "Ventas netas · sep 2026"
-            label.textContent = (twoLines || !t2 || c.id === "name" || c.id === "spark" ? t1 : t1 + " · " + t2) + (sorted ? (dir === "asc" ? " ↑" : " ↓") : "");
+            label.textContent = (twoLines || !t2 || !span[i] || c.id === "name" || c.id === "spark" ? t1 : (t1 ? t1 + " · " : "") + t2) + (sorted ? (dir === "asc" ? " ↑" : " ↓") : "");
             if (c.id === "name" && s.header.expandButtons !== false && this.canInteract && m.levels.length > 1) {
                 // Expandir / contraer todo (lo guarda el host). Cada botón para la propagación: el clic en la cabecera ordena.
                 const box = this.div("st-xbtns", cell);
@@ -1055,13 +1224,13 @@ export class Visual implements IVisual {
                 if (c.id === "spark" && scaleNote) { const sc = document.createElement("span"); sc.className = "st-scale"; sc.textContent = " · " + scaleNote; label.appendChild(sc); }
                 return;
             }
-            // Segunda línea: el contexto. El de Δ y Δ% es el mismo y ocupa las dos columnas.
-            if (c.id === "pct" && hasD) return;
+            // Segunda línea: el contexto, una vez por grupo (Δ y Δ%; la varianza).
+            if (!span[i]) return;
             const ctx = this.div("st-h2 st-h2-" + c.id, h);
             ctx.textContent = t2;
             if (c.id === "spark" && scaleNote) { const sc = document.createElement("span"); sc.className = "st-scale"; sc.textContent = " · " + scaleNote; ctx.appendChild(sc); }
             ctx.style.gridRow = "2";
-            ctx.style.gridColumn = (i + 1) + (c.id === "delta" && hasP ? " / span 2" : "");
+            ctx.style.gridColumn = (i + 1) + (span[i] > 1 ? " / span " + span[i] : "");
             if (c.id === "name" && by === "host" && this.hostSortText() !== "") ctx.classList.add("st-h2-host");
         });
     }
@@ -1075,6 +1244,8 @@ export class Visual implements IVisual {
             case "value3": return m && m.valueIdx[2] !== undefined ? m.sources[m.valueIdx[2]].displayName : "";
             case "delta": return "Δ";
             case "deltaPct": return "Δ%";
+            case "varAbs": return "Δ" + this.varCode(m);
+            case "varPct": return "Δ" + this.varCode(m) + "%";
         }
         return "";
     }
@@ -1153,7 +1324,12 @@ export class Visual implements IVisual {
         const val = rowSel.append("div").attr("class", "st-c st-c-val").attr("role", "gridcell");
         val.append("span").attr("class", "st-vbar").attr("aria-hidden", "true");
         val.append("span").attr("class", "st-vtext");
-        for (const c of ["delta", "pct", "m2", "m3"]) rowSel.append("div").attr("class", "st-c st-c-" + c).attr("role", "gridcell");
+        // Mismo orden que COL_ORDER: la rejilla coloca las celdas por orden y las ocultas (st-hide-*) no ocupan.
+        for (const c of ["delta", "pct", "pl", "py", "fc", "vabs"]) rowSel.append("div").attr("class", "st-c st-c-" + c + (c === "pl" || c === "py" || c === "fc" ? " st-ref" : "")).attr("role", "gridcell");
+        const vb = rowSel.append("div").attr("class", "st-c st-c-vbar").attr("role", "gridcell");
+        vb.append("span").attr("class", "st-vb-axis").attr("aria-hidden", "true");
+        vb.append("span").attr("class", "st-vb-bar").attr("aria-hidden", "true");
+        for (const c of ["vpct", "stat", "m2", "m3"]) rowSel.append("div").attr("class", "st-c st-c-" + c).attr("role", "gridcell");
         const sp = rowSel.append("div").attr("class", "st-c st-c-spark").attr("role", "gridcell");
         const svg = sp.append("svg").attr("class", "st-svg").attr("aria-hidden", "true");
         for (const c of ["st-b1", "st-b2", "st-b3", "st-band", "st-area", "st-pos", "st-neg", "st-tgt", "st-line", "st-mk-neg", "st-mk-first", "st-mk-max", "st-mk-min", "st-mk-last", "st-hover"]) {
@@ -1240,7 +1416,42 @@ export class Visual implements IVisual {
         pc.className = "st-c st-c-pct" + (d.deltaPct === null || d.deltaPct === 0 ? "" : " " + (d.deltaPct > 0 ? up : down)) + (d.small ? " st-small" : "");
         q(".st-c-m2").textContent = m.valueIdx.length > 1 ? this.fmtFull(d.shown[1] ?? null, d.shownFmt[1]) : "";
         q(".st-c-m3").textContent = m.valueIdx.length > 2 ? this.fmtFull(d.shown[2] ?? null, d.shownFmt[2]) : "";
+        // Referencias (gris, también en el gratis), con el formato del modelo (el del punto si es dinámico).
+        const refIdx = [m.planIdx, m.pyIdx, m.fcIdx];
+        REF_COLS.forEach((id, k) => {
+            const i = refIdx[k];
+            q(".st-c-" + id).textContent = i < 0 ? "" : this.fmtFull(d.refs[k], this.valueModeUsed === "total" ? (d.totFmt?.[i] ?? m.sources[i].format)
+                : (d.fmt?.[i]?.[m.lastIdx] ?? m.sources[i].format));
+        });
+        // Varianza contra la base (Pro): verde/rojo según "A decrease is good".
+        if (this.cols.some(c => c.id === "vabs" || c.id === "vbar" || c.id === "vpct")) {
+            const fav = d.vabs === null || d.vabs === 0 ? "" : ((d.vabs > 0) !== !!s.values.invert ? " st-vgood" : " st-vbad");
+            const va = q(".st-c-vabs");
+            va.textContent = d.vabs === null ? "" : this.signed(d.vabs, this.fmtCompact(d.vabs, m.sources[m.valueIdx[0]].format));
+            va.className = "st-c st-c-vabs" + fav;
+            const vp = q(".st-c-vpct");
+            vp.textContent = d.vpct === null ? "" : this.fmtPct(d.vpct);
+            vp.className = "st-c st-c-vpct" + fav;
+            this.paintVarBar(q(".st-c-vbar"), d, fav);
+        }
         this.paintSpark(el, d, m);
+    }
+
+    /** Barra de varianza: eje en cero en el centro, favorable a la derecha si sube; escala común por nivel. */
+    private paintVarBar(cell: HTMLElement, d: Row, fav: string): void {
+        const axis = cell.querySelector(".st-vb-axis") as HTMLElement, bar = cell.querySelector(".st-vb-bar") as HTMLElement;
+        const col = this.cols.find(c => c.id === "vbar");
+        if (!col) return;
+        const mx = this.varExt.get(d.level) ?? 0;
+        const cw = Math.max(8, col.w - this.gap - 4);
+        const mid = this.gap + cw / 2;
+        axis.style.left = mid.toFixed(1) + "px";
+        if (d.vabs === null || !(mx > 0)) { bar.style.display = "none"; return; }
+        const len = Math.max(1, Math.abs(d.vabs) / mx * (cw / 2));
+        bar.style.display = "block";
+        bar.style.left = (d.vabs >= 0 ? mid : mid - len).toFixed(1) + "px";
+        bar.style.width = len.toFixed(1) + "px";
+        bar.className = "st-vb-bar" + fav + (d.vabs < 0 ? " st-vb-neg" : "");
     }
 
     private drawTotal(m: Model): void {
@@ -1597,7 +1808,7 @@ export class Visual implements IVisual {
         const mode = String(this.settings.rows.tooltips);
         const target = e.target as Element;
         const cell = target.closest(".st-c-spark");
-        const onValue = !!target.closest(".st-c-val, .st-c-delta, .st-c-pct, .st-c-m2, .st-c-m3");
+        const onValue = !!target.closest(".st-c-val, .st-c-delta, .st-c-pct, .st-c-m2, .st-c-m3, .st-c-pl, .st-c-py, .st-c-fc, .st-c-vabs, .st-c-vbar, .st-c-vpct, .st-c-stat");
         const svg = rowEl.querySelector("svg.st-svg") as SVGSVGElement | null;
         const hover = svg ? svg.querySelector(".st-hover") as SVGPathElement : null;
         this.layerEl.querySelectorAll(".st-hover").forEach(p => { if (p !== hover) p.removeAttribute("d"); });
@@ -1660,7 +1871,7 @@ export class Visual implements IVisual {
             out.push({ displayName: this.tf("UI_DeltaVs", "Δ vs {0}", this.periodLabels[p - 1]),
                 value: this.signed(dl, this.fmtCompact(dl, m.sources[m0].format)) + (prev > 0 ? "  (" + this.fmtPct(dl / prev) + ")" : "") });
         }
-        for (const i of [m.targetIdx, m.planIdx, m.pyIdx].concat(m.tipIdx)) if (i >= 0) out.push({ displayName: m.sources[i].displayName, value: val(i) || this.t("UI_Blank", "(Blank)") });
+        for (const i of [m.targetIdx, m.planIdx, m.pyIdx, m.fcIdx].concat(m.tipIdx)) if (i >= 0) out.push({ displayName: m.sources[i].displayName, value: val(i) || this.t("UI_Blank", "(Blank)") });
         return out;
     }
 
@@ -1679,7 +1890,14 @@ export class Visual implements IVisual {
             if (band) out.push({ displayName: this.t("UI_Band", "Band"), value: band });
             if (d.small) out.push({ displayName: "Δ%", value: this.tf("UI_SmallBase", "small base ({0}): read the % with care", this.fmtFull(d.base, m.sources[m0].format)) });
         }
-        const tIdx = [m.targetIdx, m.planIdx, m.pyIdx].concat(m.tipIdx);
+        const vbi = this.varBaseIdx(m);
+        if (vbi >= 0 && this.previewOf("variance") && this.settings.variance.show !== false) {
+            const m0 = m.valueIdx[0];
+            out.push({ displayName: "Δ" + this.varCode(m) + " · " + this.tf("UI_Vs", "vs {0}", m.sources[vbi].displayName),
+                value: d.vabs === null ? this.t("UI_Blank", "(Blank)") : this.signed(d.vabs, this.fmtCompact(d.vabs, m.sources[m0].format)) + (d.vpct !== null ? "  (" + this.fmtPct(d.vpct) + ")" : "") });
+            if (d.vabs !== null && d.vpct === null) out.push({ displayName: "Δ" + this.varCode(m) + "%", value: this.t("UI_NoPctBase", "not shown: the base is zero or negative") });
+        }
+        const tIdx = [m.targetIdx, m.planIdx, m.pyIdx, m.fcIdx].concat(m.tipIdx);
         for (const i of tIdx) if (i >= 0) {
             const v = this.valueModeUsed === "total" ? d.tot[i] : (m.lastIdx >= 0 ? d.s[i][m.lastIdx] : null);
             out.push({ displayName: m.sources[i].displayName, value: this.fmtFull(v, m.sources[i].format) || this.t("UI_Blank", "(Blank)") });
@@ -2006,7 +2224,7 @@ export class Visual implements IVisual {
         const L = this.look;
         const k = obj + "." + prop;
         return k === "sparkline.color" ? L.line : k === "sparkline.accent" ? L.accent : k === "sparkline.targetColor" ? L.target
-            : k === "values.upColor" ? L.up : k === "values.downColor" ? L.down
+            : k === "values.upColor" || k === "variance.goodColor" ? L.up : k === "values.downColor" || k === "variance.badColor" ? L.down
             : k === "header.background" ? L.bg : prop === "background" ? (obj === "level3" ? L.bg : L.sub) : prop === "color" ? L.text : "#000000";
     }
 
@@ -2062,8 +2280,10 @@ export class Visual implements IVisual {
                             // Cada "Value" con el nombre de su medida; las que no están, fuera.
                             const names: Record<string, string> = {};
                             m.valueIdx.forEach((vi, k) => { names[k === 0 ? "value" : "value" + (k + 1)] = m.sources[vi].displayName; });
+                            const varOk = this.varBaseIdx(m) >= 0;
                             const items = (sl.control.properties.items as any[])
                                 .filter(x => !/^value\d?$/.test(x.value) || names[x.value] !== undefined)
+                                .filter(x => varOk || (x.value !== "varAbs" && x.value !== "varPct"))
                                 .map(x => names[x.value] !== undefined ? { value: x.value, displayName: names[x.value] } : x);
                             sl.control.properties.items = items;
                             const cur = String(this.settings.rows.sortBy);
@@ -2123,6 +2343,7 @@ export class Visual implements IVisual {
         marcar(".st-row .st-c-spark", "sparkline", 3);
         marcar(".st-row .st-c-val, .st-row .st-c-delta, .st-row .st-c-pct", "values", 1);
         marcar(".st-row .st-c-name", "rows", 1);
+        marcar(".st-row .st-c-vabs, .st-row .st-c-vbar, .st-row .st-c-vpct, .st-row .st-ref", "variance", 1);
     }
 
     private getSubSelectionStyles(subs: powerbi.visuals.CustomVisualSubSelection[]): powerbi.visuals.SubSelectionStyles | undefined {
@@ -2152,6 +2373,8 @@ export class Visual implements IVisual {
             case "header": return [toggle("header", "show"), toggle("header", "context"), div, reset("header"), nav("header")] as any;
             case "values": return [toggle("subTotals", "columnSubtotals"), pick("values", "compare"), toggle("values", "showDelta"), toggle("values", "showDeltaPct"), div, reset("values"), nav("values")] as any;
             case "rows": return [pick("rows", "density"), toggle("rows", "grandTotal"), pick("rows", "sortBy"), div, reset("rows"), nav("rows")] as any;
+            case "variance": return [pick("variance", "base"), toggle("variance", "showReference"), toggle("variance", "showAbs"), toggle("variance", "showPct"),
+                toggle("variance", "showBar"), div, reset("variance"), nav("variance")] as any;
         }
         return undefined;
     }

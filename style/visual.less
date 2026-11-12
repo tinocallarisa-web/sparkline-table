@@ -193,3 +193,25 @@
 .st-xbtn { border: 1px solid var(--st-rule); background: transparent; color: var(--st-soft); font-size: 11px; line-height: 1; padding: 1px 4px;
     border-radius: 3px; cursor: pointer; }
 .st-xbtn:hover, .st-xbtn:focus-visible { color: var(--st-text); border-color: var(--st-text); outline: none; }
+// ── Bloque 2 (Pro) ──────────────────────────────────────────────────────────────────────────────────────────────
+.st-root.st-hide-pl .st-c-pl, .st-root.st-hide-py .st-c-py, .st-root.st-hide-fc .st-c-fc, .st-root.st-hide-vabs .st-c-vabs,
+.st-root.st-hide-vbar .st-c-vbar, .st-root.st-hide-vpct .st-c-vpct, .st-root.st-hide-stat .st-c-stat,
+.st-root.st-hide-spark2 .st-c-spark2, .st-root.st-hide-spark3 .st-c-spark3 { display: none; }
+// Referencias (Plan / Prior year / Forecast): en gris, también en el gratis.
+.st-c-pl, .st-c-py, .st-c-fc, .st-c-vabs, .st-c-vpct, .st-c-stat {
+    text-align: right; font-variant-numeric: tabular-nums; font-size: var(--st-vfs, 11px);
+}
+.st-ref { color: var(--st-soft); }
+.st-c-vabs, .st-c-vpct { color: var(--st-soft); }
+.st-vgood { color: var(--st-vgood); }
+.st-vbad { color: var(--st-vbad); }
+// Barra de varianza: eje en cero, favorable/desfavorable en color; en alto contraste la negativa va rayada.
+.st-c-vbar { position: relative; }
+.st-vb-axis { position: absolute; top: 15%; bottom: 15%; width: 1px; background: var(--st-rule); pointer-events: none; }
+.st-vb-bar { position: absolute; top: 26%; bottom: 26%; display: none; background: var(--st-soft); pointer-events: none; }
+.st-vb-bar.st-vgood { background: var(--st-vgood); }
+.st-vb-bar.st-vbad { background: var(--st-vbad); }
+.st-root.st-hc .st-vb-bar.st-vb-neg { background: repeating-linear-gradient(135deg, var(--st-text) 0 2px, transparent 2px 4px); outline: 1px solid var(--st-text); }
+// Marca de agua con título y funciones.
+.st-watermark { flex-direction: column; }
+.st-wm-why { font-weight: 600; letter-spacing: 0.02em; margin-top: 0.15em; }

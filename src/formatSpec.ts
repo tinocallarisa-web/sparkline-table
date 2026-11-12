@@ -135,6 +135,91 @@ export const OBJECTS: Record<string, ObjSpec> = {
             }
         ]
     },
+    "variance": {
+        "name": "variance",
+        "key": "Obj_variance",
+        "label": "Variance (Pro)",
+        "props": [
+            {
+                "name": "show",
+                "type": "bool",
+                "def": true,
+                "key": "Prop_variance_show",
+                "label": "Show variance"
+            },
+            {
+                "name": "base",
+                "type": "enum",
+                "def": "auto",
+                "key": "Prop_variance_base",
+                "label": "Compare with",
+                "items": [
+                    [
+                        "auto",
+                        "Enum_base_auto",
+                        "Plan, else prior year"
+                    ],
+                    [
+                        "plan",
+                        "Enum_base_plan",
+                        "Plan"
+                    ],
+                    [
+                        "previousYear",
+                        "Enum_base_previousYear",
+                        "Prior year"
+                    ],
+                    [
+                        "forecast",
+                        "Enum_base_forecast",
+                        "Forecast"
+                    ]
+                ]
+            },
+            {
+                "name": "showReference",
+                "type": "bool",
+                "def": true,
+                "key": "Prop_variance_showReference",
+                "label": "Reference columns"
+            },
+            {
+                "name": "showAbs",
+                "type": "bool",
+                "def": true,
+                "key": "Prop_variance_showAbs",
+                "label": "Variance (Δ)"
+            },
+            {
+                "name": "showPct",
+                "type": "bool",
+                "def": true,
+                "key": "Prop_variance_showPct",
+                "label": "Variance % (Δ%)"
+            },
+            {
+                "name": "showBar",
+                "type": "bool",
+                "def": true,
+                "key": "Prop_variance_showBar",
+                "label": "Variance bar"
+            },
+            {
+                "name": "goodColor",
+                "type": "fill",
+                "def": "",
+                "key": "Prop_variance_goodColor",
+                "label": "Favourable color"
+            },
+            {
+                "name": "badColor",
+                "type": "fill",
+                "def": "",
+                "key": "Prop_variance_badColor",
+                "label": "Unfavourable color"
+            }
+        ]
+    },
     "sparkline": {
         "name": "sparkline",
         "key": "Obj_sparkline",
@@ -554,6 +639,16 @@ export const OBJECTS: Record<string, ObjSpec> = {
                         "deltaPct",
                         "Enum_sortBy_deltaPct",
                         "Change % (Δ%)"
+                    ],
+                    [
+                        "varAbs",
+                        "Enum_sortBy_varAbs",
+                        "Variance (Δ)"
+                    ],
+                    [
+                        "varPct",
+                        "Enum_sortBy_varPct",
+                        "Variance % (Δ%)"
                     ]
                 ]
             },
@@ -1119,6 +1214,17 @@ export const PANE: CardSpec[] = [
             {
                 "obj": "values",
                 "toggle": null
+            }
+        ]
+    },
+    {
+        "uid": "variance",
+        "key": "Obj_variance",
+        "label": "Variance (Pro)",
+        "groups": [
+            {
+                "obj": "variance",
+                "toggle": "show"
             }
         ]
     },

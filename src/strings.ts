@@ -4,7 +4,13 @@
  */
 export const STRINGS: Record<string, Record<string, string>> = {
     "es-ES": {
+        "Feat_fx": "formato condicional",
+        "Feat_horizon": "minigráfico de horizonte",
         "Feat_images": "imágenes de fila",
+        "Feat_sparklines": "columnas de minigráfico adicionales",
+        "Feat_status": "iconos de estado",
+        "Feat_styles": "estilos de la colección",
+        "Feat_variance": "columnas de desviación",
         "Guide_Back": "Atrás",
         "Guide_Close": "Cerrar el asistente",
         "Guide_Done": "añadido",
@@ -81,7 +87,13 @@ export const STRINGS: Record<string, Record<string, string>> = {
         "UI_ValueShows": "El valor muestra"
     },
     "pt-BR": {
+        "Feat_fx": "formatação condicional",
+        "Feat_horizon": "minigráfico de horizonte",
         "Feat_images": "imagens das linhas",
+        "Feat_sparklines": "colunas extras de minigráfico",
+        "Feat_status": "ícones de status",
+        "Feat_styles": "estilos da coleção",
+        "Feat_variance": "colunas de desvio",
         "Guide_Back": "Voltar",
         "Guide_Close": "Fechar o assistente",
         "Guide_Done": "adicionado",
@@ -157,7 +169,13 @@ export const STRINGS: Record<string, Record<string, string>> = {
         "UI_ValueShows": "O valor mostra"
     },
     "pt-PT": {
+        "Feat_fx": "formatação condicional",
+        "Feat_horizon": "minigráfico de horizonte",
         "Feat_images": "imagens das linhas",
+        "Feat_sparklines": "colunas extras de minigráfico",
+        "Feat_status": "ícones de status",
+        "Feat_styles": "estilos da coleção",
+        "Feat_variance": "colunas de desvio",
         "Guide_Back": "Voltar",
         "Guide_Close": "Fechar o assistente",
         "Guide_Done": "adicionado",
@@ -233,7 +251,13 @@ export const STRINGS: Record<string, Record<string, string>> = {
         "UI_ValueShows": "O valor mostra"
     },
     "fr-FR": {
+        "Feat_fx": "mise en forme conditionnelle",
+        "Feat_horizon": "mini-graphique horizon",
         "Feat_images": "images de ligne",
+        "Feat_sparklines": "colonnes de mini-graphiques supplémentaires",
+        "Feat_status": "icônes d’état",
+        "Feat_styles": "styles de la collection",
+        "Feat_variance": "colonnes d’écart",
         "Guide_Back": "Retour",
         "Guide_Close": "Fermer l’assistant",
         "Guide_Done": "ajouté",
@@ -308,7 +332,13 @@ export const STRINGS: Record<string, Record<string, string>> = {
         "UI_ValueShows": "La valeur affiche"
     },
     "de-DE": {
+        "Feat_fx": "bedingte Formatierung",
+        "Feat_horizon": "Horizont-Sparkline",
         "Feat_images": "Zeilenbilder",
+        "Feat_sparklines": "zusätzliche Sparkline-Spalten",
+        "Feat_status": "Statussymbole",
+        "Feat_styles": "Stile der Kollektion",
+        "Feat_variance": "Abweichungsspalten",
         "Guide_Back": "Zurück",
         "Guide_Close": "Assistent schließen",
         "Guide_Done": "hinzugefügt",
@@ -387,7 +417,13 @@ export const STRINGS: Record<string, Record<string, string>> = {
         "UI_Vs": "ggü. {0}"
     },
     "it-IT": {
+        "Feat_fx": "formattazione condizionale",
+        "Feat_horizon": "sparkline orizzonte",
         "Feat_images": "immagini di riga",
+        "Feat_sparklines": "colonne di sparkline aggiuntive",
+        "Feat_status": "icone di stato",
+        "Feat_styles": "stili della collezione",
+        "Feat_variance": "colonne di scostamento",
         "Guide_Back": "Indietro",
         "Guide_Close": "Chiudi la procedura guidata",
         "Guide_Done": "aggiunto",
@@ -465,7 +501,13 @@ export const STRINGS: Record<string, Record<string, string>> = {
         "UI_ValueShows": "Il valore mostra"
     },
     "nl-NL": {
+        "Feat_fx": "voorwaardelijke opmaak",
+        "Feat_horizon": "horizon-sparkline",
         "Feat_images": "rijafbeeldingen",
+        "Feat_sparklines": "extra sparklinekolommen",
+        "Feat_status": "statuspictogrammen",
+        "Feat_styles": "stijlen van de collectie",
+        "Feat_variance": "afwijkingskolommen",
         "Guide_Back": "Terug",
         "Guide_Close": "Hulp sluiten",
         "Guide_Done": "toegevoegd",
@@ -543,7 +585,13 @@ export const STRINGS: Record<string, Record<string, string>> = {
         "UI_Vs": "t.o.v. {0}"
     },
     "pl-PL": {
+        "Feat_fx": "formatowanie warunkowe",
+        "Feat_horizon": "wykres horyzontu",
         "Feat_images": "obrazy wierszy",
+        "Feat_sparklines": "dodatkowe kolumny wykresów przebiegu w czasie",
+        "Feat_status": "ikony stanu",
+        "Feat_styles": "style kolekcji",
+        "Feat_variance": "kolumny odchyleń",
         "Guide_Back": "Wstecz",
         "Guide_Close": "Zamknij kreator",
         "Guide_Done": "dodano",
@@ -621,7 +669,13 @@ export const STRINGS: Record<string, Record<string, string>> = {
         "UI_ValueShows": "Wartość pokazuje"
     },
     "ja-JP": {
+        "Feat_fx": "条件付き書式",
+        "Feat_horizon": "ホライズン スパークライン",
         "Feat_images": "行の画像",
+        "Feat_sparklines": "追加のスパークライン列",
+        "Feat_status": "状態アイコン",
+        "Feat_styles": "コレクションのスタイル",
+        "Feat_variance": "差異列",
         "Guide_Back": "戻る",
         "Guide_Close": "ガイドを閉じる",
         "Guide_Done": "追加済み",
@@ -701,7 +755,13 @@ export const STRINGS: Record<string, Record<string, string>> = {
         "UI_Vs": "対 {0}"
     },
     "zh-CN": {
+        "Feat_fx": "条件格式",
+        "Feat_horizon": "地平线迷你图",
         "Feat_images": "行图像",
+        "Feat_sparklines": "额外的迷你图列",
+        "Feat_status": "状态图标",
+        "Feat_styles": "系列样式",
+        "Feat_variance": "差异列",
         "Guide_Back": "上一步",
         "Guide_Close": "关闭向导",
         "Guide_Done": "已添加",
@@ -781,7 +841,13 @@ export const STRINGS: Record<string, Record<string, string>> = {
         "UI_Vs": "对比 {0}"
     },
     "ko-KR": {
+        "Feat_fx": "조건부 서식",
+        "Feat_horizon": "호라이즌 스파크라인",
         "Feat_images": "행 이미지",
+        "Feat_sparklines": "추가 스파크라인 열",
+        "Feat_status": "상태 아이콘",
+        "Feat_styles": "컬렉션 스타일",
+        "Feat_variance": "차이 열",
         "Guide_Back": "뒤로",
         "Guide_Close": "도우미 닫기",
         "Guide_Done": "추가됨",

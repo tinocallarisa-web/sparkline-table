@@ -45,7 +45,7 @@
       "displayNameKey": "Role_Plan",
       "name": "plan",
       "kind": "Measure",
-      "description": "Planned or budgeted figure. Shown in the tooltip; variance columns are part of the Pro plan.",
+      "description": "Planned or budgeted figure. Shown as a reference column; variance columns and bars are part of the Pro plan.",
       "descriptionKey": "Role_Plan_Desc"
     },
     {
@@ -53,8 +53,16 @@
       "displayNameKey": "Role_PreviousYear",
       "name": "previousYear",
       "kind": "Measure",
-      "description": "The same figure for the prior year. Shown in the tooltip; variance columns are part of the Pro plan.",
+      "description": "The same figure for the prior year. Shown as a reference column; variance columns and bars are part of the Pro plan.",
       "descriptionKey": "Role_PreviousYear_Desc"
+    },
+    {
+      "displayName": "Forecast (Pro)",
+      "displayNameKey": "Role_Forecast",
+      "name": "forecast",
+      "kind": "Measure",
+      "description": "Forecast or latest estimate. Shown as a reference column; variance against it is part of the Pro plan.",
+      "descriptionKey": "Role_Forecast_Desc"
     },
     {
       "displayName": "Tooltips",
@@ -91,6 +99,9 @@
             "max": 5
           },
           "rowImage": {
+            "max": 1
+          },
+          "forecast": {
             "max": 1
           }
         }
@@ -146,6 +157,11 @@
             {
               "for": {
                 "in": "rowImage"
+              }
+            },
+            {
+              "for": {
+                "in": "forecast"
               }
             }
           ]
@@ -401,6 +417,97 @@
         "barColor": {
           "displayName": "Data bar color",
           "displayNameKey": "Prop_values_barColor",
+          "type": {
+            "fill": {
+              "solid": {
+                "color": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "variance": {
+      "displayName": "Variance (Pro)",
+      "displayNameKey": "Obj_variance",
+      "properties": {
+        "show": {
+          "displayName": "Show variance",
+          "displayNameKey": "Prop_variance_show",
+          "type": {
+            "bool": true
+          }
+        },
+        "base": {
+          "displayName": "Compare with",
+          "displayNameKey": "Prop_variance_base",
+          "type": {
+            "enumeration": [
+              {
+                "value": "auto",
+                "displayName": "Plan, else prior year",
+                "displayNameKey": "Enum_base_auto"
+              },
+              {
+                "value": "plan",
+                "displayName": "Plan",
+                "displayNameKey": "Enum_base_plan"
+              },
+              {
+                "value": "previousYear",
+                "displayName": "Prior year",
+                "displayNameKey": "Enum_base_previousYear"
+              },
+              {
+                "value": "forecast",
+                "displayName": "Forecast",
+                "displayNameKey": "Enum_base_forecast"
+              }
+            ]
+          }
+        },
+        "showReference": {
+          "displayName": "Reference columns",
+          "displayNameKey": "Prop_variance_showReference",
+          "type": {
+            "bool": true
+          }
+        },
+        "showAbs": {
+          "displayName": "Variance (Δ)",
+          "displayNameKey": "Prop_variance_showAbs",
+          "type": {
+            "bool": true
+          }
+        },
+        "showPct": {
+          "displayName": "Variance % (Δ%)",
+          "displayNameKey": "Prop_variance_showPct",
+          "type": {
+            "bool": true
+          }
+        },
+        "showBar": {
+          "displayName": "Variance bar",
+          "displayNameKey": "Prop_variance_showBar",
+          "type": {
+            "bool": true
+          }
+        },
+        "goodColor": {
+          "displayName": "Favourable color",
+          "displayNameKey": "Prop_variance_goodColor",
+          "type": {
+            "fill": {
+              "solid": {
+                "color": true
+              }
+            }
+          }
+        },
+        "badColor": {
+          "displayName": "Unfavourable color",
+          "displayNameKey": "Prop_variance_badColor",
           "type": {
             "fill": {
               "solid": {
@@ -826,6 +933,16 @@
                 "value": "deltaPct",
                 "displayName": "Change % (Δ%)",
                 "displayNameKey": "Enum_sortBy_deltaPct"
+              },
+              {
+                "value": "varAbs",
+                "displayName": "Variance (Δ)",
+                "displayNameKey": "Enum_sortBy_varAbs"
+              },
+              {
+                "value": "varPct",
+                "displayName": "Variance % (Δ%)",
+                "displayNameKey": "Enum_sortBy_varPct"
               }
             ]
           }

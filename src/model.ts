@@ -64,6 +64,13 @@ export interface Row {
     base: Num;
     delta: Num;
     deltaPct: Num;
+    /** Bloque 2: referencias a la vista [Plan, Prior year, Forecast] (motor), base de la varianza y varianza. */
+    refs: Num[];
+    vref: Num;
+    vabs: Num;
+    vpct: Num;
+    /** Estado por umbral: 1 malo, 2 neutro, 3 bueno, 0 sin dato. */
+    status: number;
     small: boolean;
     highlighted: boolean;
     spark: unknown;
@@ -82,6 +89,7 @@ export interface Model {
     targetIdx: number;
     planIdx: number;
     pyIdx: number;
+    fcIdx: number;
     tipIdx: number[];
     imgIdx: number;
     hasTotals: boolean;
@@ -105,13 +113,14 @@ export function buildModel(dv: DataView, mkId: IdMaker): Model | null {
     const nM = Math.max(1, sources.length);
     const valueIdx: number[] = [];
     const tipIdx: number[] = [];
-    let targetIdx = -1, planIdx = -1, pyIdx = -1, imgIdx = -1;
+    let targetIdx = -1, planIdx = -1, pyIdx = -1, fcIdx = -1, imgIdx = -1;
     sources.forEach((s, i) => {
         if (hasRole(s, "values")) valueIdx.push(i);
         else if (hasRole(s, "target") && targetIdx < 0) targetIdx = i;
         else if (hasRole(s, "rowImage") && imgIdx < 0) imgIdx = i;
         else if (hasRole(s, "plan") && planIdx < 0) planIdx = i;
         else if (hasRole(s, "previousYear") && pyIdx < 0) pyIdx = i;
+        else if (hasRole(s, "forecast") && fcIdx < 0) fcIdx = i;
         else if (hasRole(s, "tooltips")) tipIdx.push(i);
     });
     const rowFields = (dv.metadata?.columns || []).filter(c => hasRole(c, "rows")).length;
@@ -187,7 +196,8 @@ export function buildModel(dv: DataView, mkId: IdMaker): Model | null {
     const newRow = (key: string, level: number, label: string, parent: Row | null, order: number): Row => ({
         key, level, label, isLeaf: false, expandable: false, collapsed: false, parent, children: [], id: null,
         s: sources.map(() => new Array(nP).fill(null)), tot: sources.map(() => null), fmt: null, totFmt: null, hl: null, img: null,
-        hostOrder: order, index: -1, shown: [], shownFmt: [], cur: null, base: null, delta: null, deltaPct: null, small: false,
+        hostOrder: order, index: -1, shown: [], shownFmt: [], cur: null, base: null, delta: null, deltaPct: null,
+        refs: [null, null, null], vref: null, vabs: null, vpct: null, status: 0, small: false,
         highlighted: false, spark: null,
     });
 
@@ -241,7 +251,7 @@ export function buildModel(dv: DataView, mkId: IdMaker): Model | null {
     }
     void anyFmt;
     return {
-        roots, all, total, levels, rowFields, periods, sources, valueIdx, targetIdx, planIdx, pyIdx, tipIdx, imgIdx,
+        roots, all, total, levels, rowFields, periods, sources, valueIdx, targetIdx, planIdx, pyIdx, fcIdx, tipIdx, imgIdx,
         hasTotals, hasHighlights, leaves, lastLevelExpandable, lastIdx,
     };
 }
