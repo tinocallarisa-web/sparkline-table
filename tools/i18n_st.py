@@ -249,3 +249,19 @@ P.update({
 "status icons": ["ícones de status", "icônes d’état", "Statussymbole", "icone di stato", "statuspictogrammen", "ikony stanu", "状態アイコン", "状态图标", "상태 아이콘", "iconos de estado"],
 "variance columns": ["colunas de desvio", "colonnes d’écart", "Abweichungsspalten", "colonne di scostamento", "afwijkingskolommen", "kolumny odchyleń", "差異列", "差异列", "차이 열", "columnas de desviación"],
 })
+
+# --- bloque 2: parte 2, estado por umbral ---
+P.update({
+"Poor below (Δ% <)": ["Ruim abaixo de (Δ% <)", "Mauvais sous (Δ% <)", "Schlecht unter (Δ% <)", "Scarso sotto (Δ% <)", "Slecht onder (Δ% <)", "Słaby poniżej (Δ% <)", "不良の上限 (Δ% <)", "差：低于 (Δ% <)", "나쁨 기준 미만(Δ% <)", "Malo por debajo de (Δ% <)"],
+"Poor color": ["Cor de ruim", "Couleur mauvais", "Farbe schlecht", "Colore scarso", "Kleur slecht", "Kolor słaby", "不良の色", "差的颜色", "나쁨 색", "Color malo"],
+"Good color": ["Cor de bom", "Couleur bon", "Farbe gut", "Colore buono", "Kleur goed", "Kolor dobry", "良好の色", "好的颜色", "좋음 색", "Color bueno"],
+"Good from (Δ% ≥)": ["Bom a partir de (Δ% ≥)", "Bon à partir de (Δ% ≥)", "Gut ab (Δ% ≥)", "Buono da (Δ% ≥)", "Goed vanaf (Δ% ≥)", "Dobry od (Δ% ≥)", "良好の下限 (Δ% ≥)", "好：自 (Δ% ≥)", "좋음 기준 이상(Δ% ≥)", "Bueno desde (Δ% ≥)"],
+"Fair color": ["Cor de regular", "Couleur moyen", "Farbe mittel", "Colore discreto", "Kleur redelijk", "Kolor średni", "普通の色", "一般的颜色", "보통 색", "Color regular"],
+"Next to the value": ["Junto ao valor", "À côté de la valeur", "Neben dem Wert", "Accanto al valore", "Naast de waarde", "Obok wartości", "値の横", "值旁边", "값 옆", "Junto al valor"],
+"Own column": ["Coluna própria", "Colonne propre", "Eigene Spalte", "Colonna propria", "Eigen kolom", "Osobna kolumna", "専用の列", "单独列", "별도 열", "Columna propia"],
+"Position": ["Posição", "Position", "Position", "Posizione", "Positie", "Pozycja", "位置", "位置", "위치", "Posición"],
+"Show status icons": ["Mostrar ícones de status", "Afficher les icônes d’état", "Statussymbole anzeigen", "Mostra icone di stato", "Statuspictogrammen weergeven", "Pokaż ikony stanu", "状態アイコンを表示", "显示状态图标", "상태 아이콘 표시", "Mostrar iconos de estado"],
+"Status": ["Status", "État", "Status", "Stato", "Status", "Stan", "状態", "状态", "상태", "Estado"],
+"Status icons (Pro)": ["Ícones de status (Pro)", "Icônes d’état (Pro)", "Statussymbole (Pro)", "Icone di stato (Pro)", "Statuspictogrammen (Pro)", "Ikony stanu (Pro)", "状態アイコン (Pro)", "状态图标 (Pro)", "상태 아이콘(Pro)", "Iconos de estado (Pro)"],
+"{0}: good from {1}, poor below {2}": ["{0}: bom a partir de {1}, ruim abaixo de {2}", "{0} : bon à partir de {1}, mauvais sous {2}", "{0}: gut ab {1}, schlecht unter {2}", "{0}: buono da {1}, scarso sotto {2}", "{0}: goed vanaf {1}, slecht onder {2}", "{0}: dobry od {1}, słaby poniżej {2}", "{0}: {1} 以上で良好、{2} 未満で不良", "{0}：≥ {1} 为好，< {2} 为差", "{0}: {1} 이상 좋음, {2} 미만 나쁨", "{0}: bueno desde {1}, malo por debajo de {2}"],
+})

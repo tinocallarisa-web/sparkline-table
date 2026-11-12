@@ -51,6 +51,17 @@ OBJECTS = [
         ("goodColor", "Favourable color", "fill", "", {}),
         ("badColor", "Unfavourable color", "fill", "", {}),
     ]),
+    # Estado por umbral (Pro): icono con FORMA y color (● bueno, ▲ neutro, ◆ malo, como los conjuntos de iconos de
+    # Excel), sobre la varianza % contra la referencia o, sin referencia, sobre el Δ% del periodo.
+    ("status", "Status icons (Pro)", [
+        ("show", "Show status icons", "bool", False, {}),
+        ("position", "Position", "enum", "column", {"items": [("column", "Own column"), ("value", "Next to the value")]}),
+        ("goodFrom", "Good from (Δ% ≥)", "num", 0, {"min": -100, "max": 100}),
+        ("badBelow", "Poor below (Δ% <)", "num", -5, {"min": -100, "max": 100}),
+        ("goodColor", "Good color", "fill", "", {}),
+        ("neutralColor", "Fair color", "fill", "", {}),
+        ("badColor", "Poor color", "fill", "", {}),
+    ]),
     ("sparkline", "Sparkline", [
         ("type", "Type", "enum", "line", {"items": [("line", "Line"), ("area", "Area"), ("column", "Column"),
                                                    ("winloss", "Win/loss"), ("bullet", "Bullet")]}),
@@ -143,6 +154,7 @@ PANE = [
     ("style", "Style template", [("style", None, None)]),
     ("values", "Values", [("values", None, None)]),
     ("variance", "Variance (Pro)", [("variance", None, "show")]),
+    ("status", "Status icons (Pro)", [("status", None, "show")]),
     ("sparkline", "Sparkline", [("sparkline", None, None)]),
     ("bands", "Qualitative bands", [("bands", None, "showBands")]),
     ("markers", "Markers", [("markers", None, None)]),

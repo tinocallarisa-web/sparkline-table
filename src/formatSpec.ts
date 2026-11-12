@@ -220,6 +220,78 @@ export const OBJECTS: Record<string, ObjSpec> = {
             }
         ]
     },
+    "status": {
+        "name": "status",
+        "key": "Obj_status",
+        "label": "Status icons (Pro)",
+        "props": [
+            {
+                "name": "show",
+                "type": "bool",
+                "def": false,
+                "key": "Prop_status_show",
+                "label": "Show status icons"
+            },
+            {
+                "name": "position",
+                "type": "enum",
+                "def": "column",
+                "key": "Prop_status_position",
+                "label": "Position",
+                "items": [
+                    [
+                        "column",
+                        "Enum_position_column",
+                        "Own column"
+                    ],
+                    [
+                        "value",
+                        "Enum_position_value",
+                        "Next to the value"
+                    ]
+                ]
+            },
+            {
+                "name": "goodFrom",
+                "type": "num",
+                "def": 0,
+                "key": "Prop_status_goodFrom",
+                "label": "Good from (Δ% ≥)",
+                "min": -100,
+                "max": 100
+            },
+            {
+                "name": "badBelow",
+                "type": "num",
+                "def": -5,
+                "key": "Prop_status_badBelow",
+                "label": "Poor below (Δ% <)",
+                "min": -100,
+                "max": 100
+            },
+            {
+                "name": "goodColor",
+                "type": "fill",
+                "def": "",
+                "key": "Prop_status_goodColor",
+                "label": "Good color"
+            },
+            {
+                "name": "neutralColor",
+                "type": "fill",
+                "def": "",
+                "key": "Prop_status_neutralColor",
+                "label": "Fair color"
+            },
+            {
+                "name": "badColor",
+                "type": "fill",
+                "def": "",
+                "key": "Prop_status_badColor",
+                "label": "Poor color"
+            }
+        ]
+    },
     "sparkline": {
         "name": "sparkline",
         "key": "Obj_sparkline",
@@ -1224,6 +1296,17 @@ export const PANE: CardSpec[] = [
         "groups": [
             {
                 "obj": "variance",
+                "toggle": "show"
+            }
+        ]
+    },
+    {
+        "uid": "status",
+        "key": "Obj_status",
+        "label": "Status icons (Pro)",
+        "groups": [
+            {
+                "obj": "status",
                 "toggle": "show"
             }
         ]

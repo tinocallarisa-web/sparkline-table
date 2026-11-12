@@ -69,11 +69,11 @@ const MARGIN_ROWS = 8;
 const PAD = 6;
 const MINUS = "−";
 
-interface Look { bg: string; text: string; soft: string; rule: string; line: string; accent: string; up: string; down: string; target: string; sub: string; sel: string; hover: string; band: string; }
+interface Look { bg: string; text: string; soft: string; rule: string; line: string; accent: string; up: string; down: string; target: string; sub: string; sel: string; hover: string; band: string; neutral: string; }
 
 const CLASSIC: Look = {
     bg: "#FFFFFF", text: "#252423", soft: "#605E5C", rule: "#C8C6C4", line: "#8A8886", accent: "#118DFF", up: "#107C10",
-    down: "#C4314B", target: "#252423", sub: "#F7F7F7", sel: "#DEECF9", hover: "#F3F2F1", band: "#EDEBE9",
+    down: "#C4314B", target: "#252423", sub: "#F7F7F7", sel: "#DEECF9", hover: "#F3F2F1", band: "#EDEBE9", neutral: "#C27C0E",
 };
 
 type ColId = "name" | "val" | "delta" | "pct" | "pl" | "py" | "fc" | "vabs" | "vbar" | "vpct" | "stat" | "m2" | "m3" | "spark" | "spark2" | "spark3";
@@ -182,6 +182,8 @@ export class Visual implements IVisual {
     private watermarkWhy: HTMLDivElement | null = null;
     /** Varianza: |Δ| máximo por nivel (escala común de la barra). */
     private varExt = new Map<number, number>();
+    /** Estado junto al valor (en vez de en su columna). */
+    private statusInline = false;
     private gap = 16;
     /** El alto pedido era menor que el texto y se ha subido (se avisa en el panel). */
     private rowHClamped = false;
@@ -461,7 +463,7 @@ export class Visual implements IVisual {
     private computeLook(): Look {
         if (this.hc) {
             const fg = this.hcFg, bg = this.hcBg;
-            return { bg, text: fg, soft: fg, rule: fg, line: fg, accent: fg, up: fg, down: fg, target: fg, sub: bg, sel: bg, hover: bg, band: bg };
+            return { bg, text: fg, soft: fg, rule: fg, line: fg, accent: fg, up: fg, down: fg, target: fg, sub: bg, sel: bg, hover: bg, band: bg, neutral: fg };
         }
         let base: Look;
         if (this.settings.style.template === "classic") base = { ...CLASSIC };
@@ -475,6 +477,7 @@ export class Visual implements IVisual {
                 rule: p?.foregroundNeutralTertiary?.value ?? CLASSIC.rule, line: p?.foregroundNeutralTertiary?.value ?? CLASSIC.line,
                 accent, up: p?.positive?.value ?? CLASSIC.up, down: p?.negative?.value ?? CLASSIC.down, target: fg,
                 sub: mix(fg, bg, 0.035), sel: mix(accent, bg, 0.16), hover: mix(fg, bg, 0.06), band: mix(fg, bg, 0.09),
+                neutral: CLASSIC.neutral,
             };
         }
         const s = this.settings;
@@ -667,6 +670,31 @@ export class Visual implements IVisual {
         return m.planIdx >= 0 ? m.planIdx : m.pyIdx;
     }
 
+    /** Regla del estado: umbrales en fracción (ordenados) y si se mide sobre la varianza o sobre el Δ% del periodo. */
+    private statusRule(m: Model | null): { good: number; bad: number; useVar: boolean; metric: string } {
+        const s = this.settings.status || {};
+        let good = Number(s.goodFrom) / 100, bad = Number(s.badBelow) / 100;
+        if (bad > good) [good, bad] = [bad, good];
+        const useVar = this.varBaseIdx(m) >= 0;
+        return { good, bad, useVar, metric: useVar ? "Δ" + this.varCode(m) + "%" : "Δ%" };
+    }
+
+    /** Forma y nombre de cada estado: la forma lo dice sin color (alto contraste, daltonismo). */
+    private statusLook(k: number): { glyph: string; cls: string; name: string } {
+        if (k === 3) return { glyph: "●", cls: "st-s3", name: this.t("UI_BandGood", "Good") };
+        if (k === 2) return { glyph: "▲", cls: "st-s2", name: this.t("UI_BandFair", "Fair") };
+        if (k === 1) return { glyph: "◆", cls: "st-s1", name: this.t("UI_BandPoor", "Poor") };
+        return { glyph: "", cls: "", name: "" };
+    }
+
+    /** Texto de la regla (tooltip y lector de pantalla): "Δ%PL ≥ 0,0 % bueno · < −5,0 % malo". */
+    private statusRuleText(m: Model): string {
+        const r = this.statusRule(m);
+        const p = (v: number) => this.fmtPct(v).replace(/^\+/, "");
+        return this.tf("UI_StatusRule", "{0}: good from {1}, poor below {2}", r.metric, p(r.good), p(r.bad))
+            + (this.settings.values.invert ? " · " + this.t("Prop_values_invert", "A decrease is good") : "");
+    }
+
     /** Letra de la base (PL / PY / FC) para las cabeceras ΔPL, ΔPL%. */
     private varCode(m: Model | null): string {
         const i = this.varBaseIdx(m);
@@ -685,6 +713,7 @@ export class Visual implements IVisual {
         const v = s.variance || {};
         const varOn = !!m && this.varBaseIdx(m) >= 0 && v.show !== false && (!!v.showAbs || !!v.showPct || !!v.showBar);
         groups.push(["variance", varOn, "var=" + this.varCode(m)]);
+        groups.push(["status", !!m && s.status?.show === true, "st"]);
         groups.push(["images", !!m && m.imgIdx >= 0, "img"]);
         const labels: ProFeature[] = [], parts: string[] = [], set = new Set<ProFeature>();
         for (const [f, on, sig] of groups) if (on) { labels.push(f); set.add(f); parts.push(sig); }
@@ -884,6 +913,10 @@ export class Visual implements IVisual {
         set("--st-vbar", String(this.settings.values.barColor || L.accent));
         set("--st-vgood", this.hc ? this.hcFg : String(this.settings.variance.goodColor || L.up));
         set("--st-vbad", this.hc ? this.hcFg : String(this.settings.variance.badColor || L.down));
+        const sts = this.settings.status;
+        set("--st-s3", this.hc ? this.hcFg : String(sts.goodColor || L.up));
+        set("--st-s2", this.hc ? this.hcFg : String(sts.neutralColor || L.neutral));
+        set("--st-s1", this.hc ? this.hcFg : String(sts.badColor || L.down));
         const bs = this.settings.bands;
         set("--st-b1", this.hc ? "transparent" : String(bs.band1Color || "#F6CFCB"));
         set("--st-b2", this.hc ? "transparent" : String(bs.band2Color || "#FBE7B5"));
@@ -947,6 +980,14 @@ export class Visual implements IVisual {
                 const md = med.get(r.level);
                 if (r.deltaPct !== null && md !== undefined && Math.abs(r.base as number) < thr * md) r.small = true;
             }
+        }
+        // Estado por umbral (Pro): sobre la varianza % contra la referencia o, sin ella, sobre el Δ% del periodo.
+        const st = this.statusRule(m);
+        for (const r of all) {
+            const x = st.useVar ? r.vpct : r.deltaPct;
+            if (x === null) { r.status = 0; continue; }
+            const sc = s.values.invert ? -x : x;
+            r.status = sc >= st.good ? 3 : sc < st.bad ? 1 : 2;
         }
         // Escalas por nivel (la común por defecto): un subtotal no aplasta a sus hijos.
         this.ext.clear(); this.extBullet.clear(); this.barExt.clear();
@@ -1076,7 +1117,10 @@ export class Visual implements IVisual {
         const pW = Math.max(Math.ceil(pText) + gap, hdrW("Δ%"));
 
         const want: Col[] = [{ id: "name", w: 0, sortKey: "name" }];
-        want.push({ id: "val", w: valW(0), sortKey: "value" });
+        // Estado junto al valor: la celda del valor crece lo que ocupa el icono (nunca se corta la cifra).
+        const stOn = this.previewOf("status") && s.status.show === true;
+        this.statusInline = stOn && s.status.position === "value";
+        want.push({ id: "val", w: valW(0) + (this.statusInline ? Math.ceil(fs * 1.1) + 4 : 0), sortKey: "value" });
         if (s.values.showDelta) want.push({ id: "delta", w: dW, sortKey: "delta" });
         if (s.values.showDeltaPct) want.push({ id: "pct", w: pW, sortKey: "deltaPct" });
         if (m.valueIdx.length > 1) want.push({ id: "m2", w: valW(1), sortKey: "value2" });
@@ -1091,6 +1135,7 @@ export class Visual implements IVisual {
         if (varOn && s.variance.showAbs) want.push({ id: "vabs", w: Math.min(160, Math.max(Math.ceil(vaText) + gap, hdrW("Δ" + code))), sortKey: "varAbs" });
         if (varOn && s.variance.showBar) want.push({ id: "vbar", w: Math.round(Math.max(56, Math.min(110, this.W * 0.09))) + gap, sortKey: null });
         if (varOn && s.variance.showPct) want.push({ id: "vpct", w: Math.max(Math.ceil(pText) + gap, hdrW("Δ" + code + "%")), sortKey: "varPct" });
+        if (stOn && !this.statusInline) want.push({ id: "stat", w: Math.ceil(fs * 1.3) + gap, sortKey: null });
 
         // Último valor dentro del minigráfico
         const fmt0 = m.sources[m.valueIdx[0]].format;
@@ -1323,6 +1368,7 @@ export class Visual implements IVisual {
         // Celda de valor: la barra de fondo (Data bars) debajo y el texto encima.
         const val = rowSel.append("div").attr("class", "st-c st-c-val").attr("role", "gridcell");
         val.append("span").attr("class", "st-vbar").attr("aria-hidden", "true");
+        val.append("span").attr("class", "st-sicon").attr("aria-hidden", "true");
         val.append("span").attr("class", "st-vtext");
         // Mismo orden que COL_ORDER: la rejilla coloca las celdas por orden y las ocultas (st-hide-*) no ocupan.
         for (const c of ["delta", "pct", "pl", "py", "fc", "vabs"]) rowSel.append("div").attr("class", "st-c st-c-" + c + (c === "pl" || c === "py" || c === "fc" ? " st-ref" : "")).attr("role", "gridcell");
@@ -1434,6 +1480,16 @@ export class Visual implements IVisual {
             vp.className = "st-c st-c-vpct" + fav;
             this.paintVarBar(q(".st-c-vbar"), d, fav);
         }
+        // Estado por umbral (Pro): en su columna o junto al valor.
+        const showSt = this.previewOf("status") && s.status.show === true;
+        const sl = this.statusLook(showSt ? d.status : 0);
+        const si = q(".st-c-val .st-sicon");
+        si.textContent = this.statusInline ? sl.glyph : "";
+        si.className = "st-sicon " + sl.cls;
+        const sc = q(".st-c-stat");
+        sc.textContent = showSt && !this.statusInline ? sl.glyph : "";
+        sc.className = "st-c st-c-stat " + sl.cls;
+        if (sl.name) sc.setAttribute("aria-label", sl.name); else sc.removeAttribute("aria-label");
         this.paintSpark(el, d, m);
     }
 
@@ -1897,6 +1953,9 @@ export class Visual implements IVisual {
                 value: d.vabs === null ? this.t("UI_Blank", "(Blank)") : this.signed(d.vabs, this.fmtCompact(d.vabs, m.sources[m0].format)) + (d.vpct !== null ? "  (" + this.fmtPct(d.vpct) + ")" : "") });
             if (d.vabs !== null && d.vpct === null) out.push({ displayName: "Δ" + this.varCode(m) + "%", value: this.t("UI_NoPctBase", "not shown: the base is zero or negative") });
         }
+        if (this.previewOf("status") && this.settings.status.show === true && d.status > 0) {
+            out.push({ displayName: this.t("UI_Status", "Status"), value: this.statusLook(d.status).glyph + " " + this.statusLook(d.status).name + " · " + this.statusRuleText(m) });
+        }
         const tIdx = [m.targetIdx, m.planIdx, m.pyIdx, m.fcIdx].concat(m.tipIdx);
         for (const i of tIdx) if (i >= 0) {
             const v = this.valueModeUsed === "total" ? d.tot[i] : (m.lastIdx >= 0 ? d.s[i][m.lastIdx] : null);
@@ -1957,6 +2016,7 @@ export class Visual implements IVisual {
         this.root.setAttribute("aria-activedescendant", "st-r-" + r.index);
         const parts = [r.label, this.tf("UI_Level", "level {0}", String(r.level + 1)), this.fmtFull(r.shown[0] ?? null, r.shownFmt[0])];
         if (r.deltaPct !== null) parts.push(this.fmtPct(r.deltaPct));
+        if (this.previewOf("status") && this.settings.status.show === true && r.status > 0) parts.push(this.t("UI_Status", "Status") + " " + this.statusLook(r.status).name);
         if (r.expandable) parts.push(r.collapsed ? this.t("UI_Collapsed", "collapsed") : this.t("UI_Expanded", "expanded"));
         if (this.isSelected(r)) parts.push(this.t("UI_Selected", "selected"));
         this.live.textContent = parts.filter(x => x).join(", ");
@@ -2224,7 +2284,8 @@ export class Visual implements IVisual {
         const L = this.look;
         const k = obj + "." + prop;
         return k === "sparkline.color" ? L.line : k === "sparkline.accent" ? L.accent : k === "sparkline.targetColor" ? L.target
-            : k === "values.upColor" || k === "variance.goodColor" ? L.up : k === "values.downColor" || k === "variance.badColor" ? L.down
+            : k === "values.upColor" || k === "variance.goodColor" || k === "status.goodColor" ? L.up
+            : k === "values.downColor" || k === "variance.badColor" || k === "status.badColor" ? L.down : k === "status.neutralColor" ? L.neutral
             : k === "header.background" ? L.bg : prop === "background" ? (obj === "level3" ? L.bg : L.sub) : prop === "color" ? L.text : "#000000";
     }
 

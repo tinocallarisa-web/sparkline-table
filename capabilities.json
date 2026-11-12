@@ -518,6 +518,84 @@
         }
       }
     },
+    "status": {
+      "displayName": "Status icons (Pro)",
+      "displayNameKey": "Obj_status",
+      "properties": {
+        "show": {
+          "displayName": "Show status icons",
+          "displayNameKey": "Prop_status_show",
+          "type": {
+            "bool": true
+          }
+        },
+        "position": {
+          "displayName": "Position",
+          "displayNameKey": "Prop_status_position",
+          "type": {
+            "enumeration": [
+              {
+                "value": "column",
+                "displayName": "Own column",
+                "displayNameKey": "Enum_position_column"
+              },
+              {
+                "value": "value",
+                "displayName": "Next to the value",
+                "displayNameKey": "Enum_position_value"
+              }
+            ]
+          }
+        },
+        "goodFrom": {
+          "displayName": "Good from (Δ% ≥)",
+          "displayNameKey": "Prop_status_goodFrom",
+          "type": {
+            "numeric": true
+          }
+        },
+        "badBelow": {
+          "displayName": "Poor below (Δ% <)",
+          "displayNameKey": "Prop_status_badBelow",
+          "type": {
+            "numeric": true
+          }
+        },
+        "goodColor": {
+          "displayName": "Good color",
+          "displayNameKey": "Prop_status_goodColor",
+          "type": {
+            "fill": {
+              "solid": {
+                "color": true
+              }
+            }
+          }
+        },
+        "neutralColor": {
+          "displayName": "Fair color",
+          "displayNameKey": "Prop_status_neutralColor",
+          "type": {
+            "fill": {
+              "solid": {
+                "color": true
+              }
+            }
+          }
+        },
+        "badColor": {
+          "displayName": "Poor color",
+          "displayNameKey": "Prop_status_badColor",
+          "type": {
+            "fill": {
+              "solid": {
+                "color": true
+              }
+            }
+          }
+        }
+      }
+    },
     "sparkline": {
       "displayName": "Sparkline",
       "displayNameKey": "Obj_sparkline",
