@@ -265,3 +265,13 @@ P.update({
 "Status icons (Pro)": ["Ícones de status (Pro)", "Icônes d’état (Pro)", "Statussymbole (Pro)", "Icone di stato (Pro)", "Statuspictogrammen (Pro)", "Ikony stanu (Pro)", "状態アイコン (Pro)", "状态图标 (Pro)", "상태 아이콘(Pro)", "Iconos de estado (Pro)"],
 "{0}: good from {1}, poor below {2}": ["{0}: bom a partir de {1}, ruim abaixo de {2}", "{0} : bon à partir de {1}, mauvais sous {2}", "{0}: gut ab {1}, schlecht unter {2}", "{0}: buono da {1}, scarso sotto {2}", "{0}: goed vanaf {1}, slecht onder {2}", "{0}: dobry od {1}, słaby poniżej {2}", "{0}: {1} 以上で良好、{2} 未満で不良", "{0}：≥ {1} 为好，< {2} 为差", "{0}: {1} 이상 좋음, {2} 미만 나쁨", "{0}: bueno desde {1}, malo por debajo de {2}"],
 })
+
+# --- bloque 2: parte 3, hasta 3 columnas de minigráfico ---
+P.update({
+"Measure": ["Medida", "Mesure", "Measure", "Misura", "Meetwaarde", "Miara", "メジャー", "度量值", "측정값", "Medida"],
+"Show sparkline 2": ["Mostrar minigráfico 2", "Afficher le mini-graphique 2", "Sparkline 2 anzeigen", "Mostra sparkline 2", "Sparkline 2 weergeven", "Pokaż wykres przebiegu 2", "スパークライン 2 を表示", "显示迷你图 2", "스파크라인 2 표시", "Mostrar minigráfico 2"],
+"Show sparkline 3": ["Mostrar minigráfico 3", "Afficher le mini-graphique 3", "Sparkline 3 anzeigen", "Mostra sparkline 3", "Sparkline 3 weergeven", "Pokaż wykres przebiegu 3", "スパークライン 3 を表示", "显示迷你图 3", "스파크라인 3 표시", "Mostrar minigráfico 3"],
+"Sparkline 2 (Pro)": ["Minigráfico 2 (Pro)", "Mini-graphique 2 (Pro)", "Sparkline 2 (Pro)", "Sparkline 2 (Pro)", "Sparkline 2 (Pro)", "Wykres przebiegu 2 (Pro)", "スパークライン 2 (Pro)", "迷你图 2 (Pro)", "스파크라인 2(Pro)", "Minigráfico 2 (Pro)"],
+"Sparkline 3 (Pro)": ["Minigráfico 3 (Pro)", "Mini-graphique 3 (Pro)", "Sparkline 3 (Pro)", "Sparkline 3 (Pro)", "Sparkline 3 (Pro)", "Wykres przebiegu 3 (Pro)", "スパークライン 3 (Pro)", "迷你图 3 (Pro)", "스파크라인 3(Pro)", "Minigráfico 3 (Pro)"],
+"Value 1": ["Valor 1", "Valeur 1", "Wert 1", "Valore 1", "Waarde 1", "Wartość 1", "値 1", "值 1", "값 1", "Valor 1"],
+})

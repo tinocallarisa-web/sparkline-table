@@ -456,6 +456,250 @@ export const OBJECTS: Record<string, ObjSpec> = {
             }
         ]
     },
+    "spark2": {
+        "name": "spark2",
+        "key": "Obj_spark2",
+        "label": "Sparkline 2 (Pro)",
+        "props": [
+            {
+                "name": "show",
+                "type": "bool",
+                "def": false,
+                "key": "Prop_spark2_show",
+                "label": "Show sparkline 2"
+            },
+            {
+                "name": "measure",
+                "type": "enum",
+                "def": "value2",
+                "key": "Prop_spark2_measure",
+                "label": "Measure",
+                "items": [
+                    [
+                        "value1",
+                        "Enum_measure_value1",
+                        "Value 1"
+                    ],
+                    [
+                        "value2",
+                        "Enum_measure_value2",
+                        "Value 2"
+                    ],
+                    [
+                        "value3",
+                        "Enum_measure_value3",
+                        "Value 3"
+                    ]
+                ]
+            },
+            {
+                "name": "type",
+                "type": "enum",
+                "def": "line",
+                "key": "Prop_spark2_type",
+                "label": "Type",
+                "items": [
+                    [
+                        "line",
+                        "Enum_type_line",
+                        "Line"
+                    ],
+                    [
+                        "area",
+                        "Enum_type_area",
+                        "Area"
+                    ],
+                    [
+                        "column",
+                        "Enum_type_column",
+                        "Column"
+                    ],
+                    [
+                        "winloss",
+                        "Enum_type_winloss",
+                        "Win/loss"
+                    ],
+                    [
+                        "bullet",
+                        "Enum_type_bullet",
+                        "Bullet"
+                    ]
+                ]
+            },
+            {
+                "name": "curve",
+                "type": "enum",
+                "def": "linear",
+                "key": "Prop_spark2_curve",
+                "label": "Curve",
+                "items": [
+                    [
+                        "linear",
+                        "Enum_curve_linear",
+                        "Linear"
+                    ],
+                    [
+                        "smooth",
+                        "Enum_curve_smooth",
+                        "Smooth"
+                    ],
+                    [
+                        "step",
+                        "Enum_curve_step",
+                        "Step"
+                    ]
+                ]
+            },
+            {
+                "name": "scale",
+                "type": "enum",
+                "def": "level",
+                "key": "Prop_spark2_scale",
+                "label": "Scale",
+                "items": [
+                    [
+                        "level",
+                        "Enum_scale_level",
+                        "Shared by level"
+                    ],
+                    [
+                        "row",
+                        "Enum_scale_row",
+                        "Per row"
+                    ]
+                ]
+            },
+            {
+                "name": "color",
+                "type": "fill",
+                "def": "",
+                "key": "Prop_spark2_color",
+                "label": "Color"
+            }
+        ]
+    },
+    "spark3": {
+        "name": "spark3",
+        "key": "Obj_spark3",
+        "label": "Sparkline 3 (Pro)",
+        "props": [
+            {
+                "name": "show",
+                "type": "bool",
+                "def": false,
+                "key": "Prop_spark3_show",
+                "label": "Show sparkline 3"
+            },
+            {
+                "name": "measure",
+                "type": "enum",
+                "def": "value3",
+                "key": "Prop_spark3_measure",
+                "label": "Measure",
+                "items": [
+                    [
+                        "value1",
+                        "Enum_measure_value1",
+                        "Value 1"
+                    ],
+                    [
+                        "value2",
+                        "Enum_measure_value2",
+                        "Value 2"
+                    ],
+                    [
+                        "value3",
+                        "Enum_measure_value3",
+                        "Value 3"
+                    ]
+                ]
+            },
+            {
+                "name": "type",
+                "type": "enum",
+                "def": "line",
+                "key": "Prop_spark3_type",
+                "label": "Type",
+                "items": [
+                    [
+                        "line",
+                        "Enum_type_line",
+                        "Line"
+                    ],
+                    [
+                        "area",
+                        "Enum_type_area",
+                        "Area"
+                    ],
+                    [
+                        "column",
+                        "Enum_type_column",
+                        "Column"
+                    ],
+                    [
+                        "winloss",
+                        "Enum_type_winloss",
+                        "Win/loss"
+                    ],
+                    [
+                        "bullet",
+                        "Enum_type_bullet",
+                        "Bullet"
+                    ]
+                ]
+            },
+            {
+                "name": "curve",
+                "type": "enum",
+                "def": "linear",
+                "key": "Prop_spark3_curve",
+                "label": "Curve",
+                "items": [
+                    [
+                        "linear",
+                        "Enum_curve_linear",
+                        "Linear"
+                    ],
+                    [
+                        "smooth",
+                        "Enum_curve_smooth",
+                        "Smooth"
+                    ],
+                    [
+                        "step",
+                        "Enum_curve_step",
+                        "Step"
+                    ]
+                ]
+            },
+            {
+                "name": "scale",
+                "type": "enum",
+                "def": "level",
+                "key": "Prop_spark3_scale",
+                "label": "Scale",
+                "items": [
+                    [
+                        "level",
+                        "Enum_scale_level",
+                        "Shared by level"
+                    ],
+                    [
+                        "row",
+                        "Enum_scale_row",
+                        "Per row"
+                    ]
+                ]
+            },
+            {
+                "name": "color",
+                "type": "fill",
+                "def": "",
+                "key": "Prop_spark3_color",
+                "label": "Color"
+            }
+        ]
+    },
     "bands": {
         "name": "bands",
         "key": "Obj_bands",
@@ -1319,6 +1563,28 @@ export const PANE: CardSpec[] = [
             {
                 "obj": "sparkline",
                 "toggle": null
+            }
+        ]
+    },
+    {
+        "uid": "spark2",
+        "key": "Obj_spark2",
+        "label": "Sparkline 2 (Pro)",
+        "groups": [
+            {
+                "obj": "spark2",
+                "toggle": "show"
+            }
+        ]
+    },
+    {
+        "uid": "spark3",
+        "key": "Obj_spark3",
+        "label": "Sparkline 3 (Pro)",
+        "groups": [
+            {
+                "obj": "spark3",
+                "toggle": "show"
             }
         ]
     },

@@ -67,7 +67,7 @@
 .st-good { color: var(--st-up); }
 .st-bad { color: var(--st-down); }
 .st-small { opacity: 0.5; }
-.st-c-spark { padding: 0 6px 0 var(--st-gap, 16px); overflow: visible; display: flex; align-items: center; }
+.st-sp { padding: 0 6px 0 var(--st-gap, 16px); overflow: visible; display: flex; align-items: center; }
 // El triángulo toma el tamaño de la fuente del nivel.
 .st-toggle { display: inline-block; width: 1.25em; flex: 0 0 1.25em; color: var(--st-soft); text-align: center; user-select: none; }
 .st-toggle.st-pending { opacity: 0.35; }
@@ -96,10 +96,10 @@
 .st-hover { stroke: var(--st-soft); stroke-width: 1; stroke-dasharray: 2, 2; fill: none; }
 .st-lastlbl { fill: var(--st-accent); text-anchor: end; dominant-baseline: central; font-variant-numeric: tabular-nums; }
 // Columnas y win/loss: barras en el color de la serie; bullet: la barra en el de acento.
-.st-root.st-t-bullet .st-pos { fill: var(--st-accent); }
-.st-root.st-t-bullet .st-tgt { stroke-dasharray: none; stroke-width: 2; opacity: 1; }
-.st-root.st-t-winloss .st-pos { fill: var(--st-up); }
-.st-root.st-t-winloss .st-band { fill: none; stroke: var(--st-band); stroke-width: 1; }
+.st-svg.st-t-bullet .st-pos { fill: var(--st-accent); }
+.st-svg.st-t-bullet .st-tgt { stroke-dasharray: none; stroke-width: 2; opacity: 1; }
+.st-svg.st-t-winloss .st-pos { fill: var(--st-up); }
+.st-svg.st-t-winloss .st-band { fill: none; stroke: var(--st-band); stroke-width: 1; }
 .st-root.st-hide-val .st-c-val, .st-root.st-hide-delta .st-c-delta, .st-root.st-hide-pct .st-c-pct,
 .st-root.st-hide-m2 .st-c-m2, .st-root.st-hide-m3 .st-c-m3 { display: none; }
 .st-root.st-empty .st-header, .st-root.st-empty .st-scroller, .st-root.st-empty .st-total, .st-root.st-empty .st-notice { display: none; }
@@ -220,3 +220,5 @@
 .st-s3 { color: var(--st-s3); } .st-s2 { color: var(--st-s2); } .st-s1 { color: var(--st-s1); }
 .st-sicon { position: relative; margin-right: 4px; font-weight: 400; }
 .st-sicon:empty { display: none; }
+// Minigráficos 2 y 3: cabecera alineada a la izquierda, como la del primero.
+.st-header .st-h-spark2, .st-header .st-h-spark3, .st-header .st-h2-spark2, .st-header .st-h2-spark3 { text-align: left; padding-right: 6px; }

@@ -89,6 +89,13 @@ const REF_CODES = ["PL", "PY", "FC"];
 /** Funciones Pro (bloque 2), con su nombre para la marca de agua y el aviso de Power BI. */
 type ProFeature = "variance" | "status" | "sparklines" | "styles" | "fx" | "images" | "horizon";
 
+/**
+ * Una columna de minigráfico. La 1.ª (gratis) lee la tarjeta Sparkline, su medida es la 1.ª de Values y lleva objetivo,
+ * bandas y último valor; la 2.ª y la 3.ª (Pro) llevan su propia medida de Values, tipo, curva, escala y color.
+ */
+interface SparkCfg { slot: number; cls: string; mi: number; k: number; type: string; curve: string; scale: string; color: string; target: boolean; label: boolean; }
+const SPARK_CLS = ["st-c-spark", "st-c-spark2", "st-c-spark3"];
+
 interface Geo {
     gen: number; line: string; area: string; pos: string; neg: string; tgt: string; band: string;
     b1: string; b2: string; b3: string; bandName: string; color: string;
@@ -139,8 +146,9 @@ export class Visual implements IVisual {
     private baseIdx = -1;
     private compareUsed: "previous" | "lastYear" = "previous";
     private valueModeUsed: "last" | "total" = "last";
-    private ext = new Map<number, [number, number]>();
-    private extBullet = new Map<number, [number, number]>();
+    /** Escalas por "columna de minigráfico:nivel". */
+    private ext = new Map<string, [number, number]>();
+    private extBullet = new Map<string, [number, number]>();
     private fmtCache = new Map<string, valueFormatter.IValueFormatter>();
     private canvasCtx: CanvasRenderingContext2D | null = null;
 
@@ -184,6 +192,9 @@ export class Visual implements IVisual {
     private varExt = new Map<number, number>();
     /** Estado junto al valor (en vez de en su columna). */
     private statusInline = false;
+    /** Columnas de minigráfico que se dibujan (la 1.ª siempre) y ancho de la 2.ª/3.ª. */
+    private sparks: SparkCfg[] = [];
+    private sparkW2 = 100;
     private gap = 16;
     /** El alto pedido era menor que el texto y se ha subido (se avisa en el panel). */
     private rowHClamped = false;
@@ -670,6 +681,29 @@ export class Visual implements IVisual {
         return m.planIdx >= 0 ? m.planIdx : m.pyIdx;
     }
 
+    /** Posición en Values de la medida del minigráfico 2 (i = 1) o 3 (i = 2), o -1 si está apagado o no existe. */
+    private extraSparkK(m: Model, i: number): number {
+        const st = this.settings["spark" + (i + 1)];
+        if (!st || st.show !== true) return -1;
+        const k = Number(String(st.measure).replace("value", "")) - 1;
+        return k >= 0 && k < m.valueIdx.length ? k : -1;
+    }
+
+    /** Las columnas de minigráfico a dibujar en este render (la 2.ª y 3.ª solo con Pro o en la vista previa). */
+    private computeSparks(m: Model): void {
+        const s = this.settings;
+        this.sparks = [{ slot: 0, cls: SPARK_CLS[0], mi: m.valueIdx[0], k: 0, type: String(s.sparkline.type), curve: String(s.sparkline.curve),
+            scale: String(s.sparkline.scale), color: "", target: true, label: true }];
+        if (!this.previewOf("sparklines")) return;
+        for (const i of [1, 2]) {
+            const k = this.extraSparkK(m, i);
+            if (k < 0) continue;
+            const st = s["spark" + (i + 1)];
+            this.sparks.push({ slot: i, cls: SPARK_CLS[i], mi: m.valueIdx[k], k, type: String(st.type), curve: String(st.curve),
+                scale: String(st.scale), color: this.hc ? "" : String(st.color || ""), target: false, label: false });
+        }
+    }
+
     /** Regla del estado: umbrales en fracción (ordenados) y si se mide sobre la varianza o sobre el Δ% del periodo. */
     private statusRule(m: Model | null): { good: number; bad: number; useVar: boolean; metric: string } {
         const s = this.settings.status || {};
@@ -714,6 +748,8 @@ export class Visual implements IVisual {
         const varOn = !!m && this.varBaseIdx(m) >= 0 && v.show !== false && (!!v.showAbs || !!v.showPct || !!v.showBar);
         groups.push(["variance", varOn, "var=" + this.varCode(m)]);
         groups.push(["status", !!m && s.status?.show === true, "st"]);
+        const extra = !!m && [1, 2].some(i => this.extraSparkK(m, i) >= 0);
+        groups.push(["sparklines", extra, "sp=" + (m ? [1, 2].map(i => this.extraSparkK(m, i)).join(",") : "")]);
         groups.push(["images", !!m && m.imgIdx >= 0, "img"]);
         const labels: ProFeature[] = [], parts: string[] = [], set = new Set<ProFeature>();
         for (const [f, on, sig] of groups) if (on) { labels.push(f); set.add(f); parts.push(sig); }
@@ -923,7 +959,7 @@ export class Visual implements IVisual {
         set("--st-b3", this.hc ? "transparent" : String(bs.band3Color || "#CDE8CF")); set("--st-focus", this.hc ? this.hcSel : L.accent);
         st.background = this.hc ? this.hcBg : (this.settings.style.template === "classic" ? CLASSIC.bg : "transparent");
         this.root.classList.toggle("st-hc", this.hc);
-        for (const t of ["line", "area", "column", "winloss", "bullet"]) this.root.classList.toggle("st-t-" + t, this.settings.sparkline.type === t);
+        // El tipo va en cada svg (st-svg st-t-*): cada columna de minigráfico tiene el suyo.
         this.root.classList.toggle("st-format", this.formatMode);
     }
 
@@ -999,17 +1035,22 @@ export class Visual implements IVisual {
             this.barExt.set(r.level, e);
         }
         const tg = this.showTarget(m) ? m.targetIdx : -1;
-        for (const r of all) {
-            const e = this.ext.get(r.level) ?? [Infinity, -Infinity];
-            const scan = (arr: Num[]) => { for (const v of arr) if (v !== null) { if (v < e[0]) e[0] = v; if (v > e[1]) e[1] = v; } };
-            scan(r.s[m0]);
-            if (tg >= 0) scan(r.s[tg]);
-            this.ext.set(r.level, e);
-            const b = this.extBullet.get(r.level) ?? [0, 0];
-            const bt = this.bulletTarget(r, m);
-            // Con bandas, un 10 % de aire sobre el objetivo para que se vea la banda buena.
-            for (const v of [r.shown[0], bt, bt !== null && this.bandEdges(bt, m) ? bt * 1.1 : null]) if (v !== null && v !== undefined) { if (v < b[0]) b[0] = v; if (v > b[1]) b[1] = v; }
-            this.extBullet.set(r.level, b);
+        // Cada columna de minigráfico con su escala por nivel (clave "columna:nivel").
+        this.computeSparks(m);
+        for (const c of this.sparks) {
+            for (const r of all) {
+                const key = c.slot + ":" + r.level;
+                const e = this.ext.get(key) ?? [Infinity, -Infinity];
+                const scan = (arr: Num[]) => { for (const v of arr) if (v !== null) { if (v < e[0]) e[0] = v; if (v > e[1]) e[1] = v; } };
+                scan(r.s[c.mi]);
+                if (c.target && tg >= 0) scan(r.s[tg]);
+                this.ext.set(key, e);
+                const b = this.extBullet.get(key) ?? [0, 0];
+                const bt = c.target ? this.bulletTarget(r, m) : null;
+                // Con bandas, un 10 % de aire sobre el objetivo para que se vea la banda buena.
+                for (const v of [r.shown[c.k], bt, bt !== null && this.bandEdges(bt, m) ? bt * 1.1 : null]) if (v !== null && v !== undefined) { if (v < b[0]) b[0] = v; if (v > b[1]) b[1] = v; }
+                this.extBullet.set(key, b);
+            }
         }
     }
 
@@ -1152,7 +1193,10 @@ export class Visual implements IVisual {
         // varianza (barra, Δ, Δ%) y el valor. El primer minigráfico nunca.
         const W = this.W - 2 - (this.scroller.offsetWidth - this.scroller.clientWidth || 0);
         const nameMin = Math.min(150, Math.max(64, this.W * 0.18));
-        let spark = Math.max(56, Math.min(220, this.W * 0.3));
+        const extraSp = this.sparks.filter(c => c.slot > 0);
+        let spark = Math.max(56, Math.min(extraSp.length ? 180 : 220, this.W * (extraSp.length ? 0.22 : 0.3)));
+        this.sparkW2 = Math.round(Math.max(56, Math.min(150, this.W * 0.14)));
+        for (const c of extraSp) want.push({ id: c.slot === 1 ? "spark2" : "spark3", w: this.sparkW2 + gap + PAD, sortKey: null });
         const dropOrder: ColId[] = ["spark3", "spark2", "m3", "m2", "fc", "py", "delta", "pct", "stat", "pl", "vbar", "vabs", "vpct", "val"];
         const sum = () => want.reduce((a, c) => a + c.w, 0) + gap + PAD;
         for (const id of dropOrder) {
@@ -1209,6 +1253,15 @@ export class Visual implements IVisual {
         const sparkTitle = s.sparkline.type === "bullet" && m.targetIdx >= 0
             ? m.sources[m.valueIdx[0]].displayName + " / " + m.sources[m.targetIdx].displayName
             : this.typeName(String(s.sparkline.type)) + " · " + m.sources[m.valueIdx[0]].displayName;
+        // Minigráficos 2 y 3: "Tipo · medida" y el rango (o la cifra a la vista en bullet), con su escala rotulada.
+        const range = m.periods.length > 1 ? this.periodLabels[0] + " – " + this.periodLabels[m.periods.length - 1] : (this.periodLabels[0] ?? "");
+        const extraTitle = (slot: number): [string, string] => {
+            const c = this.sparks.find(x => x.slot === slot);
+            if (!c) return ["", ""];
+            const ctx = c.type === "bullet" ? valCtx : range + (c.type === "winloss" ? " · " + this.tf("UI_Vs", "vs {0}", "0") : "");
+            return [this.typeName(c.type) + " · " + m.sources[c.mi].displayName,
+                ctx + (c.scale === "row" && c.type !== "winloss" ? " · " + this.t("UI_ScalePerRow", "Scale: per row") : "")];
+        };
         const titles: Record<ColId, [string, string]> = {
             name: [levelNames, nameCtx],
             val: [m.sources[m.valueIdx[0]].displayName, valCtx],
@@ -1224,8 +1277,8 @@ export class Visual implements IVisual {
             vbar: [this.cols.some(c => c.id === "vabs") ? "" : "Δ" + this.varCode(m), varCtx],
             vpct: ["Δ" + this.varCode(m) + "%", varCtx],
             stat: ["", ""],
-            spark2: ["", ""],
-            spark3: ["", ""],
+            spark2: extraTitle(1),
+            spark3: extraTitle(2),
         };
         // Segunda línea compartida: Δ y Δ% (vs el periodo base) y la varianza (vs la referencia) ocupan sus columnas.
         const group = (id: ColId): string => id === "delta" || id === "pct" ? "chg" : id === "vabs" || id === "vbar" || id === "vpct" ? "var" : id;
@@ -1376,12 +1429,14 @@ export class Visual implements IVisual {
         vb.append("span").attr("class", "st-vb-axis").attr("aria-hidden", "true");
         vb.append("span").attr("class", "st-vb-bar").attr("aria-hidden", "true");
         for (const c of ["vpct", "stat", "m2", "m3"]) rowSel.append("div").attr("class", "st-c st-c-" + c).attr("role", "gridcell");
-        const sp = rowSel.append("div").attr("class", "st-c st-c-spark").attr("role", "gridcell");
-        const svg = sp.append("svg").attr("class", "st-svg").attr("aria-hidden", "true");
-        for (const c of ["st-b1", "st-b2", "st-b3", "st-band", "st-area", "st-pos", "st-neg", "st-tgt", "st-line", "st-mk-neg", "st-mk-first", "st-mk-max", "st-mk-min", "st-mk-last", "st-hover"]) {
-            svg.append("path").attr("class", c);
+        for (const cls of SPARK_CLS) {
+            const sp = rowSel.append("div").attr("class", "st-c st-sp " + cls).attr("role", "gridcell");
+            const svg = sp.append("svg").attr("class", "st-svg").attr("aria-hidden", "true");
+            for (const c of ["st-b1", "st-b2", "st-b3", "st-band", "st-hz", "st-area", "st-pos", "st-neg", "st-tgt", "st-line", "st-mk-neg", "st-mk-first", "st-mk-max", "st-mk-min", "st-mk-last", "st-hover"]) {
+                svg.append(c === "st-hz" ? "g" : "path").attr("class", c);
+            }
+            svg.append("text").attr("class", "st-lastlbl");
         }
-        svg.append("text").attr("class", "st-lastlbl");
     }
 
     private drawRows(): void {
@@ -1523,12 +1578,23 @@ export class Visual implements IVisual {
     // ── Minigráfico ──────────────────────────────────────────────────────────
 
     private paintSpark(el: HTMLElement, d: Row, m: Model): void {
-        const svg = el.querySelector("svg.st-svg") as SVGSVGElement;
-        const w = this.sparkW + this.labelW, h = this.rowH;
+        let gs = d.spark as Geo[] | null;
+        if (!gs || !gs.length || gs[0].gen !== this.gen) { gs = []; d.spark = gs; }
+        for (const c of this.sparks) {
+            const svg = el.querySelector("." + c.cls + " svg.st-svg") as SVGSVGElement | null;
+            if (!svg) continue;
+            let g = gs[c.slot];
+            if (!g) { g = this.geo(d, m, c); gs[c.slot] = g; }
+            this.paintGeo(svg, g, c);
+        }
+    }
+
+    private paintGeo(svg: SVGSVGElement, g: Geo, c: SparkCfg): void {
+        const w = (c.slot === 0 ? this.sparkW + this.labelW : this.sparkW2), h = this.rowH;
         if (svg.getAttribute("width") !== String(w)) svg.setAttribute("width", String(w));
         if (svg.getAttribute("height") !== String(h)) svg.setAttribute("height", String(h));
-        let g = d.spark as Geo | null;
-        if (!g || g.gen !== this.gen) { g = this.geo(d, m); d.spark = g; }
+        const tcls = "st-svg st-t-" + c.type + (g.color ? " st-colored" : "");
+        if (svg.getAttribute("class") !== tcls) svg.setAttribute("class", tcls);
         const set = (cls: string, v: string) => {
             const p = svg.querySelector("." + cls) as SVGPathElement;
             if (p.getAttribute("d") !== v) { if (v) p.setAttribute("d", v); else p.removeAttribute("d"); }
@@ -1540,7 +1606,6 @@ export class Visual implements IVisual {
         // Line colour: por fila o por tendencia, la línea, las barras y los marcadores toman el color de la fila.
         if (g.color) { svg.style.setProperty("--st-line", g.color); svg.style.setProperty("--st-accent", g.color); }
         else { svg.style.removeProperty("--st-line"); svg.style.removeProperty("--st-accent"); }
-        svg.classList.toggle("st-colored", !!g.color);
         const line = svg.querySelector(".st-line") as SVGPathElement;
         line.style.strokeWidth = String(this.settings.sparkline.width);
         const t = svg.querySelector(".st-lastlbl") as SVGTextElement;
@@ -1595,31 +1660,32 @@ export class Visual implements IVisual {
     }
 
     /** Escala por fila: siempre, o (auto, propuesta pendiente de Tino) solo en las filas de detalle. */
-    private perRow(r: Row): boolean {
-        const sc = String(this.settings.sparkline.scale);
+    private perRow(r: Row, c: SparkCfg): boolean {
+        const sc = c.scale;
         return sc === "row" || (sc === "auto" && r.isLeaf);
     }
 
-    private rowExt(r: Row, m: Model): [number, number] {
+    private rowExt(r: Row, m: Model, c: SparkCfg): [number, number] {
         const s = this.settings;
-        const type = String(s.sparkline.type);
+        const type = c.type;
+        const key = c.slot + ":" + r.level;
         if (type === "bullet") {
-            if (this.perRow(r)) {
+            if (this.perRow(r, c)) {
                 const b: [number, number] = [0, 0];
-                const bt = this.bulletTarget(r, m);
-                for (const v of [r.shown[0], bt, bt !== null && this.bandEdges(bt, m) ? bt * 1.1 : null]) if (v !== null && v !== undefined) { b[0] = Math.min(b[0], v); b[1] = Math.max(b[1], v); }
+                const bt = c.target ? this.bulletTarget(r, m) : null;
+                for (const v of [r.shown[c.k], bt, bt !== null && this.bandEdges(bt, m) ? bt * 1.1 : null]) if (v !== null && v !== undefined) { b[0] = Math.min(b[0], v); b[1] = Math.max(b[1], v); }
                 return b;
             }
-            return this.extBullet.get(r.level) ?? [0, 1];
+            return this.extBullet.get(key) ?? [0, 1];
         }
         let e: [number, number];
-        if (this.perRow(r)) {
+        if (this.perRow(r, c)) {
             e = [Infinity, -Infinity];
             const scan = (arr: Num[]) => { for (const v of arr) if (v !== null) { if (v < e[0]) e[0] = v; if (v > e[1]) e[1] = v; } };
-            scan(r.s[m.valueIdx[0]]);
-            if (this.showTarget(m)) scan(r.s[m.targetIdx]);
+            scan(r.s[c.mi]);
+            if (c.target && this.showTarget(m)) scan(r.s[m.targetIdx]);
         } else {
-            const x = this.ext.get(r.level);
+            const x = this.ext.get(key);
             e = x ? [x[0], x[1]] : [0, 1];
         }
         if (!isFinite(e[0])) e = [0, 1];
@@ -1630,29 +1696,29 @@ export class Visual implements IVisual {
     }
 
     /** Geometría del minigráfico de una fila (solo para las filas visibles; se guarda hasta el siguiente render). */
-    private geo(r: Row, m: Model): Geo {
+    private geo(r: Row, m: Model, c: SparkCfg): Geo {
         const s = this.settings;
-        const type = String(s.sparkline.type);
+        const type = c.type;
         const g: Geo = { gen: this.gen, line: "", area: "", pos: "", neg: "", tgt: "", band: "", b1: "", b2: "", b3: "", bandName: "", color: "", mkFirst: "", mkMax: "", mkMin: "", mkNeg: "", mkLast: "", lastX: -1, lastY: -1, lastText: "" };
-        const sr = r.s[m.valueIdx[0]];
+        const sr = r.s[c.mi];
         const nP = sr.length;
-        const w = this.sparkW, H = this.rowH;
+        const w = c.slot === 0 ? this.sparkW : this.sparkW2, H = this.rowH;
         const top = Math.max(2, Math.round(H * 0.16)), bot = H - top;
         const ph = Math.max(4, bot - top);
         const f1 = (v: number) => (Math.round(v * 10) / 10).toString();
-        const [lo, hi0] = this.rowExt(r, m);
+        const [lo, hi0] = this.rowExt(r, m, c);
         const hi = hi0 > lo ? hi0 : lo + (Math.abs(lo) || 1);
         const y = (v: number) => top + (hi - v) / (hi - lo) * ph;
-        const fmt0 = m.sources[m.valueIdx[0]].format;
+        const fmt0 = m.sources[c.mi].format;
         // Los marcadores crecen o encogen con el alto de fila (24 px = tamaño del panel).
         const ms = Number(s.markers.size) * Math.max(0.7, Math.min(1.6, this.rowH / 24));
 
-        g.color = this.rowLineColor(r);
+        g.color = c.slot === 0 ? this.rowLineColor(r) : c.color;
         if (type === "bullet") {
             const x = (v: number) => 2 + (Math.max(lo, Math.min(hi, v)) - lo) / (hi - lo) * (w - 4);
             const bh = Math.max(3, Math.round(ph * 0.55)), by = Math.round((H - bh) / 2);
-            const bt = this.bulletTarget(r, m);
-            const bd = this.bandEdges(bt, m);
+            const bt = c.target ? this.bulletTarget(r, m) : null;
+            const bd = c.target ? this.bandEdges(bt, m) : null;
             if (bd) {
                 // Bandas cualitativas debajo; la barra del valor y la marca del objetivo encima.
                 const rect = (a: number, b: number) => b > a ? "M" + f1(x(a)) + "," + top + "H" + f1(x(b)) + "V" + bot + "H" + f1(x(a)) + "Z" : "";
@@ -1660,15 +1726,15 @@ export class Visual implements IVisual {
                 if (!bd.lower) { g.b1 = rect(lo, e1); g.b2 = rect(e1, e2); g.b3 = rect(e2, hi); }
                 else { g.b3 = rect(lo, e1); g.b2 = rect(e1, e2); g.b1 = rect(e2, hi); }
             } else g.band = "M2," + top + "H" + (w - 2) + "V" + bot + "H2Z";
-            const v = r.shown[0];
+            const v = r.shown[c.k];
             if (v !== null && v !== undefined) {
                 const x0 = x(Math.max(lo, Math.min(0, hi))), x1 = x(v);
                 const a = Math.min(x0, x1), b = Math.max(x0, x1, a + 1);
                 const rect = "M" + f1(a) + "," + by + "H" + f1(b) + "V" + (by + bh) + "H" + f1(a) + "Z";
                 if (v < 0) g.neg = rect; else g.pos = rect;
-                g.lastText = this.labelW ? this.fmtCompact(v, r.shownFmt[0]) : "";
+                g.lastText = c.label && this.labelW ? this.fmtCompact(v, r.shownFmt[0]) : "";
             }
-            const t = this.bulletTarget(r, m);
+            const t = bt;
             if (t !== null && this.showTarget(m)) {
                 const tx = f1(x(t));
                 g.tgt = "M" + tx + "," + (top - 1) + "V" + (bot + 1);
@@ -1688,7 +1754,7 @@ export class Visual implements IVisual {
             if (iMax < 0 || v > (sr[iMax] as number)) iMax = p;
             if (iMin < 0 || v < (sr[iMin] as number)) iMin = p;
         }
-        const tgS = this.showTarget(m) ? r.s[m.targetIdx] : null;
+        const tgS = c.target && this.showTarget(m) ? r.s[m.targetIdx] : null;
 
         if (type === "winloss") {
             const mid = Math.round(H / 2), bw = Math.max(1, step * 0.72);
@@ -1722,7 +1788,7 @@ export class Visual implements IVisual {
         } else {
             // Línea / área con la curva elegida (Linear, Smooth = monótona, Step = escalón centrado). defined() corta en
             // cada periodo vacío: un hueco nunca se une ni se pone a cero.
-            const curve = s.sparkline.curve === "smooth" ? curveMonotoneX : s.sparkline.curve === "step" ? curveStep : curveLinear;
+            const curve = c.curve === "smooth" ? curveMonotoneX : c.curve === "step" ? curveStep : curveLinear;
             const idx = sr.map((_v, p) => p);
             const ok = (p: number) => sr[p] !== null;
             const ln = d3line<number>().defined(ok).x(p => x(p)).y(p => y(sr[p] as number)).curve(curve);
@@ -1761,7 +1827,7 @@ export class Visual implements IVisual {
             if (mk.min && iMin >= 0 && sr[iMax] !== sr[iMin]) g.mkMin = tri(iMin, ms, false);
             if (mk.last) g.mkLast = circ(last, ms);
             g.lastX = x(last); g.lastY = y(sr[last] as number);
-            if (this.labelW) g.lastText = this.fmtCompact(sr[last] as number, r.fmt?.[m.valueIdx[0]]?.[last] ?? fmt0);
+            if (c.label && this.labelW) g.lastText = this.fmtCompact(sr[last] as number, r.fmt?.[c.mi]?.[last] ?? fmt0);
         }
         return g;
     }
@@ -1863,9 +1929,10 @@ export class Visual implements IVisual {
         if (!m) return;
         const mode = String(this.settings.rows.tooltips);
         const target = e.target as Element;
-        const cell = target.closest(".st-c-spark");
+        const cell = target.closest(".st-sp") as HTMLElement | null;
+        const cfg = cell ? this.sparks.find(c => cell.classList.contains(c.cls)) : undefined;
         const onValue = !!target.closest(".st-c-val, .st-c-delta, .st-c-pct, .st-c-m2, .st-c-m3, .st-c-pl, .st-c-py, .st-c-fc, .st-c-vabs, .st-c-vbar, .st-c-vpct, .st-c-stat");
-        const svg = rowEl.querySelector("svg.st-svg") as SVGSVGElement | null;
+        const svg = (cell ?? rowEl).querySelector("svg.st-svg") as SVGSVGElement | null;
         const hover = svg ? svg.querySelector(".st-hover") as SVGPathElement : null;
         this.layerEl.querySelectorAll(".st-hover").forEach(p => { if (p !== hover) p.removeAttribute("d"); });
         const allowed = mode !== "off" && !this.pointerBusy && (cell || (mode === "row" && onValue));
@@ -1876,15 +1943,16 @@ export class Visual implements IVisual {
         const below = rr.top - rect.top < this.H / 2;
         const coords = [e.clientX - rect.left, below ? rr.bottom - rect.top + 2 : rr.top - rect.top - 2];
         let items: VisualTooltipDataItem[];
-        if (cell && svg && this.settings.sparkline.type !== "bullet") {
+        if (cell && cfg && svg && cfg.type !== "bullet") {
             const sr = svg.getBoundingClientRect();
             const px = e.clientX - sr.left;
             const nP = m.periods.length;
-            const band = this.settings.sparkline.type === "column" || this.settings.sparkline.type === "winloss";
-            const p = Math.max(0, Math.min(nP - 1, band ? Math.floor((px - 2) / ((this.sparkW - 4) / nP)) : Math.round((px - 3) / (nP > 1 ? (this.sparkW - 6) / (nP - 1) : 1))));
+            const band = cfg.type === "column" || cfg.type === "winloss";
+            const sw = cfg.slot === 0 ? this.sparkW : this.sparkW2;
+            const p = Math.max(0, Math.min(nP - 1, band ? Math.floor((px - 2) / ((sw - 4) / nP)) : Math.round((px - 3) / (nP > 1 ? (sw - 6) / (nP - 1) : 1))));
             items = this.pointTip(d, p, m);
             if (hover) {
-                const X = band ? 2 + (p + 0.5) * (this.sparkW - 4) / nP : (nP > 1 ? 3 + p * (this.sparkW - 6) / (nP - 1) : this.sparkW / 2);
+                const X = band ? 2 + (p + 0.5) * (sw - 4) / nP : (nP > 1 ? 3 + p * (sw - 6) / (nP - 1) : sw / 2);
                 hover.setAttribute("d", "M" + X.toFixed(1) + ",1V" + (this.rowH - 1));
             }
         } else {
@@ -2283,7 +2351,7 @@ export class Visual implements IVisual {
     private fillDefault(obj: string, prop: string): string {
         const L = this.look;
         const k = obj + "." + prop;
-        return k === "sparkline.color" ? L.line : k === "sparkline.accent" ? L.accent : k === "sparkline.targetColor" ? L.target
+        return k === "sparkline.color" || k === "spark2.color" || k === "spark3.color" ? L.line : k === "sparkline.accent" ? L.accent : k === "sparkline.targetColor" ? L.target
             : k === "values.upColor" || k === "variance.goodColor" || k === "status.goodColor" ? L.up
             : k === "values.downColor" || k === "variance.badColor" || k === "status.badColor" ? L.down : k === "status.neutralColor" ? L.neutral
             : k === "header.background" ? L.bg : prop === "background" ? (obj === "level3" ? L.bg : L.sub) : prop === "color" ? L.text : "#000000";
@@ -2336,6 +2404,15 @@ export class Visual implements IVisual {
                         const sl: any = this.slice(g.obj, p);
                         if (g.obj === "rows" && p.name === "rowHeight" && this.rowHClamped) {
                             sl.displayName += " — " + this.tf("UI_RowHeightRaised", "raised to {0} px to fit the text", String(this.rowH));
+                        }
+                        if ((g.obj === "spark2" || g.obj === "spark3") && p.name === "measure" && m) {
+                            // Cada "Value N" con el nombre de su medida; las que no están, fuera.
+                            const items = (sl.control.properties.items as any[]).filter(x => Number(String(x.value).slice(5)) <= m.valueIdx.length)
+                                .map(x => ({ value: x.value, displayName: m.sources[m.valueIdx[Number(String(x.value).slice(5)) - 1]].displayName }));
+                            if (items.length) {
+                                sl.control.properties.items = items;
+                                sl.control.properties.value = items.find((x: any) => x.value === String(this.settings[g.obj].measure)) ?? items[0];
+                            }
                         }
                         if (g.obj === "rows" && p.name === "sortBy" && m) {
                             // Cada "Value" con el nombre de su medida; las que no están, fuera.
@@ -2402,6 +2479,8 @@ export class Visual implements IVisual {
         };
         marcar(".st-h", "header", 1);
         marcar(".st-row .st-c-spark", "sparkline", 3);
+        marcar(".st-row .st-c-spark2", "spark2", 3);
+        marcar(".st-row .st-c-spark3", "spark3", 3);
         marcar(".st-row .st-c-val, .st-row .st-c-delta, .st-row .st-c-pct", "values", 1);
         marcar(".st-row .st-c-name", "rows", 1);
         marcar(".st-row .st-c-vabs, .st-row .st-c-vbar, .st-row .st-c-vpct, .st-row .st-ref", "variance", 1);
@@ -2412,6 +2491,7 @@ export class Visual implements IVisual {
         const ref = (o: string, p: string) => ({ reference: { objectName: o, propertyName: p }, label: this.propLabel(o, p) });
         switch (name) {
             case "sparkline": return { type: 3, stroke: ref("sparkline", "color"), width: ref("sparkline", "width") } as any;
+            case "spark2": case "spark3": return { type: 3, stroke: ref(name, "color") } as any;
             case "header": return { type: 1, fontSize: ref("header", "fontSize") } as any;
             case "values": return { type: 1, fontSize: ref("values", "fontSize") } as any;
             case "rows": return { type: 1, fontSize: ref("rows", "fontSize") } as any;
@@ -2434,6 +2514,7 @@ export class Visual implements IVisual {
             case "header": return [toggle("header", "show"), toggle("header", "context"), div, reset("header"), nav("header")] as any;
             case "values": return [toggle("subTotals", "columnSubtotals"), pick("values", "compare"), toggle("values", "showDelta"), toggle("values", "showDeltaPct"), div, reset("values"), nav("values")] as any;
             case "rows": return [pick("rows", "density"), toggle("rows", "grandTotal"), pick("rows", "sortBy"), div, reset("rows"), nav("rows")] as any;
+            case "spark2": case "spark3": return [toggle(name, "show"), pick(name, "measure"), pick(name, "type"), pick(name, "scale"), div, reset(name), nav(name)] as any;
             case "variance": return [pick("variance", "base"), toggle("variance", "showReference"), toggle("variance", "showAbs"), toggle("variance", "showPct"),
                 toggle("variance", "showBar"), div, reset("variance"), nav("variance")] as any;
         }

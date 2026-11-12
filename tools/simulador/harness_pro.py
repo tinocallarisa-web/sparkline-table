@@ -188,6 +188,84 @@ async def main():
         res["p1_eventos"] = await events(pg)
         await pg.close()
 
+        # ── Parte 2: estado por umbral ───────────────────────────────────────────────────────────────
+        pg = await page()
+        st_on = {"status": {"show": True}}
+        if not FREE:
+            await H.upd(pg, dvp(st_on), W, Hh)
+            await shot(pg, "05_estado_columna")
+            res["p2_estados"] = await pg.evaluate("""() => { const c = [...document.querySelectorAll('.st-row .st-c-stat')];
+                return { bueno: c.filter(x => x.textContent === '●').length, neutro: c.filter(x => x.textContent === '▲').length, malo: c.filter(x => x.textContent === '◆').length }; }""")
+            # Comprobación de la regla con los datos: ΔPL% ≥ 0 bueno, < −5 % malo.
+            res["p2_regla_ok"] = await pg.evaluate("""() => __v.rows.every(r => r.vpct === null ? r.status === 0 : (r.vpct >= 0 ? r.status === 3 : r.vpct < -0.05 ? r.status === 1 : r.status === 2))""")
+            await H.upd(pg, dvp({"status": {"show": True, "position": "value", "goodFrom": 5, "badBelow": -20}, "values": {"invert": True}}), W, Hh)
+            await shot(pg, "06_estado_junto_al_valor_invertido")
+            res["p2_regla_invertida_ok"] = await pg.evaluate("""() => __v.rows.every(r => r.vpct === null ? r.status === 0 : (-r.vpct >= 0.05 ? r.status === 3 : -r.vpct < -0.20 ? r.status === 1 : r.status === 2))""")
+            # Sin referencia: sobre el Δ% del periodo.
+            await H.upd(pg, H.build(expanded=vista, objects=st_on)[0], W, Hh)
+            res["p2_sin_referencia_usa_delta"] = await pg.evaluate("__v.rows.slice(0, 4).map(r => [r.label, r.deltaPct === null ? null : +r.deltaPct.toFixed(3), r.status])")
+            await pg.evaluate("() => { window.__tipItems = null; __host.tooltipService.show = (o) => { window.__tipItems = o.dataItems; __tips++; }; }")
+            await H.upd(pg, dvp({"status": {"show": True}, "rows": {"tooltips": "row"}}), W, Hh)
+            box = await pg.evaluate("(() => { const r = document.querySelector('.st-row[data-i=\"2\"] .st-c-stat').getBoundingClientRect(); return [r.x + r.width / 2, r.y + r.height / 2]; })()")
+            await pg.mouse.move(box[0], box[1])
+            await pg.wait_for_timeout(450)
+            res["p2_tooltip_regla"] = await pg.evaluate("(__tipItems || []).filter(i => /Estado|Status/.test(i.displayName)).map(i => i.value)")
+            await pg.mouse.move(2, 2)
+            await pg.evaluate("Object.assign(__pal, {isHighContrast: true, foreground: {value: '#FFFFFF'}, background: {value: '#000000'}}); document.body.style.background = '#000';")
+            await H.upd(pg, dvp(st_on), W, Hh)
+            await shot(pg, "07_estado_y_varianza_alto_contraste")
+            await pg.evaluate("Object.assign(__pal, {isHighContrast: false, foreground: {value: '#252423'}, background: {value: '#FFFFFF'}}); document.body.style.background = '#fff';")
+        else:
+            await H.upd(pg, dvp(st_on), W, Hh, view=0)
+            await pg.wait_for_timeout(80)
+            await H.upd(pg, dvp(st_on), W, Hh, view=0)
+            res["p2_lectura_sin_estado"] = "stat" in await pg.evaluate(hidden_js)
+            await H.upd(pg, dvp(st_on), W, Hh, view=1)
+            await pg.evaluate("() => { const g = document.querySelector('.st-guide'); if (g) g.style.display = 'none'; }")
+            await shot(pg, "03_edicion_estado_marca")
+            res["p2_edicion_marca"] = await pg.evaluate("document.querySelector('.st-watermark').textContent")
+        res["p2_eventos"] = await events(pg)
+        await pg.close()
+
+        # ── Parte 3: hasta 3 columnas de minigráfico ─────────────────────────────────────────────────
+        W3 = 1280
+        pg = await page(W3, Hh)
+        three = {"spark2": {"show": True, "type": "column", "scale": "row", "color": {"solid": {"color": "#7A1F1F"}}},
+                 "spark3": {"show": True, "measure": "value1", "type": "winloss"},
+                 "variance": {"showReference": False, "showBar": False}}
+        if not FREE:
+            await H.upd(pg, dvp(three), W3, Hh)
+            await shot(pg, "08_tres_minigraficos")
+            res["p3_cabeceras"] = await pg.evaluate("[...document.querySelectorAll('.st-h-spark .st-h1, .st-h-spark2 .st-h1, .st-h-spark3 .st-h1, .st-h2-spark2, .st-h2-spark3')].map(e => e.textContent)")
+            res["p3_trazados"] = await pg.evaluate("""() => { const r = document.querySelector('.st-row[data-i="2"]');
+                const d = s => { const p = r.querySelector(s); return p && p.getAttribute('d') ? p.getAttribute('d').length : 0; };
+                return { s1_linea: d('.st-c-spark .st-line'), s2_columnas: d('.st-c-spark2 .st-pos'), s3_winloss: d('.st-c-spark3 .st-pos') + d('.st-c-spark3 .st-neg'),
+                         s2_color: getComputedStyle(r.querySelector('.st-c-spark2 .st-pos')).fill }; }""")
+            # Escala propia: la 2.ª (Margen %, por fila) no comparte dominio con la 1.ª (Ventas).
+            res["p3_escalas"] = await pg.evaluate("[...__v.ext.keys()].sort()")
+            # Tooltip en el 2.º minigráfico: el periodo bajo el ratón
+            await pg.evaluate("() => { window.__tipItems = null; __host.tooltipService.show = (o) => { window.__tipItems = o.dataItems; __tips++; }; }")
+            box = await pg.evaluate("(() => { const r = document.querySelector('.st-row[data-i=\"2\"] .st-c-spark2 svg').getBoundingClientRect(); return [r.x + r.width - 3, r.y + r.height / 2]; })()")
+            await pg.mouse.move(box[0], box[1])
+            await pg.wait_for_timeout(450)
+            res["p3_tooltip_spark2"] = await pg.evaluate("(__tipItems || []).slice(0, 3).map(i => i.displayName + ': ' + i.value)")
+            await pg.mouse.move(2, 2)
+            await H.upd(pg, dvp(three), 800, Hh)
+            res["p3_estrecho_ocultas"] = await pg.evaluate(hidden_js)
+            await shot(pg, "09_tres_minigraficos_estrecho")
+        else:
+            await H.upd(pg, dvp(three), W3, Hh, view=0)
+            await pg.wait_for_timeout(80)
+            await H.upd(pg, dvp(three), W3, Hh, view=0)
+            res["p3_lectura_ocultas"] = await pg.evaluate(hidden_js)
+            await shot(pg, "04_lectura_un_minigrafico")
+            await H.upd(pg, dvp(three), W3, Hh, view=1)
+            await pg.evaluate("() => { const g = document.querySelector('.st-guide'); if (g) g.style.display = 'none'; }")
+            await shot(pg, "05_edicion_tres_minigraficos_marca")
+            res["p3_edicion_marca"] = await pg.evaluate("document.querySelector('.st-watermark').textContent")
+        res["p3_eventos"] = await events(pg)
+        await pg.close()
+
         await b.close()
     res["errores"] = errs
     sys.stdout.reconfigure(encoding="utf-8")

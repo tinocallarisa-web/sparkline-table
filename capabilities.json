@@ -765,6 +765,248 @@
         }
       }
     },
+    "spark2": {
+      "displayName": "Sparkline 2 (Pro)",
+      "displayNameKey": "Obj_spark2",
+      "properties": {
+        "show": {
+          "displayName": "Show sparkline 2",
+          "displayNameKey": "Prop_spark2_show",
+          "type": {
+            "bool": true
+          }
+        },
+        "measure": {
+          "displayName": "Measure",
+          "displayNameKey": "Prop_spark2_measure",
+          "type": {
+            "enumeration": [
+              {
+                "value": "value1",
+                "displayName": "Value 1",
+                "displayNameKey": "Enum_measure_value1"
+              },
+              {
+                "value": "value2",
+                "displayName": "Value 2",
+                "displayNameKey": "Enum_measure_value2"
+              },
+              {
+                "value": "value3",
+                "displayName": "Value 3",
+                "displayNameKey": "Enum_measure_value3"
+              }
+            ]
+          }
+        },
+        "type": {
+          "displayName": "Type",
+          "displayNameKey": "Prop_spark2_type",
+          "type": {
+            "enumeration": [
+              {
+                "value": "line",
+                "displayName": "Line",
+                "displayNameKey": "Enum_type_line"
+              },
+              {
+                "value": "area",
+                "displayName": "Area",
+                "displayNameKey": "Enum_type_area"
+              },
+              {
+                "value": "column",
+                "displayName": "Column",
+                "displayNameKey": "Enum_type_column"
+              },
+              {
+                "value": "winloss",
+                "displayName": "Win/loss",
+                "displayNameKey": "Enum_type_winloss"
+              },
+              {
+                "value": "bullet",
+                "displayName": "Bullet",
+                "displayNameKey": "Enum_type_bullet"
+              }
+            ]
+          }
+        },
+        "curve": {
+          "displayName": "Curve",
+          "displayNameKey": "Prop_spark2_curve",
+          "type": {
+            "enumeration": [
+              {
+                "value": "linear",
+                "displayName": "Linear",
+                "displayNameKey": "Enum_curve_linear"
+              },
+              {
+                "value": "smooth",
+                "displayName": "Smooth",
+                "displayNameKey": "Enum_curve_smooth"
+              },
+              {
+                "value": "step",
+                "displayName": "Step",
+                "displayNameKey": "Enum_curve_step"
+              }
+            ]
+          }
+        },
+        "scale": {
+          "displayName": "Scale",
+          "displayNameKey": "Prop_spark2_scale",
+          "type": {
+            "enumeration": [
+              {
+                "value": "level",
+                "displayName": "Shared by level",
+                "displayNameKey": "Enum_scale_level"
+              },
+              {
+                "value": "row",
+                "displayName": "Per row",
+                "displayNameKey": "Enum_scale_row"
+              }
+            ]
+          }
+        },
+        "color": {
+          "displayName": "Color",
+          "displayNameKey": "Prop_spark2_color",
+          "type": {
+            "fill": {
+              "solid": {
+                "color": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "spark3": {
+      "displayName": "Sparkline 3 (Pro)",
+      "displayNameKey": "Obj_spark3",
+      "properties": {
+        "show": {
+          "displayName": "Show sparkline 3",
+          "displayNameKey": "Prop_spark3_show",
+          "type": {
+            "bool": true
+          }
+        },
+        "measure": {
+          "displayName": "Measure",
+          "displayNameKey": "Prop_spark3_measure",
+          "type": {
+            "enumeration": [
+              {
+                "value": "value1",
+                "displayName": "Value 1",
+                "displayNameKey": "Enum_measure_value1"
+              },
+              {
+                "value": "value2",
+                "displayName": "Value 2",
+                "displayNameKey": "Enum_measure_value2"
+              },
+              {
+                "value": "value3",
+                "displayName": "Value 3",
+                "displayNameKey": "Enum_measure_value3"
+              }
+            ]
+          }
+        },
+        "type": {
+          "displayName": "Type",
+          "displayNameKey": "Prop_spark3_type",
+          "type": {
+            "enumeration": [
+              {
+                "value": "line",
+                "displayName": "Line",
+                "displayNameKey": "Enum_type_line"
+              },
+              {
+                "value": "area",
+                "displayName": "Area",
+                "displayNameKey": "Enum_type_area"
+              },
+              {
+                "value": "column",
+                "displayName": "Column",
+                "displayNameKey": "Enum_type_column"
+              },
+              {
+                "value": "winloss",
+                "displayName": "Win/loss",
+                "displayNameKey": "Enum_type_winloss"
+              },
+              {
+                "value": "bullet",
+                "displayName": "Bullet",
+                "displayNameKey": "Enum_type_bullet"
+              }
+            ]
+          }
+        },
+        "curve": {
+          "displayName": "Curve",
+          "displayNameKey": "Prop_spark3_curve",
+          "type": {
+            "enumeration": [
+              {
+                "value": "linear",
+                "displayName": "Linear",
+                "displayNameKey": "Enum_curve_linear"
+              },
+              {
+                "value": "smooth",
+                "displayName": "Smooth",
+                "displayNameKey": "Enum_curve_smooth"
+              },
+              {
+                "value": "step",
+                "displayName": "Step",
+                "displayNameKey": "Enum_curve_step"
+              }
+            ]
+          }
+        },
+        "scale": {
+          "displayName": "Scale",
+          "displayNameKey": "Prop_spark3_scale",
+          "type": {
+            "enumeration": [
+              {
+                "value": "level",
+                "displayName": "Shared by level",
+                "displayNameKey": "Enum_scale_level"
+              },
+              {
+                "value": "row",
+                "displayName": "Per row",
+                "displayNameKey": "Enum_scale_row"
+              }
+            ]
+          }
+        },
+        "color": {
+          "displayName": "Color",
+          "displayNameKey": "Prop_spark3_color",
+          "type": {
+            "fill": {
+              "solid": {
+                "color": true
+              }
+            }
+          }
+        }
+      }
+    },
     "bands": {
       "displayName": "Qualitative bands",
       "displayNameKey": "Obj_bands",

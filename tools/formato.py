@@ -17,6 +17,8 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Bloque 1: Report theme (por defecto) y Classic. Los seis estilos de la colección (Pro) entran en el bloque 2.
 TEMPLATES = [("report", "Report theme"), ("classic", "Classic")]
 
+SPARK_TYPES = [("line", "Line"), ("area", "Area"), ("column", "Column"), ("winloss", "Win/loss"), ("bullet", "Bullet")]
+
 # (propiedad, etiqueta, tipo, por defecto, extra)   tipo: bool | num | fill | enum | text
 OBJECTS = [
     ("style", "Style template", [
@@ -63,8 +65,7 @@ OBJECTS = [
         ("badColor", "Poor color", "fill", "", {}),
     ]),
     ("sparkline", "Sparkline", [
-        ("type", "Type", "enum", "line", {"items": [("line", "Line"), ("area", "Area"), ("column", "Column"),
-                                                   ("winloss", "Win/loss"), ("bullet", "Bullet")]}),
+        ("type", "Type", "enum", "line", {"items": SPARK_TYPES}),
         # auto (propuesta, pendiente de Tino): por fila en el último nivel, común por nivel en los subtotales.
         ("scale", "Scale", "enum", "auto", {"items": [("auto", "Per row in detail rows, shared in subtotals"), ("level", "Shared by level"), ("row", "Per row")]}),
         ("zero", "Start at zero", "bool", False, {}),
@@ -81,6 +82,18 @@ OBJECTS = [
     ]),
     # Bandas cualitativas del bullet (gratis, 12-11). Nombres de Bullet Chart Pro (showBands, band1Pct, band2Pct,
     # band1Color..band3Color); aquí los umbrales son % del OBJETIVO.
+    # Minigráficos 2 y 3 (Pro): cada uno con su medida de Values, tipo, curva, escala y color. El visual pone en el
+    # panel el nombre real de cada medida y quita las que no están.
+] + [
+    (obj, label, [
+        ("show", "Show " + label.replace(" (Pro)", "").lower(), "bool", False, {}),
+        ("measure", "Measure", "enum", dflt, {"items": [("value1", "Value 1"), ("value2", "Value 2"), ("value3", "Value 3")]}),
+        ("type", "Type", "enum", "line", {"items": SPARK_TYPES}),
+        ("curve", "Curve", "enum", "linear", {"items": [("linear", "Linear"), ("smooth", "Smooth"), ("step", "Step")]}),
+        ("scale", "Scale", "enum", "level", {"items": [("level", "Shared by level"), ("row", "Per row")]}),
+        ("color", "Color", "fill", "", {}),
+    ]) for obj, label, dflt in [("spark2", "Sparkline 2 (Pro)", "value2"), ("spark3", "Sparkline 3 (Pro)", "value3")]
+] + [
     ("bands", "Qualitative bands", [
         ("showBands", "Show bands", "bool", True, {}),
         ("band1Pct", "Poor below (% of target)", "num", 80, {"min": 0, "max": 200}),
@@ -156,6 +169,8 @@ PANE = [
     ("variance", "Variance (Pro)", [("variance", None, "show")]),
     ("status", "Status icons (Pro)", [("status", None, "show")]),
     ("sparkline", "Sparkline", [("sparkline", None, None)]),
+    ("spark2", "Sparkline 2 (Pro)", [("spark2", None, "show")]),
+    ("spark3", "Sparkline 3 (Pro)", [("spark3", None, "show")]),
     ("bands", "Qualitative bands", [("bands", None, "showBands")]),
     ("markers", "Markers", [("markers", None, None)]),
     ("rows", "Rows", [("rows", None, None)]),
