@@ -334,6 +334,36 @@ async def main():
         res["p5_eventos"] = await events(pg)
         await pg.close()
 
+        # ── Parte 6: imagen por fila dentro del mismo gating ────────────────────────────────────────
+        pg = await page()
+        # Primero la imagen (add_images supone las 3 medidas del bloque 1) y luego las referencias.
+        dvi = lambda: add_refs(H.add_images(H.build(expanded={"Z1"}, objects={"variance": {"show": False}})[0]))
+        img_js = """() => ({ dibujadas: [...document.querySelectorAll('.st-row .st-imgbox image')].filter(i => i.getAttribute('href')).length,
+            huecos: [...document.querySelectorAll('.st-row .st-imgbox')].filter(b => b.style.display !== 'none').length,
+            marca: document.querySelector('.st-watermark') && document.querySelector('.st-watermark').style.display !== 'none' ? document.querySelector('.st-watermark').textContent : '' })"""
+        if not FREE:
+            await H.upd(pg, dvi(), W, Hh)
+            res["p6_pro"] = await pg.evaluate(img_js)
+            await shot(pg, "19_imagenes_pro")
+        else:
+            await H.upd(pg, dvi(), W, Hh, view=0)
+            await pg.wait_for_timeout(80)
+            await H.upd(pg, dvi(), W, Hh, view=0)
+            res["p6_lectura"] = await pg.evaluate(img_js)
+            await shot(pg, "09_lectura_sin_imagenes_ni_hueco")
+            await H.upd(pg, dvi(), W, Hh, view=1)
+            await pg.evaluate("() => { const g = document.querySelector('.st-guide'); if (g) g.style.display = 'none'; }")
+            res["p6_edicion"] = await pg.evaluate(img_js)
+            await shot(pg, "10_edicion_imagenes_marca")
+            # Varias funciones a la vez: la marca nombra dos y "+n".
+            todo = add_refs(H.add_images(H.build(expanded={"Z1"}, objects={"status": {"show": True}, "style": {"template": "signal"}})[0]))
+            await H.upd(pg, todo, W, Hh, view=1)
+            await pg.evaluate("() => { const g = document.querySelector('.st-guide'); if (g) g.style.display = 'none'; }")
+            res["p6_edicion_varias"] = await pg.evaluate(img_js)
+            res["p6_avisos"] = await pg.evaluate("__notices.slice(-1)")
+        res["p6_eventos"] = await events(pg)
+        await pg.close()
+
         # ── Bullet (gratis, hallazgo de Tino): 4 provincias de tamaños muy distintos, escala por fila ──
         if not FREE:
             pg = await page(1100, 260)
