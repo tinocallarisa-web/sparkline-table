@@ -168,6 +168,34 @@ IF ( ISINSCOPE ( dim_pdv[id_comercial] ), BLANK (), [Plan ventas netas] )
 - Botones 1 · 2 · 3: a la izquierda del título de la jerarquía, nunca encima. Con la columna estrecha, el título se
   recorta con "…" y los botones se ven enteros.
 
+## 11. Formato en el lienzo (on-object) — fallo del 1.0.0.50
+
+Qué estaba mal: el `HtmlSubSelectionHelper` escucha el clic en el elemento del visual (por burbujeo) y los manejadores
+de clic de filas y cabeceras hacían `stopPropagation()` antes de mirar el modo formato, así que el clic nunca llegaba al
+helper. Además, las filas que crea el scroll no se marcaban y los estilos de texto iban incompletos.
+
+En Desktop, botón **Formatear** del visual (modo formato en el lienzo), clic en cada elemento: debe recuadrarse, salir
+su barra de formato y, con "Más opciones" / doble clic, abrir **su** tarjeta:
+
+| Elemento | Tarjeta |
+|---|---|
+| Cabecera de columnas y buscador | Column headers |
+| Nombre de fila de nivel 1 / 2 / 3 (e imagen) | Row levels (elige el nivel en el selector; el atajo "Rows" lleva a Rows) |
+| Fila Total (nombre) | Row levels → Grand total row |
+| Valor, Δ, Δ%, otras medidas | Values |
+| Plan / AA / FC, ΔPL, barra, ΔPL% | Variance |
+| Icono de estado | Status icons |
+| Minigráfico 1 / 2 / 3 | Sparkline / Sparkline 2 / Sparkline 3 |
+| Bandas del bullet | Qualitative bands |
+| Fondo de la tabla (fuera de una celda) | Gridlines |
+
+- En modo formato el clic **no** selecciona datos ni expande/contrae, y el teclado no navega. Sal del modo formato:
+  todo vuelve a funcionar igual (clic selecciona, ▸ expande).
+- Haz scroll en modo formato y pulsa una fila que no se veía antes: también debe recuadrarse.
+- Analizador de rendimiento: un par de eventos por update, también al entrar y salir del modo formato.
+- Limitación: el atajo de Row levels abre la tarjeta, pero no preselecciona el nivel en el selector (la API de
+  navegación solo admite tarjeta y grupo).
+
 ## Rendimiento y certificación (repetir con todo puesto)
 
 - Analizador de rendimiento: un par de eventos por update; el scroll no emite nada.

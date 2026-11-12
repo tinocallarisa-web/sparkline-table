@@ -260,6 +260,7 @@ export class Visual implements IVisual {
         this.searchCount = this.div("st-search-n", this.searchBar);
         this.searchInput.addEventListener("input", () => { this.query = this.searchInput.value; this.scroller.scrollTop = 0; this.repaint(); });
         this.searchInput.addEventListener("keydown", (e: KeyboardEvent) => {
+            if (this.formatMode) return;
             e.stopPropagation();
             if (e.key === "Escape") { this.searchInput.value = ""; this.query = ""; this.repaint(); }
         });
@@ -320,6 +321,9 @@ export class Visual implements IVisual {
         });
         this.layerEl.addEventListener("pointerup", () => { window.setTimeout(() => { this.pointerBusy = false; }, 0); });
         this.layerEl.addEventListener("click", (e: MouseEvent) => {
+            // Formato en el lienzo: el clic es del HtmlSubSelectionHelper (escucha en el host, por burbujeo). Ni
+            // seleccionar, ni expandir, ni stopPropagation (era lo que impedía abrir la tarjeta en Desktop).
+            if (this.formatMode) { this.downKey = null; return; }
             const rowEl = (e.target as HTMLElement).closest(".st-row") as HTMLElement | null;
             const key = rowEl ? rowEl.getAttribute("data-key") : null;
             const zone = (e.target as HTMLElement).closest(".st-c-name") ? "name" : "row";
@@ -342,12 +346,14 @@ export class Visual implements IVisual {
         });
         this.layerEl.addEventListener("mouseleave", () => this.hideTip());
         this.scroller.addEventListener("click", (e: MouseEvent) => {
+            if (this.formatMode) return;
             if (e.target === this.scroller || e.target === this.spacer || e.target === this.layerEl) this.clearSelection();
         });
-        this.totalEl.addEventListener("click", () => this.clearSelection());
+        this.totalEl.addEventListener("click", () => { if (!this.formatMode) this.clearSelection(); });
         this.totalEl.addEventListener("mousemove", (e: MouseEvent) => { if (this.model?.total) this.onHover(e, this.model.total, this.totalEl); });
         this.totalEl.addEventListener("mouseleave", () => this.hideTip());
         this.root.addEventListener("contextmenu", (e: MouseEvent) => {
+            if (this.formatMode) return;
             e.preventDefault();
             this.hideTip();
             if (!this.canInteract) return;
@@ -355,7 +361,7 @@ export class Visual implements IVisual {
             const r = rowEl ? this.rowsByKey.get(rowEl.getAttribute("data-key") || "") : null;
             this.selMgr.showContextMenu(r && r.id ? r.id : ({} as ISelectionId), { x: e.clientX, y: e.clientY });
         });
-        this.root.addEventListener("keydown", (e: KeyboardEvent) => { this.kbFocus = true; this.onKey(e); });
+        this.root.addEventListener("keydown", (e: KeyboardEvent) => { if (this.formatMode) return; this.kbFocus = true; this.onKey(e); });
         this.root.addEventListener("mousedown", () => { this.kbFocus = false; });
         this.root.addEventListener("focus", () => { this.hasFocus = true; if (this.focusIdx < 0 && this.rows.length) this.focusIdx = 0; this.drawRows(); this.announce(); });
         this.root.addEventListener("blur", () => { this.hasFocus = false; this.drawRows(); });
@@ -1486,7 +1492,7 @@ export class Visual implements IVisual {
             if (c.sortKey) {
                 cell.classList.add("st-sortable");
                 cell.setAttribute("aria-sort", sorted ? (dir === "asc" ? "ascending" : "descending") : "none");
-                cell.addEventListener("click", (e) => { e.stopPropagation(); this.onHeaderSort(c.sortKey as string); });
+                cell.addEventListener("click", (e) => { if (this.formatMode) return; e.stopPropagation(); this.onHeaderSort(c.sortKey as string); });
             }
             if (!twoLines) {
                 // Escala por fila: siempre rotulada, también con la cabecera de una línea.
@@ -1636,6 +1642,7 @@ export class Visual implements IVisual {
         const all = enter.merge(sel);
         const anySel = this.sel.size > 0;
         all.each((d: Row, i: number, nodes: HTMLDivElement[]) => this.paintRow(nodes[i], d, anySel));
+        if (this.formatMode) this.markSubSelectables(this.layerEl);
     }
 
     private paintRow(el: HTMLDivElement, d: Row, anySel: boolean): void {
@@ -2748,34 +2755,81 @@ export class Visual implements IVisual {
         return p ? this.t(p.key, p.label) : prop;
     }
 
-    private markSubSelectables(): void {
+    /**
+     * Formato en el lienzo: cada elemento lleva el objectName EXACTO de su objeto de capabilities (OBJECTS), y la
+     * tarjeta a la que lleva sale de cardOf(). Se llama en render() (todo) y en drawRows() (las filas que crea el scroll).
+     */
+    private markSubSelectables(scope: HTMLElement = this.root): void {
+        const T = 1, S = 3;   // SubSelectionStylesType: Text, Shape
         const marcar = (sel: string, objeto: string, tipo: number) => {
-            this.root.querySelectorAll(sel).forEach(el => {
-                if (!this.formatMode) { el.classList.remove(HtmlSubSelectableClass); return; }
+            scope.querySelectorAll(sel).forEach(el => {
+                if (!this.formatMode) {
+                    el.classList.remove(HtmlSubSelectableClass);
+                    el.removeAttribute(SubSelectableObjectNameAttribute);
+                    return;
+                }
                 el.classList.add(HtmlSubSelectableClass);
                 el.setAttribute(SubSelectableObjectNameAttribute, objeto);
-                el.setAttribute(SubSelectableDisplayNameAttribute, this.cardLabel(objeto));
+                el.setAttribute(SubSelectableDisplayNameAttribute, this.subLabel(objeto));
                 el.setAttribute(SubSelectableTypeAttribute, String(tipo));
             });
         };
-        marcar(".st-h", "header", 1);
-        marcar(".st-row .st-c-spark", "sparkline", 3);
-        marcar(".st-row .st-c-spark2", "spark2", 3);
-        marcar(".st-row .st-c-spark3", "spark3", 3);
-        marcar(".st-row .st-c-val, .st-row .st-c-delta, .st-row .st-c-pct", "values", 1);
-        marcar(".st-row .st-c-name", "rows", 1);
-        marcar(".st-row .st-c-vabs, .st-row .st-c-vbar, .st-row .st-c-vpct, .st-row .st-ref", "variance", 1);
+        // Cabecera y buscador → Column headers
+        marcar(".st-h, .st-h2, .st-search", "header", T);
+        // Nombre de fila (y su imagen) → Row levels, el objeto de SU nivel; total → Grand total row
+        marcar(".st-row.st-l0 .st-c-name", "level1", T);
+        marcar(".st-row.st-l1 .st-c-name", "level2", T);
+        marcar(".st-row.st-l2 .st-c-name, .st-row.st-l3 .st-c-name", "level3", T);
+        marcar(".st-total .st-c-name", "levelTotal", T);
+        // Valor, Δ / Δ% y otras medidas → Values
+        marcar(".st-c-val, .st-c-delta, .st-c-pct, .st-c-m2, .st-c-m3", "values", T);
+        // Referencias y varianza → Variance; estado → Status icons
+        marcar(".st-c-pl, .st-c-py, .st-c-fc, .st-c-vabs, .st-c-vbar, .st-c-vpct", "variance", T);
+        marcar(".st-c-stat, .st-sicon", "status", S);
+        // Minigráficos → su tarjeta; las bandas del bullet → Qualitative bands
+        marcar(".st-c-spark", "sparkline", S);
+        marcar(".st-c-spark2", "spark2", S);
+        marcar(".st-c-spark3", "spark3", S);
+        marcar(".st-c-spark .st-b1, .st-c-spark .st-b2, .st-c-spark .st-b3", "bands", S);
+        // Separadores: el fondo de la tabla (lo que no es una celda) → Gridlines
+        if (scope === this.root) marcar(".st-scroller", "grid", S);
+    }
+
+    /** Tarjeta del panel a la que lleva cada objeto (los niveles viven en la tarjeta Row levels). */
+    private cardOf(obj: string): string {
+        return obj === "level1" || obj === "level2" || obj === "level3" || obj === "levelTotal" ? "levels" : obj;
+    }
+
+    /** Nombre del elemento en el lienzo: "Row levels · Level 2" para los niveles, el de la tarjeta para el resto. */
+    private subLabel(obj: string): string {
+        if (this.cardOf(obj) === "levels") {
+            const pane = PANE.find(c => c.uid === "levels");
+            return (pane ? this.t(pane.key, pane.label) : "") + " · " + this.cardLabel(obj);
+        }
+        return this.cardLabel(obj);
     }
 
     private getSubSelectionStyles(subs: powerbi.visuals.CustomVisualSubSelection[]): powerbi.visuals.SubSelectionStyles | undefined {
         const name = subs[0]?.customVisualObjects[0]?.objectName;
         const ref = (o: string, p: string) => ({ reference: { objectName: o, propertyName: p }, label: this.propLabel(o, p) });
+        const has = (o: string, p: string) => !!OBJECTS[o]?.props.some(x => x.name === p);
+        const text = (o: string, family: string | null, size: string, color: string, bold: string | null, bg: string | null) => {
+            const st: any = { type: 1, fontSize: ref(o, size), fontColor: ref(o, color) };
+            if (family && has(o, family)) st.fontFamily = ref(o, family);
+            if (bold && has(o, bold)) st.bold = ref(o, bold);
+            if (bg && has(o, bg)) st.background = ref(o, bg);
+            return st;
+        };
         switch (name) {
+            case "header": return text("header", "fontFamily", "fontSize", "color", "bold", "background");
+            case "level1": case "level2": case "level3": case "levelTotal": return text(name, "fontFamily", "fontSize", "color", null, "background");
+            case "values": return text("values", null, "fontSize", "valueColor", null, "valueBackground");
+            case "variance": return { type: 3, fill: ref("variance", "goodColor"), stroke: ref("variance", "badColor") } as any;
+            case "status": return { type: 3, fill: ref("status", "goodColor"), color: ref("status", "neutralColor"), stroke: ref("status", "badColor") } as any;
             case "sparkline": return { type: 3, stroke: ref("sparkline", "color"), width: ref("sparkline", "width") } as any;
             case "spark2": case "spark3": return { type: 3, stroke: ref(name, "color") } as any;
-            case "header": return { type: 1, fontSize: ref("header", "fontSize") } as any;
-            case "values": return { type: 1, fontSize: ref("values", "fontSize") } as any;
-            case "rows": return { type: 1, fontSize: ref("rows", "fontSize") } as any;
+            case "bands": return { type: 3, fill: ref("bands", "band3Color") } as any;
+            case "grid": return { type: 3, stroke: ref("grid", "vColor"), width: ref("grid", "vWidth") } as any;
         }
         return undefined;
     }
@@ -2788,7 +2842,7 @@ export class Visual implements IVisual {
             disabledLabel: this.propLabel(o, p), enabledLabel: this.propLabel(o, p) });
         const pick = (o: string, p: string) => ({ type: 3, ...id(o, p), label: this.propLabel(o, p) });
         const reset = (o: string) => ({ type: 0, relatedResetFormattingIds: OBJECTS[o].props.map(p => id(o, p.name)) });
-        const nav = (o: string) => ({ type: 1, destinationInfo: { cardUid: "Visual-" + o + "-card" }, label: this.cardLabel(o) });
+        const nav = (o: string) => ({ type: 1, destinationInfo: { cardUid: "Visual-" + this.cardOf(o) + "-card" }, label: this.cardLabel(this.cardOf(o) === "levels" ? o : o) });
         const div = { type: 7 };
         switch (name) {
             case "sparkline": return [pick("sparkline", "type"), pick("sparkline", "scale"), toggle("sparkline", "showLast"), toggle("sparkline", "target"), div, reset("sparkline"), nav("sparkline")] as any;
@@ -2798,6 +2852,11 @@ export class Visual implements IVisual {
             case "spark2": case "spark3": return [toggle(name, "show"), pick(name, "measure"), pick(name, "type"), pick(name, "scale"), div, reset(name), nav(name)] as any;
             case "variance": return [pick("variance", "base"), toggle("variance", "showReference"), toggle("variance", "showAbs"), toggle("variance", "showPct"),
                 toggle("variance", "showBar"), div, reset("variance"), nav("variance")] as any;
+            case "status": return [toggle("status", "show"), pick("status", "position"), div, reset("status"), nav("status")] as any;
+            case "bands": return [toggle("bands", "showBands"), toggle("bands", "lowerIsBetter"), div, reset("bands"), nav("bands")] as any;
+            case "grid": return [pick("grid", "vertical"), pick("grid", "vStyle"), toggle("grid", "horizontal"), div, reset("grid"), nav("grid")] as any;
+            case "level1": case "level2": case "level3": case "levelTotal":
+                return [toggle(name, "italic"), pick(name, "bold"), div, reset(name), nav(name), { type: 1, destinationInfo: { cardUid: "Visual-rows-card" }, label: this.cardLabel("rows") }] as any;
         }
         return undefined;
     }

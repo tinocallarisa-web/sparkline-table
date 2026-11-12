@@ -464,6 +464,47 @@ async def main():
             res["grid_eventos"] = await events(pg)
             await pg.close()
 
+        # ── Formato en el lienzo (on-object): cada elemento abre SU tarjeta; el clic no selecciona ni expande ─
+        if not FREE:
+            pg = await page()
+            await pg.evaluate("""() => { window.__subs = []; __host.subSelectionService.subSelect = (a) => { __subs.push(a); };
+                document.getElementById('host').addEventListener('click', () => { window.__hostClicks = (window.__hostClicks || 0) + 1; }); }""")
+            fmt_dv = dvp({"status": {"show": True}, "sparkline": {"type": "bullet"}, "spark2": {"show": True}}, expanded={"Z0", "Z0|C0"})
+            await pg.evaluate("window.__dvO = " + json.dumps(fmt_dv) + ";")
+            fmt_upd = """(fm) => { __updates++; __v.update({ dataViews: [__dvO], viewport: {width: %d, height: %d}, type: 2, operationKind: 0, viewMode: 1, formatMode: fm, subSelections: [] }); }""" % (W, Hh)
+            await pg.evaluate(fmt_upd, True)
+            await pg.wait_for_timeout(60)
+            await shot(pg, "28_formato_en_el_lienzo")
+            res["oo_marcados"] = await pg.evaluate("""() => { const out = {}; document.querySelectorAll('[data-sub-selection-object-name]').forEach(e => {
+                const k = e.getAttribute('data-sub-selection-object-name'); out[k] = (out[k] || 0) + 1; }); return out; }""")
+            targets = [("cabecera", ".st-h-val .st-h1"), ("nombre_nivel1", ".st-row.st-l0 .st-label"), ("nombre_nivel2", ".st-row.st-l1 .st-label"),
+                       ("nombre_nivel3", ".st-row.st-l2 .st-label"), ("valor", ".st-row .st-c-val"), ("delta", ".st-row .st-c-delta"),
+                       ("referencia", ".st-row .st-c-pl"), ("varianza", ".st-row .st-c-vbar"), ("estado", ".st-row .st-c-stat"),
+                       ("minigrafico", ".st-row .st-c-spark"), ("banda_bullet", ".st-row .st-c-spark .st-b3"), ("minigrafico2", ".st-row .st-c-spark2"),
+                       ("total", ".st-total .st-c-name"), ("fondo_tabla", ".st-scroller")]
+            res["oo_clic"] = {}
+            t0 = await pg.evaluate("[__toggles.length, __lastSelectArg, __persist.length]")
+            for nm, sel in targets:
+                ok = await pg.evaluate("""(sel) => { const el = document.querySelector(sel); if (!el) return 'sin elemento';
+                    const n0 = __subs.length; __tap(el); const s = __subs.slice(n0);
+                    const o = s.length ? (s[0].customVisualObjects || [])[0] : null; return o ? o.objectName : ('sin subSelect, host=' + (window.__hostClicks || 0)); }""", sel)
+                res["oo_clic"][nm] = ok
+            res["oo_sin_seleccion_ni_toggle"] = (await pg.evaluate("[__toggles.length, __lastSelectArg, __persist.length]")) == t0
+            # Atajos: "Ir a la tarjeta" de un nivel lleva a Row levels; de las bandas, a Qualitative bands.
+            res["oo_atajos"] = await pg.evaluate("""() => { const nav = o => (__v.getSubSelectionShortcuts([{ customVisualObjects: [{ objectName: o }] }]) || []).filter(s => s.type === 1).map(s => s.destinationInfo.cardUid);
+                return { level2: nav('level2'), bands: nav('bands'), grid: nav('grid'), status: nav('status'), header: nav('header') }; }""")
+            res["oo_estilos"] = await pg.evaluate("""() => { const st = o => { const s = __v.getSubSelectionStyles([{ customVisualObjects: [{ objectName: o }] }]); return s ? Object.keys(s).join(',') : null; };
+                return { header: st('header'), level1: st('level1'), values: st('values'), grid: st('grid') }; }""")
+            # Tarjetas del panel que existen (los cardUid de los atajos deben estar aquí con el prefijo Visual-)
+            res["oo_tarjetas"] = await pg.evaluate("__v.getFormattingModel().cards.map(c => c.uid)")
+            # Fuera del modo formato todo sigue igual: el clic selecciona.
+            await pg.evaluate(fmt_upd, False)
+            await pg.wait_for_timeout(60)
+            await pg.evaluate("() => __tap(document.querySelector('.st-row.st-l2 .st-c-val'))")
+            res["oo_fuera_selecciona"] = await pg.evaluate("[__lastSelectArg, document.querySelectorAll('[data-sub-selection-object-name]').length]")
+            res["oo_eventos"] = await events(pg)
+            await pg.close()
+
         # ── Parte 1 bis (hallazgo de Tino en Desktop): filas sin real y unidades distintas ────────────
         pg = await page()
         def ghosts(dv):
