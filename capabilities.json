@@ -460,6 +460,52 @@
             "bool": true
           }
         },
+        "curve": {
+          "displayName": "Curve",
+          "displayNameKey": "Prop_sparkline_curve",
+          "type": {
+            "enumeration": [
+              {
+                "value": "linear",
+                "displayName": "Linear",
+                "displayNameKey": "Enum_curve_linear"
+              },
+              {
+                "value": "smooth",
+                "displayName": "Smooth",
+                "displayNameKey": "Enum_curve_smooth"
+              },
+              {
+                "value": "step",
+                "displayName": "Step",
+                "displayNameKey": "Enum_curve_step"
+              }
+            ]
+          }
+        },
+        "lineColor": {
+          "displayName": "Line colour",
+          "displayNameKey": "Prop_sparkline_lineColor",
+          "type": {
+            "enumeration": [
+              {
+                "value": "neutral",
+                "displayName": "Neutral",
+                "displayNameKey": "Enum_lineColor_neutral"
+              },
+              {
+                "value": "row",
+                "displayName": "Per row",
+                "displayNameKey": "Enum_lineColor_row"
+              },
+              {
+                "value": "trend",
+                "displayName": "By trend",
+                "displayNameKey": "Enum_lineColor_trend"
+              }
+            ]
+          }
+        },
         "width": {
           "displayName": "Line width",
           "displayNameKey": "Prop_sparkline_width",
@@ -506,6 +552,73 @@
         "targetColor": {
           "displayName": "Target color",
           "displayNameKey": "Prop_sparkline_targetColor",
+          "type": {
+            "fill": {
+              "solid": {
+                "color": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "bands": {
+      "displayName": "Qualitative bands",
+      "displayNameKey": "Obj_bands",
+      "properties": {
+        "showBands": {
+          "displayName": "Show bands",
+          "displayNameKey": "Prop_bands_showBands",
+          "type": {
+            "bool": true
+          }
+        },
+        "band1Pct": {
+          "displayName": "Poor below (% of target)",
+          "displayNameKey": "Prop_bands_band1Pct",
+          "type": {
+            "numeric": true
+          }
+        },
+        "band2Pct": {
+          "displayName": "Good from (% of target)",
+          "displayNameKey": "Prop_bands_band2Pct",
+          "type": {
+            "numeric": true
+          }
+        },
+        "lowerIsBetter": {
+          "displayName": "Lower is better",
+          "displayNameKey": "Prop_bands_lowerIsBetter",
+          "type": {
+            "bool": true
+          }
+        },
+        "band1Color": {
+          "displayName": "Band 1 (worst)",
+          "displayNameKey": "Prop_bands_band1Color",
+          "type": {
+            "fill": {
+              "solid": {
+                "color": true
+              }
+            }
+          }
+        },
+        "band2Color": {
+          "displayName": "Band 2 (mid)",
+          "displayNameKey": "Prop_bands_band2Color",
+          "type": {
+            "fill": {
+              "solid": {
+                "color": true
+              }
+            }
+          }
+        },
+        "band3Color": {
+          "displayName": "Band 3 (best)",
+          "displayNameKey": "Prop_bands_band3Color",
           "type": {
             "fill": {
               "solid": {

@@ -490,6 +490,29 @@ async def main():
         res["eventos_pagina_niveles"] = {"updates": nu, "pares_1a1": ev == "SF" * nu}
         await pg.close()
 
+        # Curvas, color de línea y bandas del bullet (bloque 1, 12-11)
+        pg = await page(W, H)
+        vis = {"Z0", "Z0|C0", "Z1"}
+        for nm, ob in [("26_curva_linear", {"sparkline": {"curve": "linear", "scale": "row"}}),
+                       ("27_curva_smooth", {"sparkline": {"curve": "smooth", "scale": "row"}}),
+                       ("28_curva_step", {"sparkline": {"curve": "step", "scale": "row"}}),
+                       ("29_area_smooth", {"sparkline": {"type": "area", "curve": "smooth", "scale": "row"}}),
+                       ("30_color_por_fila", {"sparkline": {"lineColor": "row", "scale": "row"}, "markers": {"max": True, "min": True}}),
+                       ("31_color_por_tendencia", {"sparkline": {"lineColor": "trend", "scale": "row"}, "markers": {"max": True, "min": True}}),
+                       ("32_bullet_bandas", {"sparkline": {"type": "bullet", "scale": "row"}}),
+                       ("33_bullet_bandas_lower_better", {"sparkline": {"type": "bullet", "scale": "row"}, "bands": {"lowerIsBetter": True}})]:
+            await upd(pg, build(expanded=vis, objects=ob)[0], W, H)
+            await pg.screenshot(path=os.path.join(OUT, nm + ".png"))
+        res["bandas_pintadas"] = await pg.evaluate("[...document.querySelectorAll('.st-b1, .st-b2, .st-b3')].filter(p => p.getAttribute('d')).length")
+        await upd(pg, build(expanded=vis, objects={"sparkline": {"type": "bullet"}, "rows": {"tooltips": "row"}})[0], W, H)
+        await pg.evaluate("() => { window.__tipItems = null; __host.tooltipService.show = (o) => { window.__tipItems = o.dataItems; __tips++; }; }")
+        vb = await pg.evaluate("(() => { const r = document.querySelector('.st-row[data-i=\"3\"] .st-c-val').getBoundingClientRect(); return [r.x + r.width / 2, r.y + r.height / 2]; })()")
+        await pg.mouse.move(vb[0], vb[1]); await pg.wait_for_timeout(450)
+        res["tooltip_banda"] = await pg.evaluate("(__tipItems || []).filter(i => i.displayName === 'Band' || i.displayName === 'Banda').map(i => i.value)")
+        ev = await pg.evaluate("__ev.join('')"); nu = await pg.evaluate("__updates")
+        res["eventos_pagina_curvas"] = {"updates": nu, "pares_1a1": ev == "SF" * nu}
+        await pg.close()
+
         # Banderas en el nivel 1 (rol Row image, data URI); una zona con URL http (no se carga) y el aviso editando.
         pg = await page(W, H)
         dvi = add_images(build(expanded={"Z1"}, objects={"level1": {"imageShape": "round"}})[0])

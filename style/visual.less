@@ -78,6 +78,11 @@
 .st-toggle.st-can:hover { color: var(--st-text); }
 .st-svg { display: block; overflow: visible; }
 .st-band { fill: var(--st-band); stroke: none; }
+// Bandas cualitativas del bullet (colores de Qualitative bands); en alto contraste, solo el contorno.
+.st-b1 { fill: var(--st-b1); } .st-b2 { fill: var(--st-b2); } .st-b3 { fill: var(--st-b3); }
+.st-root.st-hc .st-b1, .st-root.st-hc .st-b2, .st-root.st-hc .st-b3 { stroke: var(--st-text); stroke-width: 0.75; }
+// Line colour por fila o por tendencia: máximo y mínimo en el color de la fila (la forma los distingue).
+.st-svg.st-colored .st-mk-max, .st-svg.st-colored .st-mk-min { fill: var(--st-line); }
 .st-area { fill: var(--st-line); fill-opacity: 0.22; stroke: none; }
 .st-line { fill: none; stroke: var(--st-line); stroke-width: 1.5; stroke-linejoin: round; stroke-linecap: round; }
 .st-pos { fill: var(--st-line); }

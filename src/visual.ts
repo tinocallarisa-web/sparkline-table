@@ -21,6 +21,7 @@
 
 import powerbi from "powerbi-visuals-api";
 import { select, Selection } from "d3-selection";
+import { line as d3line, area as d3area, curveLinear, curveMonotoneX, curveStep } from "d3-shape";
 import { valueFormatter } from "powerbi-visuals-utils-formattingutils";
 import {
     HtmlSubSelectableClass, HtmlSubSelectionHelper, SubSelectableDisplayNameAttribute,
@@ -80,6 +81,7 @@ interface Col { id: ColId; w: number; sortKey: string | null; }
 
 interface Geo {
     gen: number; line: string; area: string; pos: string; neg: string; tgt: string; band: string;
+    b1: string; b2: string; b3: string; bandName: string; color: string;
     mkFirst: string; mkMax: string; mkMin: string; mkNeg: string; mkLast: string;
     lastX: number; lastY: number; lastText: string;
 }
@@ -684,7 +686,11 @@ export class Visual implements IVisual {
         set("--st-bg", L.bg); set("--st-text", L.text); set("--st-soft", L.soft); set("--st-rule", L.rule);
         set("--st-line", L.line); set("--st-accent", L.accent); set("--st-up", L.up); set("--st-down", L.down);
         set("--st-target", L.target); set("--st-sub", L.sub); set("--st-sel", L.sel); set("--st-hover", L.hover);
-        set("--st-band", L.band); set("--st-focus", this.hc ? this.hcSel : L.accent);
+        set("--st-band", L.band);
+        const bs = this.settings.bands;
+        set("--st-b1", this.hc ? "transparent" : String(bs.band1Color || "#F6CFCB"));
+        set("--st-b2", this.hc ? "transparent" : String(bs.band2Color || "#FBE7B5"));
+        set("--st-b3", this.hc ? "transparent" : String(bs.band3Color || "#CDE8CF")); set("--st-focus", this.hc ? this.hcSel : L.accent);
         st.background = this.hc ? this.hcBg : (this.settings.style.template === "classic" ? CLASSIC.bg : "transparent");
         this.root.classList.toggle("st-hc", this.hc);
         for (const t of ["line", "area", "column", "winloss", "bullet"]) this.root.classList.toggle("st-t-" + t, this.settings.sparkline.type === t);
@@ -743,7 +749,8 @@ export class Visual implements IVisual {
             this.ext.set(r.level, e);
             const b = this.extBullet.get(r.level) ?? [0, 0];
             const bt = this.bulletTarget(r, m);
-            for (const v of [r.shown[0], bt]) if (v !== null && v !== undefined) { if (v < b[0]) b[0] = v; if (v > b[1]) b[1] = v; }
+            // Con bandas, un 10 % de aire sobre el objetivo para que se vea la banda buena.
+            for (const v of [r.shown[0], bt, bt !== null && this.bandEdges(bt, m) ? bt * 1.1 : null]) if (v !== null && v !== undefined) { if (v < b[0]) b[0] = v; if (v > b[1]) b[1] = v; }
             this.extBullet.set(r.level, b);
         }
     }
@@ -1045,7 +1052,7 @@ export class Visual implements IVisual {
         for (const c of ["val", "delta", "pct", "m2", "m3"]) rowSel.append("div").attr("class", "st-c st-c-" + c).attr("role", "gridcell");
         const sp = rowSel.append("div").attr("class", "st-c st-c-spark").attr("role", "gridcell");
         const svg = sp.append("svg").attr("class", "st-svg").attr("aria-hidden", "true");
-        for (const c of ["st-band", "st-area", "st-pos", "st-neg", "st-tgt", "st-line", "st-mk-neg", "st-mk-first", "st-mk-max", "st-mk-min", "st-mk-last", "st-hover"]) {
+        for (const c of ["st-b1", "st-b2", "st-b3", "st-band", "st-area", "st-pos", "st-neg", "st-tgt", "st-line", "st-mk-neg", "st-mk-first", "st-mk-max", "st-mk-min", "st-mk-last", "st-hover"]) {
             svg.append("path").attr("class", c);
         }
         svg.append("text").attr("class", "st-lastlbl");
@@ -1154,9 +1161,14 @@ export class Visual implements IVisual {
             const p = svg.querySelector("." + cls) as SVGPathElement;
             if (p.getAttribute("d") !== v) { if (v) p.setAttribute("d", v); else p.removeAttribute("d"); }
         };
+        set("st-b1", g.b1); set("st-b2", g.b2); set("st-b3", g.b3);
         set("st-band", g.band); set("st-area", g.area); set("st-pos", g.pos); set("st-neg", g.neg); set("st-tgt", g.tgt);
         set("st-line", g.line); set("st-mk-neg", g.mkNeg); set("st-mk-first", g.mkFirst); set("st-mk-max", g.mkMax);
         set("st-mk-min", g.mkMin); set("st-mk-last", g.mkLast); set("st-hover", "");
+        // Line colour: por fila o por tendencia, la línea, las barras y los marcadores toman el color de la fila.
+        if (g.color) { svg.style.setProperty("--st-line", g.color); svg.style.setProperty("--st-accent", g.color); }
+        else { svg.style.removeProperty("--st-line"); svg.style.removeProperty("--st-accent"); }
+        svg.classList.toggle("st-colored", !!g.color);
         const line = svg.querySelector(".st-line") as SVGPathElement;
         line.style.strokeWidth = String(this.settings.sparkline.width);
         const t = svg.querySelector(".st-lastlbl") as SVGTextElement;
@@ -1164,6 +1176,50 @@ export class Visual implements IVisual {
         t.setAttribute("x", String(w - 2));
         t.setAttribute("y", String(Math.round(h / 2)));
         t.style.fontSize = Math.max(7, Math.min(Number(this.settings.values.fontSize) - 1, Math.round(h * 0.55))) + "px";
+    }
+
+    /**
+     * Line colour. Neutral: "" (gris de la plantilla con el último punto en el acento). Per row: la paleta del tema,
+     * estable por clave de fila (en los subtotales, el color del nivel). By trend: el verde/rojo de la columna Δ según
+     * el último valor frente a la base de "Change vs" (sin base, neutro). Alto contraste manda: siempre "".
+     */
+    private rowLineColor(r: Row): string {
+        const mode = String(this.settings.sparkline.lineColor);
+        if (this.hc || mode === "neutral") return "";
+        if (mode === "row") {
+            try { return this.pal?.getColor?.(r.isLeaf ? "row:" + r.key : "level:" + r.level)?.value ?? ""; } catch { return ""; }
+        }
+        if (r.delta === null) return "";
+        const inv = !!this.settings.values.invert;
+        const good = r.delta === 0 ? true : (r.delta > 0) !== inv;
+        return good ? this.look.up : this.look.down;
+    }
+
+    /** Bandas del bullet: bordes en unidades del valor (umbrales en % del objetivo) o null si no tocan. */
+    private bandEdges(t: Num, m: Model): { edges: [number, number]; lower: boolean; p1: number; p2: number } | null {
+        const b = this.settings.bands;
+        if (b.showBands === false || t === null || !(t > 0) || !this.showTarget(m) || this.settings.sparkline.type !== "bullet") return null;
+        let p1 = Number(b.band1Pct) / 100, p2 = Number(b.band2Pct) / 100;
+        if (p1 > p2) [p1, p2] = [p2, p1];
+        const lower = !!b.lowerIsBetter;
+        // Lower is better: los mismos umbrales reflejados alrededor del 100 % (80/95 → bueno ≤ 105 %, malo > 120 %).
+        const edges: [number, number] = lower ? [t * (2 - p2), t * (2 - p1)] : [t * p1, t * p2];
+        return { edges, lower, p1, p2 };
+    }
+
+    /** En qué banda cae el valor del bullet (para el tooltip). */
+    private bandOf(r: Row, m: Model): string {
+        const t = this.bulletTarget(r, m), v = r.shown[0];
+        const bd = this.bandEdges(t, m);
+        if (!bd || v === null || v === undefined) return "";
+        const [e1, e2] = bd.edges;
+        const k = !bd.lower ? (v < e1 ? 1 : v < e2 ? 2 : 3) : (v <= e1 ? 3 : v <= e2 ? 2 : 1);
+        const name = k === 1 ? this.t("UI_BandPoor", "Poor") : k === 2 ? this.t("UI_BandFair", "Fair") : this.t("UI_BandGood", "Good");
+        return name + " (" + this.fmtPctPlain(v / (t as number)) + " " + this.t("UI_OfTarget", "of target") + ")";
+    }
+
+    private fmtPctPlain(v: number): string {
+        try { return new Intl.NumberFormat(this.host.locale || "en-US", { style: "percent", maximumFractionDigits: 1 }).format(v); } catch { return (v * 100).toFixed(1) + "%"; }
     }
 
     /** Escala por fila: siempre, o (auto, propuesta pendiente de Tino) solo en las filas de detalle. */
@@ -1178,7 +1234,8 @@ export class Visual implements IVisual {
         if (type === "bullet") {
             if (this.perRow(r)) {
                 const b: [number, number] = [0, 0];
-                for (const v of [r.shown[0], this.bulletTarget(r, m)]) if (v !== null && v !== undefined) { b[0] = Math.min(b[0], v); b[1] = Math.max(b[1], v); }
+                const bt = this.bulletTarget(r, m);
+                for (const v of [r.shown[0], bt, bt !== null && this.bandEdges(bt, m) ? bt * 1.1 : null]) if (v !== null && v !== undefined) { b[0] = Math.min(b[0], v); b[1] = Math.max(b[1], v); }
                 return b;
             }
             return this.extBullet.get(r.level) ?? [0, 1];
@@ -1204,7 +1261,7 @@ export class Visual implements IVisual {
     private geo(r: Row, m: Model): Geo {
         const s = this.settings;
         const type = String(s.sparkline.type);
-        const g: Geo = { gen: this.gen, line: "", area: "", pos: "", neg: "", tgt: "", band: "", mkFirst: "", mkMax: "", mkMin: "", mkNeg: "", mkLast: "", lastX: -1, lastY: -1, lastText: "" };
+        const g: Geo = { gen: this.gen, line: "", area: "", pos: "", neg: "", tgt: "", band: "", b1: "", b2: "", b3: "", bandName: "", color: "", mkFirst: "", mkMax: "", mkMin: "", mkNeg: "", mkLast: "", lastX: -1, lastY: -1, lastText: "" };
         const sr = r.s[m.valueIdx[0]];
         const nP = sr.length;
         const w = this.sparkW, H = this.rowH;
@@ -1218,10 +1275,19 @@ export class Visual implements IVisual {
         // Los marcadores crecen o encogen con el alto de fila (24 px = tamaño del panel).
         const ms = Number(s.markers.size) * Math.max(0.7, Math.min(1.6, this.rowH / 24));
 
+        g.color = this.rowLineColor(r);
         if (type === "bullet") {
-            const x = (v: number) => 2 + (v - lo) / (hi - lo) * (w - 4);
+            const x = (v: number) => 2 + (Math.max(lo, Math.min(hi, v)) - lo) / (hi - lo) * (w - 4);
             const bh = Math.max(3, Math.round(ph * 0.55)), by = Math.round((H - bh) / 2);
-            g.band = "M2," + top + "H" + (w - 2) + "V" + bot + "H2Z";
+            const bt = this.bulletTarget(r, m);
+            const bd = this.bandEdges(bt, m);
+            if (bd) {
+                // Bandas cualitativas debajo; la barra del valor y la marca del objetivo encima.
+                const rect = (a: number, b: number) => b > a ? "M" + f1(x(a)) + "," + top + "H" + f1(x(b)) + "V" + bot + "H" + f1(x(a)) + "Z" : "";
+                const [e1, e2] = bd.edges;
+                if (!bd.lower) { g.b1 = rect(lo, e1); g.b2 = rect(e1, e2); g.b3 = rect(e2, hi); }
+                else { g.b3 = rect(lo, e1); g.b2 = rect(e1, e2); g.b1 = rect(e2, hi); }
+            } else g.band = "M2," + top + "H" + (w - 2) + "V" + bot + "H2Z";
             const v = r.shown[0];
             if (v !== null && v !== undefined) {
                 const x0 = x(Math.max(lo, Math.min(0, hi))), x1 = x(v);
@@ -1282,25 +1348,20 @@ export class Visual implements IVisual {
             }
             g.pos = pos; g.neg = neg;
         } else {
-            // Línea / área: un periodo vacío corta la línea (no se une ni se pone a cero).
-            let d = "", area = "", pen = false, segStart = -1, prevX = 0;
-            const baseY = f1(y(lo <= 0 && hi >= 0 ? 0 : lo));
-            for (let p = 0; p <= nP; p++) {
-                const v = p < nP ? sr[p] : null;
-                if (v === null) {
-                    if (pen && type === "area") area += "L" + f1(prevX) + "," + baseY + "L" + f1(x(segStart)) + "," + baseY + "Z";
-                    pen = false;
-                    continue;
-                }
-                const X = x(p), Y = y(v);
-                if (!pen) { segStart = p; if (type === "area") area += "M" + f1(X) + "," + baseY + "L" + f1(X) + "," + f1(Y); }
-                else if (type === "area") area += "L" + f1(X) + "," + f1(Y);
-                d += (pen ? "L" : "M") + f1(X) + "," + f1(Y);
-                // Un punto suelto (huecos a los dos lados) se ve como un trazo corto.
-                if (!pen && (p === nP - 1 || sr[p + 1] === null)) d += "h0.01";
-                pen = true; prevX = X;
+            // Línea / área con la curva elegida (Linear, Smooth = monótona, Step = escalón centrado). defined() corta en
+            // cada periodo vacío: un hueco nunca se une ni se pone a cero.
+            const curve = s.sparkline.curve === "smooth" ? curveMonotoneX : s.sparkline.curve === "step" ? curveStep : curveLinear;
+            const idx = sr.map((_v, p) => p);
+            const ok = (p: number) => sr[p] !== null;
+            const ln = d3line<number>().defined(ok).x(p => x(p)).y(p => y(sr[p] as number)).curve(curve);
+            let d = ln(idx) || "";
+            // Un punto suelto (huecos a los dos lados) se ve como un trazo corto.
+            for (let p = 0; p < nP; p++) if (ok(p) && (p === 0 || !ok(p - 1)) && (p === nP - 1 || !ok(p + 1))) d += "M" + f1(x(p)) + "," + f1(y(sr[p] as number)) + "h0.01";
+            g.line = d;
+            if (type === "area") {
+                const baseY = y(lo <= 0 && hi >= 0 ? 0 : lo);
+                g.area = d3area<number>().defined(ok).x(p => x(p)).y0(baseY).y1(p => y(sr[p] as number)).curve(curve)(idx) || "";
             }
-            g.line = d; g.area = type === "area" ? area : "";
         }
 
         if (tgS) {
@@ -1509,6 +1570,8 @@ export class Visual implements IVisual {
             out.push({ displayName: lastLbl + " " + vs, value: d.delta === null ? this.t("UI_Blank", "(Blank)")
                 : this.signed(d.delta, this.fmtCompact(d.delta, m.sources[m0].format)) + (d.deltaPct !== null ? "  (" + this.fmtPct(d.deltaPct) + ")" : "") });
             if (d.delta !== null && d.deltaPct === null) out.push({ displayName: "Δ%", value: this.t("UI_NoPctBase", "not shown: the base is zero or negative") });
+            const band = this.bandOf(d, m);
+            if (band) out.push({ displayName: this.t("UI_Band", "Band"), value: band });
             if (d.small) out.push({ displayName: "Δ%", value: this.tf("UI_SmallBase", "small base ({0}): read the % with care", this.fmtFull(d.base, m.sources[m0].format)) });
         }
         const tIdx = [m.targetIdx, m.planIdx, m.pyIdx].concat(m.tipIdx);

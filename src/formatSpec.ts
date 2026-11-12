@@ -192,6 +192,54 @@ export const OBJECTS: Record<string, ObjSpec> = {
                 "label": "Start at zero"
             },
             {
+                "name": "curve",
+                "type": "enum",
+                "def": "linear",
+                "key": "Prop_sparkline_curve",
+                "label": "Curve",
+                "items": [
+                    [
+                        "linear",
+                        "Enum_curve_linear",
+                        "Linear"
+                    ],
+                    [
+                        "smooth",
+                        "Enum_curve_smooth",
+                        "Smooth"
+                    ],
+                    [
+                        "step",
+                        "Enum_curve_step",
+                        "Step"
+                    ]
+                ]
+            },
+            {
+                "name": "lineColor",
+                "type": "enum",
+                "def": "neutral",
+                "key": "Prop_sparkline_lineColor",
+                "label": "Line colour",
+                "items": [
+                    [
+                        "neutral",
+                        "Enum_lineColor_neutral",
+                        "Neutral"
+                    ],
+                    [
+                        "row",
+                        "Enum_lineColor_row",
+                        "Per row"
+                    ],
+                    [
+                        "trend",
+                        "Enum_lineColor_trend",
+                        "By trend"
+                    ]
+                ]
+            },
+            {
                 "name": "width",
                 "type": "num",
                 "def": 1.5,
@@ -234,6 +282,66 @@ export const OBJECTS: Record<string, ObjSpec> = {
                 "def": "",
                 "key": "Prop_sparkline_targetColor",
                 "label": "Target color"
+            }
+        ]
+    },
+    "bands": {
+        "name": "bands",
+        "key": "Obj_bands",
+        "label": "Qualitative bands",
+        "props": [
+            {
+                "name": "showBands",
+                "type": "bool",
+                "def": true,
+                "key": "Prop_bands_showBands",
+                "label": "Show bands"
+            },
+            {
+                "name": "band1Pct",
+                "type": "num",
+                "def": 80,
+                "key": "Prop_bands_band1Pct",
+                "label": "Poor below (% of target)",
+                "min": 0,
+                "max": 200
+            },
+            {
+                "name": "band2Pct",
+                "type": "num",
+                "def": 95,
+                "key": "Prop_bands_band2Pct",
+                "label": "Good from (% of target)",
+                "min": 0,
+                "max": 200
+            },
+            {
+                "name": "lowerIsBetter",
+                "type": "bool",
+                "def": false,
+                "key": "Prop_bands_lowerIsBetter",
+                "label": "Lower is better"
+            },
+            {
+                "name": "band1Color",
+                "type": "fill",
+                "def": "#F6CFCB",
+                "key": "Prop_bands_band1Color",
+                "label": "Band 1 (worst)"
+            },
+            {
+                "name": "band2Color",
+                "type": "fill",
+                "def": "#FBE7B5",
+                "key": "Prop_bands_band2Color",
+                "label": "Band 2 (mid)"
+            },
+            {
+                "name": "band3Color",
+                "type": "fill",
+                "def": "#CDE8CF",
+                "key": "Prop_bands_band3Color",
+                "label": "Band 3 (best)"
             }
         ]
     },
@@ -994,6 +1102,17 @@ export const PANE: CardSpec[] = [
             {
                 "obj": "sparkline",
                 "toggle": null
+            }
+        ]
+    },
+    {
+        "uid": "bands",
+        "key": "Obj_bands",
+        "label": "Qualitative bands",
+        "groups": [
+            {
+                "obj": "bands",
+                "toggle": "showBands"
             }
         ]
     },

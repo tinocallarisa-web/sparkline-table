@@ -186,3 +186,27 @@ P.update({
 "Whole row": ["Linha inteira", "Ligne entière", "Ganze Zeile", "Intera riga", "Hele rij", "Cały wiersz", "行全体", "整行", "전체 행", "Fila entera"],
 "row images": ["imagens das linhas", "images de ligne", "Zeilenbilder", "immagini di riga", "rijafbeeldingen", "obrazy wierszy", "行の画像", "行图像", "행 이미지", "imágenes de fila"],
 })
+
+# --- 12-11 (3): curva, color de línea, bandas cualitativas del bullet ---
+P.update({
+"Band": ["Faixa", "Bande", "Band", "Fascia", "Band", "Pasmo", "バンド", "区间", "구간", "Banda"],
+"Band 1 (worst)": ["Faixa 1 (pior)", "Bande 1 (la pire)", "Band 1 (schlechteste)", "Fascia 1 (peggiore)", "Band 1 (slechtste)", "Pasmo 1 (najgorsze)", "バンド 1 (最低)", "区间 1（最差）", "구간 1(최저)", "Banda 1 (peor)"],
+"Band 2 (mid)": ["Faixa 2 (média)", "Bande 2 (moyenne)", "Band 2 (mittel)", "Fascia 2 (media)", "Band 2 (midden)", "Pasmo 2 (średnie)", "バンド 2 (中間)", "区间 2（中等）", "구간 2(중간)", "Banda 2 (media)"],
+"Band 3 (best)": ["Faixa 3 (melhor)", "Bande 3 (la meilleure)", "Band 3 (beste)", "Fascia 3 (migliore)", "Band 3 (beste)", "Pasmo 3 (najlepsze)", "バンド 3 (最高)", "区间 3（最佳）", "구간 3(최고)", "Banda 3 (mejor)"],
+"By trend": ["Por tendência", "Selon la tendance", "Nach Trend", "Per tendenza", "Op trend", "Według trendu", "傾向別", "按趋势", "추세별", "Por tendencia"],
+"Curve": ["Curva", "Courbe", "Kurve", "Curva", "Curve", "Krzywa", "曲線", "曲线", "곡선", "Curva"],
+"Fair": ["Regular", "Moyen", "Mittel", "Discreto", "Redelijk", "Średnio", "普通", "一般", "보통", "Regular"],
+"Good": ["Bom", "Bon", "Gut", "Buono", "Goed", "Dobrze", "良好", "良好", "좋음", "Bueno"],
+"Good from (% of target)": ["Bom a partir de (% da meta)", "Bon à partir de (% de l’objectif)", "Gut ab (% des Ziels)", "Buono da (% dell’obiettivo)", "Goed vanaf (% van doel)", "Dobrze od (% celu)", "良好の下限 (目標の %)", "良好起点（目标的 %）", "좋음 기준(목표의 %)", "Bueno desde (% del objetivo)"],
+"Line colour": ["Cor da linha", "Couleur de ligne", "Linienfarbe", "Colore linea", "Lijnkleur", "Kolor linii", "線の色", "线条颜色", "선 색", "Color de línea"],
+"Linear": ["Linear", "Linéaire", "Linear", "Lineare", "Lineair", "Liniowa", "直線", "线性", "선형", "Lineal"],
+"Lower is better": ["Menor é melhor", "Plus bas est mieux", "Niedriger ist besser", "Più basso è meglio", "Lager is beter", "Niższe jest lepsze", "低いほど良い", "越低越好", "낮을수록 좋음", "Menor es mejor"],
+"Neutral": ["Neutra", "Neutre", "Neutral", "Neutro", "Neutraal", "Neutralny", "ニュートラル", "中性", "중립", "Neutro"],
+"Poor": ["Fraco", "Faible", "Schwach", "Scarso", "Zwak", "Słabo", "不良", "较差", "나쁨", "Malo"],
+"Poor below (% of target)": ["Fraco abaixo de (% da meta)", "Faible en dessous de (% de l’objectif)", "Schwach unter (% des Ziels)", "Scarso sotto (% dell’obiettivo)", "Zwak onder (% van doel)", "Słabo poniżej (% celu)", "不良の上限 (目標の %)", "较差上限（目标的 %）", "나쁨 기준(목표의 %)", "Malo por debajo de (% del objetivo)"],
+"Qualitative bands": ["Faixas qualitativas", "Bandes qualitatives", "Qualitative Bänder", "Fasce qualitative", "Kwalitatieve banden", "Pasma jakościowe", "定性バンド", "定性区间", "정성 구간", "Bandas cualitativas"],
+"Show bands": ["Mostrar faixas", "Afficher les bandes", "Bänder anzeigen", "Mostra fasce", "Banden weergeven", "Pokaż pasma", "バンドを表示", "显示区间", "구간 표시", "Mostrar bandas"],
+"Smooth": ["Suave", "Lissée", "Geglättet", "Smussata", "Vloeiend", "Wygładzona", "滑らか", "平滑", "부드럽게", "Suave"],
+"Step": ["Degraus", "Escalier", "Stufen", "A gradini", "Trap", "Schodkowa", "階段", "阶梯", "계단", "Escalonada"],
+"of target": ["da meta", "de l’objectif", "des Ziels", "dell’obiettivo", "van doel", "celu", "目標比", "目标的", "목표 대비", "del objetivo"],
+})

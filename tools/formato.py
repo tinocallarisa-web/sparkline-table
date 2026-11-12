@@ -41,12 +41,27 @@ OBJECTS = [
         # auto (propuesta, pendiente de Tino): por fila en el último nivel, común por nivel en los subtotales.
         ("scale", "Scale", "enum", "auto", {"items": [("auto", "Per row in detail rows, shared in subtotals"), ("level", "Shared by level"), ("row", "Per row")]}),
         ("zero", "Start at zero", "bool", False, {}),
+        # Curva de línea y área (gratis, 12-11): Smooth = monótona (nunca se pasa de los datos); Step = escalón centrado.
+        ("curve", "Curve", "enum", "linear", {"items": [("linear", "Linear"), ("smooth", "Smooth"), ("step", "Step")]}),
+        # Color de la línea: neutro (gris con el último punto en color), por fila (paleta del tema) o por tendencia.
+        ("lineColor", "Line colour", "enum", "neutral", {"items": [("neutral", "Neutral"), ("row", "Per row"), ("trend", "By trend")]}),
         ("width", "Line width", "num", 1.5, {"min": 0.5, "max": 4}),
         ("color", "Color", "fill", "", {}),
         ("accent", "Last point color", "fill", "", {}),
         ("showLast", "Show last value", "bool", True, {}),
         ("target", "Show target line", "bool", True, {}),
         ("targetColor", "Target color", "fill", "", {}),
+    ]),
+    # Bandas cualitativas del bullet (gratis, 12-11). Nombres de Bullet Chart Pro (showBands, band1Pct, band2Pct,
+    # band1Color..band3Color); aquí los umbrales son % del OBJETIVO.
+    ("bands", "Qualitative bands", [
+        ("showBands", "Show bands", "bool", True, {}),
+        ("band1Pct", "Poor below (% of target)", "num", 80, {"min": 0, "max": 200}),
+        ("band2Pct", "Good from (% of target)", "num", 95, {"min": 0, "max": 200}),
+        ("lowerIsBetter", "Lower is better", "bool", False, {}),
+        ("band1Color", "Band 1 (worst)", "fill", "#F6CFCB", {}),
+        ("band2Color", "Band 2 (mid)", "fill", "#FBE7B5", {}),
+        ("band3Color", "Band 3 (best)", "fill", "#CDE8CF", {}),
     ]),
     ("markers", "Markers", [
         ("last", "Last point", "bool", True, {}),
@@ -107,6 +122,7 @@ PANE = [
     ("style", "Style template", [("style", None, None)]),
     ("values", "Values", [("values", None, None)]),
     ("sparkline", "Sparkline", [("sparkline", None, None)]),
+    ("bands", "Qualitative bands", [("bands", None, "showBands")]),
     ("markers", "Markers", [("markers", None, None)]),
     ("rows", "Rows", [("rows", None, None)]),
     # Row levels: el visual la construye en código (un elemento por nivel presente), como el trazo por serie de Line Chart.

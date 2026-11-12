@@ -251,3 +251,26 @@ lo honesto. Para ver la forma, usa línea.
 - Tamaño: una bandera SVG de tres franjas ocupa ~300-600 caracteres en Base64 y un PNG de 32×24 px, 1-2 KB. Caben
   holgados. Límite (inferido, no medido aquí): las columnas de texto se truncan a 32.766 caracteres al cargar; una
   medida DAX puede devolver cadenas más largas. Para imágenes grandes, mejor una medida.
+
+## 12-11 (3): curva, color de línea y bandas del bullet (gratis)
+- **Sparkline → Curve**: Linear (por defecto), Smooth y Step, para línea y área (filas, subtotales y total).
+  - Smooth = `curveMonotoneX`: nunca se pasa de los datos.
+  - Step = `curveStep`, el escalón centrado: cada mes ocupa su mitad a cada lado, así el escalón acaba en el último
+    punto. Se elige este frente a StepAfter, que lo alargaría medio periodo.
+  - Los huecos siguen cortando la línea (`defined`).
+- **Sparkline → Line colour**:
+  - Neutral (lo de siempre): gris con el último punto en color.
+  - Per row: paleta del tema, estable por clave de fila; los subtotales llevan el color de su nivel.
+  - By trend: el verde o rojo de la columna Δ según el último valor frente a la base de *Change vs*. Respeta *A decrease
+    is good*; sin base, neutro.
+  - Con Per row y By trend, máximo y mínimo van en el color de la fila (la forma los distingue).
+  - El alto contraste manda sobre todo esto.
+- **Qualitative bands** (tarjeta propia; nombres de Bullet Chart Pro: `showBands`, `band1Pct`, `band2Pct`,
+  `band1Color`-`band3Color`): solo con el tipo Bullet y un objetivo positivo.
+  - Por defecto: malo < 80 % del objetivo, regular 80-95 %, bueno ≥ 95 %.
+  - *Lower is better* refleja los umbrales alrededor del 100 %: bueno ≤ 105 %, malo > 120 %.
+  - Colores suaves por defecto: rojo #F6CFCB, ámbar #FBE7B5, verde #CDE8CF.
+  - La barra del valor y la marca del objetivo van encima, con un 10 % de aire sobre el objetivo para que se vea la
+    banda buena.
+  - El tooltip dice la banda: "Malo (53,9 % del objetivo)".
+  - En alto contraste, solo los contornos.
