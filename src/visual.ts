@@ -571,7 +571,7 @@ export class Visual implements IVisual {
             const isData = (options.type & 2) !== 0 || !this.dataView;
             this.dataView = dv;
             const vm = (options as any).viewMode;
-            this.editing = typeof vm === "number" && vm !== 0;
+            this.editing = typeof vm === "number" && vm !== 0; // EDITING_MARKER
             this.formatMode = !!(options as any).formatMode;
             this.subSelectionHelper.setFormatMode(this.formatMode);
             this.fmtCache.clear();
@@ -1632,7 +1632,7 @@ export class Visual implements IVisual {
         // nivel recibido aún se puede expandir.
         const shownLevels = m.levels.length;
         const total = Math.min(3, Math.max(m.rowFields, shownLevels + (m.lastLevelExpandable ? 1 : 0)));
-        if (total > shownLevels) {
+        if (this.editing && total > shownLevels) {   // ayuda para quien edita; el lector ya ve los ▸
             msgs.push({ t: this.tf("UI_Levels", "Showing {0} of {1} levels: use ▸ to open the next one.", String(shownLevels), String(total)), warn: false });
         }
         if (this.editing && m.blankValues > 0) msgs.push({ t: this.tf("UI_NoDate", "{0} values without a date on the axis are not drawn", this.int(m.blankValues)), warn: false });

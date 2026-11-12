@@ -60,6 +60,13 @@ const d = new Date();
 const pad = x => String(x).padStart(2, "0");
 const stamp = (free ? "testfree " : "test ") + d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()) +
     " " + pad(d.getHours()) + ":" + pad(d.getMinutes()) + " v" + json.visual.version;
+// --capturas: Desktop siempre está en edición; para las capturas de la tienda se pinta como lo ve el lector
+// (sin avisos de edición). Solo en este paquete; el fuente no cambia.
+if (capturas) {
+    const ED = 'this.editing = typeof vm === "number" && vm !== 0; // EDITING_MARKER';
+    if (vsrc.indexOf(ED) === -1) { console.error("ERROR: no encuentro EDITING_MARKER en visual.ts: actualiza build-test.js."); process.exit(1); }
+    vsrc = vsrc.replace(ED, "this.editing = false; // PATCHED BY build-test.js --capturas");
+}
 if (!capturas) vsrc = vsrc.replace(STAMP, 'const TEST_STAMP = "' + stamp + '"; // PATCHED BY build-test.js');
 
 // Licencia: _test fuerza Pro (ISPRO_MARKER); _testfree deja que el licenseManager resuelva (sin plan para el GUID de
