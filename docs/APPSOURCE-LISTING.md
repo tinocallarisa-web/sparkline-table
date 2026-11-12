@@ -139,10 +139,24 @@ No "What's new" block: this is the first version.
 | Changelog | https://tinocallarisa-web.github.io/sparkline-table/changelog.html |
 | Source | https://github.com/tinocallarisa-web/sparkline-table |
 | Product page | https://tcviz.com/product/sparkline-table/ (gives 404 today: create it in tcviz-web before publishing) |
-| Logo | `assets/icon_300x300.png` |
-| Screenshots | pending (1366x768) |
+| Logo and screenshots | see **Images** below |
 | Package | `dist/matrixSparklinesFAB7608B939348B490060433D1A28FA6.1.0.0.0.pbiviz` (production build only after explicit confirmation) |
 | Sample report | `SparklineTable_sample.pbix` (pending; no `_test` in the name) |
+
+## Images
+
+Screenshots are 1366x768, in this order. The infographics are regenerated with `python tools/gen_infographic.py`
+(`--preparar` rebuilds the crops in `tools/img/` first); their HTML is in `docs/infographic.html` and
+`docs/infographic-pro.html`.
+
+| # | File | What it shows |
+|---|---|---|
+| Logo | `assets/icon_300x300.png` | Product icon, 300x300 |
+| 1 | `assets/infographic.png` | Free: "Which rows are drifting from plan — and is it a trend or one bad month?" Region › Store with Power BI subtotals, Δ/Δ%, sparkline per row; bullet with bands; the five sparkline types; search box; formatting per level; list of everything that is free |
+| 2 | `assets/infographic-pro.png` | Pro: variance vs Plan / Prior year / Forecast (ΔPL, bar, ΔPL%) and status; 3 sparkline columns; horizon; row images; fx; the six styles; Pro preview while editing, free table for readers without a licence |
+| 3 | `assets/Image_1.png` | Scorecard by region in Power BI Desktop: variance to plan, status, sparklines; card and table filtered by the selection |
+| 4 | `assets/Image_2.png` | Sparkline types: line, column, win/loss in three columns; area and horizon in a second copy |
+| 5 | `assets/Image_3.png` | Bullet with qualitative bands and % of target, each store against its own target |
 
 The video goes **only** in its canonical form, `https://www.youtube.com/watch?v=<id>`: never a short link, never
 `/shorts/` or `/embed/` (policy 100.3.3.3).
