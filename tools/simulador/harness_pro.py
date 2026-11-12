@@ -364,6 +364,45 @@ async def main():
         res["p6_eventos"] = await events(pg)
         await pg.close()
 
+        # ── Parte 7: horizon ─────────────────────────────────────────────────────────────────────────
+        pg = await page()
+        hz = {"sparkline": {"type": "horizon"}, "variance": {"show": False}}
+        if not FREE:
+            await H.upd(pg, dvp(hz), W, Hh)
+            await shot(pg, "20_horizon_3_bandas_cero")
+            res["p7_bandas"] = await pg.evaluate("""() => { const r = document.querySelector('.st-row[data-i="2"] .st-c-spark .st-hz');
+                return [...r.querySelectorAll('path')].map(p => (p.getAttribute('class') || '') + ':' + (p.getAttribute('d') ? p.getAttribute('fill-opacity') : '-')); }""")
+            res["p7_cabecera"] = await pg.evaluate("[document.querySelector('.st-h-spark .st-h1').textContent, document.querySelector('.st-h2-spark').textContent]")
+            await H.upd(pg, dvp({"sparkline": {"type": "horizon", "horizonBase": "mean", "horizonBands": 2}, "variance": {"show": False}}), W, Hh)
+            await shot(pg, "21_horizon_2_bandas_media")
+            res["p7_media_neg"] = await pg.evaluate("[...document.querySelectorAll('.st-row .st-c-spark .st-hz-neg')].filter(p => p.getAttribute('d')).length")
+            await H.upd(pg, dvp({"sparkline": {"type": "horizon", "horizonBase": "target"}, "style": {"template": "boardroom"}, "variance": {"show": False}}), W, Hh)
+            await shot(pg, "22_horizon_objetivo_boardroom")
+            await pg.evaluate("() => { window.__tipItems = null; __host.tooltipService.show = (o) => { window.__tipItems = o.dataItems; __tips++; }; }")
+            await H.upd(pg, dvp({"sparkline": {"type": "horizon", "horizonBase": "mean"}, "rows": {"tooltips": "row"}, "variance": {"show": False}}), W, Hh)
+            box = await pg.evaluate("(() => { const r = document.querySelector('.st-row[data-i=\"2\"] .st-c-val').getBoundingClientRect(); return [r.x + r.width / 2, r.y + r.height / 2]; })()")
+            await pg.mouse.move(box[0], box[1])
+            await pg.wait_for_timeout(450)
+            res["p7_tooltip"] = await pg.evaluate("(__tipItems || []).filter(i => /Horizon|horizonte/i.test(i.displayName)).map(i => i.displayName + ': ' + i.value)")
+            await pg.mouse.move(2, 2)
+            await H.upd(pg, dvp({"spark2": {"show": True, "type": "horizon"}, "variance": {"show": False}}), 1280, Hh)
+            res["p7_spark2"] = await pg.evaluate("[...document.querySelectorAll('.st-row .st-c-spark2 .st-hz path')].filter(p => p.getAttribute('d')).length")
+            await pg.evaluate("Object.assign(__pal, {isHighContrast: true, foreground: {value: '#FFFFFF'}, background: {value: '#000000'}}); document.body.style.background = '#000';")
+            await H.upd(pg, dvp({"sparkline": {"type": "horizon", "horizonBase": "mean"}, "variance": {"show": False}}), W, Hh)
+            await shot(pg, "23_horizon_alto_contraste")
+            await pg.evaluate("Object.assign(__pal, {isHighContrast: false, foreground: {value: '#252423'}, background: {value: '#FFFFFF'}}); document.body.style.background = '#fff';")
+        else:
+            await H.upd(pg, dvp(hz), W, Hh, view=0)
+            await pg.wait_for_timeout(80)
+            await H.upd(pg, dvp(hz), W, Hh, view=0)
+            res["p7_lectura_cae_a_linea"] = await pg.evaluate("[document.querySelector('.st-row .st-c-spark svg').getAttribute('class'), !!document.querySelector('.st-row .st-c-spark .st-line').getAttribute('d')]")
+            await H.upd(pg, dvp(hz), W, Hh, view=1)
+            await pg.evaluate("() => { const g = document.querySelector('.st-guide'); if (g) g.style.display = 'none'; }")
+            res["p7_edicion_marca"] = await pg.evaluate("document.querySelector('.st-watermark').textContent")
+            await shot(pg, "11_edicion_horizon_marca")
+        res["p7_eventos"] = await events(pg)
+        await pg.close()
+
         # ── Bullet (gratis, hallazgo de Tino): 4 provincias de tamaños muy distintos, escala por fila ──
         if not FREE:
             pg = await page(1100, 260)

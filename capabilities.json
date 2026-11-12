@@ -681,6 +681,11 @@
                 "value": "bullet",
                 "displayName": "Bullet",
                 "displayNameKey": "Enum_type_bullet"
+              },
+              {
+                "value": "horizon",
+                "displayName": "Horizon (Pro)",
+                "displayNameKey": "Enum_type_horizon"
               }
             ]
           }
@@ -766,6 +771,36 @@
           "displayNameKey": "Prop_sparkline_width",
           "type": {
             "numeric": true
+          }
+        },
+        "horizonBands": {
+          "displayName": "Horizon bands",
+          "displayNameKey": "Prop_sparkline_horizonBands",
+          "type": {
+            "numeric": true
+          }
+        },
+        "horizonBase": {
+          "displayName": "Horizon baseline",
+          "displayNameKey": "Prop_sparkline_horizonBase",
+          "type": {
+            "enumeration": [
+              {
+                "value": "zero",
+                "displayName": "Zero",
+                "displayNameKey": "Enum_horizonBase_zero"
+              },
+              {
+                "value": "mean",
+                "displayName": "Row average",
+                "displayNameKey": "Enum_horizonBase_mean"
+              },
+              {
+                "value": "target",
+                "displayName": "Target",
+                "displayNameKey": "Enum_horizonBase_target"
+              }
+            ]
           }
         },
         "color": {
@@ -903,6 +938,11 @@
                 "value": "bullet",
                 "displayName": "Bullet",
                 "displayNameKey": "Enum_type_bullet"
+              },
+              {
+                "value": "horizon",
+                "displayName": "Horizon (Pro)",
+                "displayNameKey": "Enum_type_horizon"
               }
             ]
           }
@@ -1024,6 +1064,11 @@
                 "value": "bullet",
                 "displayName": "Bullet",
                 "displayNameKey": "Enum_type_bullet"
+              },
+              {
+                "value": "horizon",
+                "displayName": "Horizon (Pro)",
+                "displayNameKey": "Enum_type_horizon"
               }
             ]
           }

@@ -119,6 +119,8 @@ interface Geo {
     b1: string; b2: string; b3: string; bandName: string; color: string;
     mkFirst: string; mkMax: string; mkMin: string; mkNeg: string; mkLast: string;
     lastX: number; lastY: number; lastText: string;
+    /** Horizon: [positivas banda 1..n, negativas banda 1..n] y nº de bandas. */
+    hz: string[]; hzN: number;
 }
 
 export class Visual implements IVisual {
@@ -786,14 +788,16 @@ export class Visual implements IVisual {
     /** Las columnas de minigráfico a dibujar en este render (la 2.ª y 3.ª solo con Pro o en la vista previa). */
     private computeSparks(m: Model): void {
         const s = this.settings;
-        this.sparks = [{ slot: 0, cls: SPARK_CLS[0], mi: m.valueIdx[0], k: 0, type: String(s.sparkline.type), curve: String(s.sparkline.curve),
+        // Horizon sin licencia (lectura): cae a línea, el gratis.
+        const ty = (t: unknown) => String(t) === "horizon" && !this.previewOf("horizon") ? "line" : String(t);
+        this.sparks = [{ slot: 0, cls: SPARK_CLS[0], mi: m.valueIdx[0], k: 0, type: ty(s.sparkline.type), curve: String(s.sparkline.curve),
             scale: String(s.sparkline.scale), color: "", target: true, label: true }];
         if (!this.previewOf("sparklines")) return;
         for (const i of [1, 2]) {
             const k = this.extraSparkK(m, i);
             if (k < 0) continue;
             const st = s["spark" + (i + 1)];
-            this.sparks.push({ slot: i, cls: SPARK_CLS[i], mi: m.valueIdx[k], k, type: String(st.type), curve: String(st.curve),
+            this.sparks.push({ slot: i, cls: SPARK_CLS[i], mi: m.valueIdx[k], k, type: ty(st.type), curve: String(st.curve),
                 scale: String(st.scale), color: this.hc ? "" : String(st.color || ""), target: false, label: false });
         }
     }
@@ -847,6 +851,8 @@ export class Visual implements IVisual {
         const extra = !!m && [1, 2].some(i => this.extraSparkK(m, i) >= 0);
         groups.push(["sparklines", extra, "sp=" + (m ? [1, 2].map(i => this.extraSparkK(m, i)).join(",") : "")]);
         groups.push(["fx", !!m && m.hasFx, "fx"]);
+        const hz = String(s.sparkline?.type) === "horizon" || (!!m && [1, 2].some(i => this.extraSparkK(m, i) >= 0 && String(s["spark" + (i + 1)].type) === "horizon"));
+        groups.push(["horizon", hz, "hz"]);
         groups.push(["images", !!m && m.imgIdx >= 0, "img"]);
         const labels: ProFeature[] = [], parts: string[] = [], set = new Set<ProFeature>();
         for (const [f, on, sig] of groups) if (on) { labels.push(f); set.add(f); parts.push(sig); }
@@ -1060,6 +1066,9 @@ export class Visual implements IVisual {
         set("--st-target", L.target); set("--st-sub", L.sub); set("--st-sel", L.sel); set("--st-hover", L.hover);
         set("--st-band", L.band);
         set("--st-vbar", String(this.settings.values.barColor || L.accent));
+        const tk = this.styleTokens();
+        set("--st-hzpos", this.hc ? this.hcFg : tk ? tk.up : "#2166AC");
+        set("--st-hzneg", this.hc ? this.hcFg : tk ? tk.down : "#B2182B");
         set("--st-vgood", this.hc ? this.hcFg : String(this.settings.variance.goodColor || L.up));
         set("--st-vbad", this.hc ? this.hcFg : String(this.settings.variance.badColor || L.down));
         const sts = this.settings.status;
@@ -1382,11 +1391,12 @@ export class Visual implements IVisual {
             }
         }
         if (type === "winloss") sparkCtx += " · " + this.tf("UI_Vs", "vs {0}", this.showTarget(m) ? m.sources[m.targetIdx].displayName : "0");
-        const scaleNote = type === "bullet" && this.showTarget(m) ? this.t("UI_ScalePerRow", "Scale: per row") : type === "winloss" ? "" : s.sparkline.scale === "row" ? this.t("UI_ScalePerRow", "Scale: per row")
+        const type0 = this.sparks[0]?.type ?? type;
+        const scaleNote = type0 === "horizon" || (type === "bullet" && this.showTarget(m)) ? this.t("UI_ScalePerRow", "Scale: per row") : type === "winloss" ? "" : s.sparkline.scale === "row" ? this.t("UI_ScalePerRow", "Scale: per row")
             : s.sparkline.scale === "auto" ? this.t("UI_ScalePerRowDetail", "Scale: per row in detail rows") : "";
         const sparkTitle = s.sparkline.type === "bullet" && m.targetIdx >= 0
             ? this.typeName("bullet") + " · " + m.sources[m.valueIdx[0]].displayName
-            : this.typeName(String(s.sparkline.type)) + " · " + m.sources[m.valueIdx[0]].displayName;
+            : this.typeName(type0) + " · " + m.sources[m.valueIdx[0]].displayName;
         // Minigráficos 2 y 3: "Tipo · medida" y el rango (o la cifra a la vista en bullet), con su escala rotulada.
         const range = m.periods.length > 1 ? this.periodLabels[0] + " – " + this.periodLabels[m.periods.length - 1] : (this.periodLabels[0] ?? "");
         const extraTitle = (slot: number): [string, string] => {
@@ -1394,7 +1404,7 @@ export class Visual implements IVisual {
             if (!c) return ["", ""];
             const ctx = c.type === "bullet" ? valCtx : range + (c.type === "winloss" ? " · " + this.tf("UI_Vs", "vs {0}", "0") : "");
             return [this.typeName(c.type) + " · " + m.sources[c.mi].displayName,
-                ctx + (c.scale === "row" && c.type !== "winloss" ? " · " + this.t("UI_ScalePerRow", "Scale: per row") : "")];
+                ctx + ((c.scale === "row" && c.type !== "winloss") || c.type === "horizon" ? " · " + this.t("UI_ScalePerRow", "Scale: per row") : "")];
         };
         const titles: Record<ColId, [string, string]> = {
             name: [levelNames, nameCtx],
@@ -1506,7 +1516,8 @@ export class Visual implements IVisual {
 
     private typeName(t: string): string {
         const it = OBJECTS.sparkline.props.find(p => p.name === "type")?.items?.find(x => x[0] === t);
-        return it ? this.t(it[1], it[2]) : t;
+        // En la cabecera y el tooltip, sin el "(Pro)" del panel.
+        return it ? this.t(it[1], it[2]).replace(/\s*\(Pro\)$/, "") : t;
     }
 
     /** Clic en una cabecera: descendente → ascendente → orden de Power BI. Local al momento; editando se guarda. */
@@ -1748,6 +1759,19 @@ export class Visual implements IVisual {
         if (svg.getAttribute("height") !== String(h)) svg.setAttribute("height", String(h));
         const tcls = "st-svg st-t-" + c.type + (g.color ? " st-colored" : "");
         if (svg.getAttribute("class") !== tcls) svg.setAttribute("class", tcls);
+        const hzG = svg.querySelector(".st-hz") as SVGGElement;
+        while (hzG.childNodes.length < 6) hzG.appendChild(document.createElementNS("http://www.w3.org/2000/svg", "path"));
+        for (let i = 0; i < 6; i++) {
+            const p = hzG.childNodes[i] as SVGPathElement;
+            const n = g.hzN, on = n > 0 && (i % 3) < n;
+            const k = i < 3 ? i : i - 3;
+            const dd = on ? g.hz[(i < 3 ? 0 : n) + k] : "";
+            if (dd) {
+                p.setAttribute("d", dd);
+                p.setAttribute("class", i < 3 ? "st-hz-pos" : "st-hz-neg");
+                p.setAttribute("fill-opacity", ((k + 1) / n).toFixed(2));
+            } else p.removeAttribute("d");
+        }
         const set = (cls: string, v: string) => {
             const p = svg.querySelector("." + cls) as SVGPathElement;
             if (p.getAttribute("d") !== v) { if (v) p.setAttribute("d", v); else p.removeAttribute("d"); }
@@ -1870,7 +1894,7 @@ export class Visual implements IVisual {
     private geo(r: Row, m: Model, c: SparkCfg): Geo {
         const s = this.settings;
         const type = c.type;
-        const g: Geo = { gen: this.gen, line: "", area: "", pos: "", neg: "", tgt: "", band: "", b1: "", b2: "", b3: "", bandName: "", color: "", mkFirst: "", mkMax: "", mkMin: "", mkNeg: "", mkLast: "", lastX: -1, lastY: -1, lastText: "" };
+        const g: Geo = { gen: this.gen, line: "", area: "", pos: "", neg: "", tgt: "", band: "", b1: "", b2: "", b3: "", bandName: "", color: "", mkFirst: "", mkMax: "", mkMin: "", mkNeg: "", mkLast: "", lastX: -1, lastY: -1, lastText: "", hz: [], hzN: 0 };
         const sr = r.s[c.mi];
         const nP = sr.length;
         const w = c.slot === 0 ? this.sparkW : this.sparkW2, H = this.rowH;
@@ -1885,6 +1909,7 @@ export class Visual implements IVisual {
         const ms = Number(s.markers.size) * Math.max(0.7, Math.min(1.6, this.rowH / 24));
 
         g.color = c.slot === 0 ? (this.fxColor(r, "sparkline", "color") || this.rowLineColor(r)) : c.color;
+        if (type === "horizon") { this.horizonGeo(r, m, c, g, sr, w, top, bot); return g; }
         if (type === "bullet") {
             const x = (v: number) => 2 + (Math.max(lo, Math.min(hi, v)) - lo) / (hi - lo) * (w - 4);
             const bh = Math.max(3, Math.round(ph * 0.55)), by = Math.round((H - bh) / 2);
@@ -2001,6 +2026,58 @@ export class Visual implements IVisual {
             if (c.label && this.labelW) g.lastText = this.fmtCompact(sr[last] as number, r.fmt?.[c.mi]?.[last] ?? fmt0);
         }
         return g;
+    }
+
+    /** Base del horizon de una fila en el periodo p (cero, media de la fila u objetivo), o null. */
+    private horizonBase(r: Row, m: Model, c: SparkCfg, sr: Num[]): (p: number) => Num {
+        const b = String(this.settings.sparkline.horizonBase);
+        if (b === "target" && c.target && m.targetIdx >= 0) { const t = r.s[m.targetIdx]; return p => t[p]; }
+        if (b === "mean") {
+            const v = sr.filter(x => x !== null) as number[];
+            const mean = v.length ? v.reduce((a, x) => a + x, 0) / v.length : 0;
+            return () => mean;
+        }
+        return () => 0;
+    }
+
+    /**
+     * Horizon (Pro): la distancia a la base, plegada en n bandas (2-3) por signo, cada una más oscura; escala SIEMPRE
+     * por fila (la banda = |distancia| máxima de la fila / n). Por encima de la base crece desde abajo; por debajo
+     * cuelga desde arriba (así se distingue también sin color, en alto contraste). Un hueco corta el trazo.
+     */
+    private horizonGeo(r: Row, m: Model, c: SparkCfg, g: Geo, sr: Num[], w: number, top: number, bot: number): void {
+        const nP = sr.length;
+        const n = Math.max(2, Math.min(3, Math.round(Number(this.settings.sparkline.horizonBands) || 3)));
+        const base = this.horizonBase(r, m, c, sr);
+        const d: Num[] = sr.map((v, p) => { const b = base(p); return v === null || b === null ? null : v - b; });
+        let mx = 0;
+        for (const v of d) if (v !== null) mx = Math.max(mx, Math.abs(v));
+        g.hzN = n;
+        g.hz = new Array(2 * n).fill("");
+        const fmt0 = m.sources[c.mi].format;
+        let last = -1;
+        for (let p = nP - 1; p >= 0; p--) if (sr[p] !== null) { last = p; break; }
+        if (c.label && this.labelW && last >= 0) g.lastText = this.fmtCompact(sr[last] as number, r.fmt?.[c.mi]?.[last] ?? fmt0);
+        if (!(mx > 0)) return;
+        const u = mx / n, ph = bot - top;
+        const x = (p: number) => nP > 1 ? 3 + p * (w - 6) / (nP - 1) : w / 2;
+        const idx = d.map((_v, p) => p);
+        const ok = (p: number) => d[p] !== null;
+        for (let b = 0; b < n; b++) {
+            const frac = (v: number) => Math.max(0, Math.min(1, (Math.abs(v) - b * u) / u));
+            const pos = d3area<number>().defined(ok).x(p => x(p)).y0(bot).y1(p => { const v = d[p] as number; return v > 0 ? bot - frac(v) * ph : bot; })(idx) || "";
+            const neg = d3area<number>().defined(ok).x(p => x(p)).y0(top).y1(p => { const v = d[p] as number; return v < 0 ? top + frac(v) * ph : top; })(idx) || "";
+            g.hz[b] = pos;
+            g.hz[n + b] = neg;
+        }
+    }
+
+    /** Texto que explica cómo se lee el horizon (tooltip y cabecera). */
+    private horizonText(m: Model): string {
+        const b = String(this.settings.sparkline.horizonBase);
+        const n = String(Math.max(2, Math.min(3, Math.round(Number(this.settings.sparkline.horizonBands) || 3))));
+        const baseName = b === "mean" ? this.t("Enum_horizonBase_mean", "Row average") : b === "target" && m.targetIdx >= 0 ? m.sources[m.targetIdx].displayName : "0";
+        return this.tf("UI_HorizonHow", "{0} bands per sign around {1}; darker = further away. Above grows from the bottom, below hangs from the top.", n, baseName);
     }
 
     // ── Interacción ──────────────────────────────────────────────────────────
@@ -2196,6 +2273,7 @@ export class Visual implements IVisual {
                 value: d.vabs === null ? this.t("UI_Blank", "(Blank)") : this.signed(d.vabs, this.fmtCompact(d.vabs, m.sources[m0].format)) + (d.vpct !== null ? "  (" + this.fmtPct(d.vpct) + ")" : "") });
             if (d.vabs !== null && d.vpct === null) out.push({ displayName: "Δ" + this.varCode(m) + "%", value: this.t("UI_NoPctBase", "not shown: the base is zero or negative") });
         }
+        if (this.sparks.some(c => c.type === "horizon")) out.push({ displayName: this.typeName("horizon"), value: this.horizonText(m) });
         if (this.previewOf("status") && this.settings.status.show === true && d.status > 0) {
             out.push({ displayName: this.t("UI_Status", "Status"), value: this.statusLook(d.status).glyph + " " + this.statusLook(d.status).name + " · " + this.statusRuleText(m) });
         }

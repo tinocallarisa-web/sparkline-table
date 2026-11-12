@@ -306,3 +306,15 @@ P.update({
 "Bullet label": ["Rótulo do bullet", "Étiquette du bullet", "Bullet-Beschriftung", "Etichetta bullet", "Bulletlabel", "Etykieta wykresu bullet", "ブレットのラベル", "子弹图标签", "불릿 레이블", "Etiqueta del bullet"],
 "Value and % of target": ["Valor e % da meta", "Valeur et % de l’objectif", "Wert und % des Ziels", "Valore e % dell’obiettivo", "Waarde en % van doel", "Wartość i % celu", "値と目標比 %", "值和目标的 %", "값 및 목표 대비 %", "Valor y % del objetivo"],
 })
+
+# --- bloque 2: parte 7, horizon ---
+P.update({
+"Horizon (Pro)": ["Horizonte (Pro)", "Horizon (Pro)", "Horizont (Pro)", "Orizzonte (Pro)", "Horizon (Pro)", "Horyzont (Pro)", "ホライズン (Pro)", "地平线图 (Pro)", "호라이즌(Pro)", "Horizonte (Pro)"],
+"Horizon bands": ["Faixas do horizonte", "Bandes de l’horizon", "Horizont-Bänder", "Bande dell’orizzonte", "Horizonbanden", "Pasma horyzontu", "ホライズンの帯", "地平线图分带", "호라이즌 밴드", "Bandas del horizonte"],
+"Horizon baseline": ["Linha de base do horizonte", "Ligne de base de l’horizon", "Horizont-Basislinie", "Linea di base dell’orizzonte", "Basislijn van horizon", "Linia bazowa horyzontu", "ホライズンの基準線", "地平线图基线", "호라이즌 기준선", "Base del horizonte"],
+"Row average": ["Média da linha", "Moyenne de la ligne", "Zeilendurchschnitt", "Media della riga", "Rijgemiddelde", "Średnia wiersza", "行の平均", "行平均值", "행 평균", "Media de la fila"],
+"Zero": ["Zero", "Zéro", "Null", "Zero", "Nul", "Zero", "ゼロ", "零", "0", "Cero"],
+})
+P.update({
+"{0} bands per sign around {1}; darker = further away. Above grows from the bottom, below hangs from the top.": ["{0} faixas por sinal em torno de {1}; mais escuro = mais longe. Acima cresce de baixo; abaixo pende de cima.", "{0} bandes par signe autour de {1} ; plus foncé = plus éloigné. Au-dessus, croît depuis le bas ; en dessous, pend depuis le haut.", "{0} Bänder je Vorzeichen um {1}; dunkler = weiter entfernt. Darüber wächst von unten, darunter hängt von oben.", "{0} bande per segno attorno a {1}; più scuro = più lontano. Sopra cresce dal basso, sotto pende dall’alto.", "{0} banden per teken rond {1}; donkerder = verder weg. Erboven groeit van onder, eronder hangt van boven.", "{0} pasma na znak wokół {1}; ciemniejsze = dalej. Powyżej rośnie od dołu, poniżej zwisa od góry.", "{1} を基準に符号ごとに {0} 本の帯。濃いほど離れています。上は下から伸び、下は上から垂れます。", "围绕 {1} 每个符号 {0} 个分带；颜色越深 = 越远。高于基线从底部向上，低于基线从顶部向下。", "{1} 기준 부호별 {0}개 밴드, 진할수록 멀리 떨어짐. 위쪽은 아래에서 올라가고 아래쪽은 위에서 내려옵니다.", "{0} bandas por signo alrededor de {1}; más oscuro = más lejos. Por encima crece desde abajo; por debajo cuelga desde arriba."],
+})

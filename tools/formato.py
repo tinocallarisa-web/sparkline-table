@@ -19,7 +19,8 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TEMPLATES = [("report", "Report theme"), ("classic", "Classic"), ("boardroom", "Boardroom (Pro)"), ("ledger", "Ledger (Pro)"),
              ("editorial", "Editorial (Pro)"), ("signal", "Signal (Pro)"), ("aurora", "Aurora (Pro)"), ("terrace", "Terrace (Pro)")]
 
-SPARK_TYPES = [("line", "Line"), ("area", "Area"), ("column", "Column"), ("winloss", "Win/loss"), ("bullet", "Bullet")]
+# Horizon (Pro, bloque 2): sexto tipo. Bandas por signo alrededor de una base, escala siempre por fila.
+SPARK_TYPES = [("line", "Line"), ("area", "Area"), ("column", "Column"), ("winloss", "Win/loss"), ("bullet", "Bullet"), ("horizon", "Horizon (Pro)")]
 
 # (propiedad, etiqueta, tipo, por defecto, extra)   tipo: bool | num | fill | enum | text
 OBJECTS = [
@@ -79,6 +80,8 @@ OBJECTS = [
         # Color de la línea: neutro (gris con el último punto en color), por fila (paleta del tema) o por tendencia.
         ("lineColor", "Line colour", "enum", "neutral", {"items": [("neutral", "Neutral"), ("row", "Per row"), ("trend", "By trend")]}),
         ("width", "Line width", "num", 1.5, {"min": 0.5, "max": 4}),
+        ("horizonBands", "Horizon bands", "num", 3, {"min": 2, "max": 3}),
+        ("horizonBase", "Horizon baseline", "enum", "zero", {"items": [("zero", "Zero"), ("mean", "Row average"), ("target", "Target")]}),
         ("color", "Color", "fill", "", {}),
         ("accent", "Last point color", "fill", "", {}),
         ("showLast", "Show last value", "bool", True, {}),

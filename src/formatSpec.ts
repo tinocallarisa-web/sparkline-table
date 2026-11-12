@@ -372,6 +372,11 @@ export const OBJECTS: Record<string, ObjSpec> = {
                         "bullet",
                         "Enum_type_bullet",
                         "Bullet"
+                    ],
+                    [
+                        "horizon",
+                        "Enum_type_horizon",
+                        "Horizon (Pro)"
                     ]
                 ]
             },
@@ -462,6 +467,39 @@ export const OBJECTS: Record<string, ObjSpec> = {
                 "label": "Line width",
                 "min": 0.5,
                 "max": 4
+            },
+            {
+                "name": "horizonBands",
+                "type": "num",
+                "def": 3,
+                "key": "Prop_sparkline_horizonBands",
+                "label": "Horizon bands",
+                "min": 2,
+                "max": 3
+            },
+            {
+                "name": "horizonBase",
+                "type": "enum",
+                "def": "zero",
+                "key": "Prop_sparkline_horizonBase",
+                "label": "Horizon baseline",
+                "items": [
+                    [
+                        "zero",
+                        "Enum_horizonBase_zero",
+                        "Zero"
+                    ],
+                    [
+                        "mean",
+                        "Enum_horizonBase_mean",
+                        "Row average"
+                    ],
+                    [
+                        "target",
+                        "Enum_horizonBase_target",
+                        "Target"
+                    ]
+                ]
             },
             {
                 "name": "color",
@@ -591,6 +629,11 @@ export const OBJECTS: Record<string, ObjSpec> = {
                         "bullet",
                         "Enum_type_bullet",
                         "Bullet"
+                    ],
+                    [
+                        "horizon",
+                        "Enum_type_horizon",
+                        "Horizon (Pro)"
                     ]
                 ]
             },
@@ -713,6 +756,11 @@ export const OBJECTS: Record<string, ObjSpec> = {
                         "bullet",
                         "Enum_type_bullet",
                         "Bullet"
+                    ],
+                    [
+                        "horizon",
+                        "Enum_type_horizon",
+                        "Horizon (Pro)"
                     ]
                 ]
             },

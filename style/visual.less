@@ -220,6 +220,10 @@
 .st-s3 { color: var(--st-s3); } .st-s2 { color: var(--st-s2); } .st-s1 { color: var(--st-s1); }
 .st-sicon { position: relative; margin-right: 4px; font-weight: 400; }
 .st-sicon:empty { display: none; }
+// Horizon: por encima de la base (azul o el "sube" del estilo) y por debajo (rojo o el "baja"); alto contraste en
+// primer plano (la posición abajo/arriba lo distingue).
+.st-hz-pos { fill: var(--st-hzpos, #2166AC); stroke: none; }
+.st-hz-neg { fill: var(--st-hzneg, #B2182B); stroke: none; }
 // Minigráficos 2 y 3: cabecera alineada a la izquierda, como la del primero.
 .st-header .st-h-spark2, .st-header .st-h-spark3, .st-header .st-h2-spark2, .st-header .st-h2-spark3 { text-align: left; padding-right: 6px; }
 .st-xbtn { min-width: 1.5em; font-variant-numeric: tabular-nums; }
