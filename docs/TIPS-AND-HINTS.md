@@ -96,5 +96,5 @@ child), left collapses (or goes to the parent); Enter or Space selects (Ctrl add
 - Documentation: <https://tinocallarisa-web.github.io/sparkline-table/support.html>
 - Questions: <https://github.com/tinocallarisa-web/sparkline-table/discussions>
 - Bugs: <https://github.com/tinocallarisa-web/sparkline-table/issues>
-- Video: [VIDEO URL — pendiente]
+- Video: https://www.youtube.com/watch?v=qrqWbeswF4Y
 - Support: support@tcviz.com

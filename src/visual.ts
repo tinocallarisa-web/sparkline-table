@@ -64,6 +64,7 @@ function matchesPlan(sp: unknown, planId: string): boolean {
 // Enlaces de la pantalla de inicio: solo con un clic, por host.launchUrl.
 const URL_GUIDE = "https://tinocallarisa-web.github.io/sparkline-table/support.html";
 const URL_PRODUCT = "https://tcviz.com/product/sparkline-table/?ref=visual-sparkline-table";
+const URL_VIDEO = "https://www.youtube.com/watch?v=qrqWbeswF4Y";
 
 const FONT = "'Segoe UI', wf_segoe-ui_normal, helvetica, arial, sans-serif";
 const MARGIN_ROWS = 8;
@@ -2517,6 +2518,7 @@ export class Visual implements IVisual {
         const links: [string, string, string][] = [
             [this.t("Landing_Guide", "Guide"), this.t("Landing_GuideSub", "support page"), URL_GUIDE],
             [this.t("Landing_Product", "Product page"), "tcviz.com", URL_PRODUCT],
+            [this.t("Landing_Video", "Video"), "YouTube", URL_VIDEO],
         ];
         if (size === "s") {
             el.appendChild(mk("p", "st-l-do", this.tf("Landing_Small", "Add {0}, {1} and {2}.", rowsW, perW, valW)));

@@ -1,9 +1,9 @@
-Sparkline Table by TCViz 1.0.0.0 - GUID matrixSparklinesFAB7608B939348B490060433D1A28FA6
+Sparkline Table by TCViz 1.0.0.0 - matrixSparklinesFAB7608B939348B490060433D1A28FA6
 
 SOURCE CODE
 https://github.com/tinocallarisa-web/sparkline-table, branch "certification". Public.
 
-SAMPLE REPORT: SparklineTable_sample.pbix (fictitious retailer), 5 pages
+SAMPLE REPORT: SparklineTable_sample.pbix, 5 pages
 1. Scorecard by region: Region > Store > Category, engine subtotals, variance vs plan
 and status; buttons 1 2 3 open the levels. Click a row: the native table filters.
 2. Sparkline types: line, column, win/loss, area and horizon.
@@ -12,7 +12,7 @@ and status; buttons 1 2 3 open the levels. Click a row: the native table filters
 5. Hints & tips.
 
 TESTING PRO - NO KEY NEEDED
-Pro is granted by the AppSource plan through IVisualLicenseManager; no key exists.
+Pro comes from the AppSource plan via IVisualLicenseManager; no key exists.
 In EDIT mode without a licence, each Pro feature (variance, status icons, extra
 sparklines, styles, fx, row images, horizon) is drawn WORKING under a "Pro preview"
 watermark that names it, with Power BI's licence notice. Intentional. Reading view
@@ -39,6 +39,6 @@ only from Base64 data URIs, never URLs. Start-screen links open on click via lau
 Rendering events: one started/finished pair per update(), fetchMoreData included;
 scroll, hover, selection and sort do not call update().
 
-Video: [VIDEO URL — pendiente]
+Video: https://www.youtube.com/watch?v=qrqWbeswF4Y
 Support: https://tinocallarisa-web.github.io/sparkline-table/support.html
 Privacy: https://tinocallarisa-web.github.io/sparkline-table/privacy.html

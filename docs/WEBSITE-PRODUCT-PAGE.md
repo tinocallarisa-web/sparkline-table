@@ -29,7 +29,7 @@ previous period or last year, and a sparkline on every row.
 - **Pro: the control reading.** Variance against plan, prior year or forecast with a bar on every row and subtotal,
   status icons, up to 3 sparkline columns, six collection styles, conditional formatting (fx), row images and horizon.
 
-Video: [VIDEO URL — pendiente]
+Video: https://www.youtube.com/watch?v=qrqWbeswF4Y
 
 ---
 

@@ -18,8 +18,8 @@ REPO = "https://github.com/tinocallarisa-web/sparkline-table"
 PRODUCT = "https://tcviz.com/product/sparkline-table/"
 VERSION = json.load(io.open(os.path.join(ROOT, "pbiviz.json"), encoding="utf-8"))["visual"]["version"]
 FECHA = "12 November 2026"
-# [VIDEO URL — pendiente]: cuando exista, la URL canónica https://www.youtube.com/watch?v=<id> (nunca la corta).
-VIDEO = ""
+# Vídeo: la URL canónica https://www.youtube.com/watch?v=<id> (nunca la corta).
+VIDEO = "https://www.youtube.com/watch?v=qrqWbeswF4Y"
 
 plantilla = io.open(os.path.join(WC, "privacy.html"), encoding="utf-8").read()
 HEAD = plantilla[:plantilla.index("<body>")]

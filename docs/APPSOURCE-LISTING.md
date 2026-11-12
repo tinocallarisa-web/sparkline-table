@@ -132,7 +132,7 @@ No "What's new" block: this is the first version.
 | Offer name | Sparkline Table by TCViz |
 | Categories | The closest available to tables / KPIs and comparison (check the list in Partner Center) |
 | Industries | Retail; Professional services |
-| Video | [VIDEO URL — pendiente] (when it exists: `https://www.youtube.com/watch?v=<id>`) |
+| Video | https://www.youtube.com/watch?v=qrqWbeswF4Y |
 | Support / documentation | https://tinocallarisa-web.github.io/sparkline-table/support.html |
 | Privacy | https://tinocallarisa-web.github.io/sparkline-table/privacy.html |
 | Terms (EULA) | https://tinocallarisa-web.github.io/sparkline-table/terms.html |
@@ -172,7 +172,7 @@ Editing this file changes nothing in the offer. In Partner Center:
 3. **Offer listing → Description:** the contents of `docs/APPSOURCE-DESCRIPTION.html` (run `ficha_html.py` again after
    any edit), not the text above.
 4. **Offer listing → Search keywords:** `sparkline table`, `kpi scorecard`, `in-cell charts`.
-5. **Offer listing → Videos:** [VIDEO URL — pendiente] — the canonical `https://www.youtube.com/watch?v=…` once it exists.
+5. **Offer listing → Videos:** `https://www.youtube.com/watch?v=qrqWbeswF4Y`
 6. **Offer listing → Support / Privacy / Terms URLs:** the table above. Check each one with a real request after the
    repo is pushed: until then GitHub Pages answers 404.
 7. **Plans → new plan:** Plan ID `sparkline-table-pro`, name, prices in the pricing fields, no trial; Plan description

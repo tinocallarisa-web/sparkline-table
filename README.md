@@ -13,7 +13,7 @@ and the horizon sparkline.
 - Privacy: https://tinocallarisa-web.github.io/sparkline-table/privacy.html · Terms: https://tinocallarisa-web.github.io/sparkline-table/terms.html
 - Changelog: https://tinocallarisa-web.github.io/sparkline-table/changelog.html
 - Questions: https://github.com/tinocallarisa-web/sparkline-table/discussions · Bugs: https://github.com/tinocallarisa-web/sparkline-table/issues
-- Video: [VIDEO URL — pendiente] · Product page: https://tcviz.com/product/sparkline-table/
+- Video: https://www.youtube.com/watch?v=qrqWbeswF4Y · Product page: https://tcviz.com/product/sparkline-table/
 - Support: support@tcviz.com
 
 Version 1.0.0.0 · Power BI visuals API 5.11.1 · no network access (`"privileges": []`).
