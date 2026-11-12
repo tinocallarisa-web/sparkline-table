@@ -25,7 +25,6 @@ OBJECTS = [
     ]),
     # Lo que enseña la columna de valor y contra qué se compara Δ / Δ%.
     ("values", "Values", [
-        ("valueMode", "Value shows", "enum", "last", {"items": [("last", "Last period"), ("total", "Total of the range")]}),
         ("compare", "Change vs", "enum", "previous", {"items": [("previous", "Previous period"), ("lastYear", "Same period last year")]}),
         ("showDelta", "Show change (Δ)", "bool", True, {}),
         ("showDeltaPct", "Show change % (Δ%)", "bool", True, {}),
@@ -39,7 +38,8 @@ OBJECTS = [
     ("sparkline", "Sparkline", [
         ("type", "Type", "enum", "line", {"items": [("line", "Line"), ("area", "Area"), ("column", "Column"),
                                                    ("winloss", "Win/loss"), ("bullet", "Bullet")]}),
-        ("scale", "Scale", "enum", "level", {"items": [("level", "Shared by level"), ("row", "Per row")]}),
+        # auto (propuesta, pendiente de Tino): por fila en el último nivel, común por nivel en los subtotales.
+        ("scale", "Scale", "enum", "auto", {"items": [("auto", "Per row in detail rows, shared in subtotals"), ("level", "Shared by level"), ("row", "Per row")]}),
         ("zero", "Start at zero", "bool", False, {}),
         ("width", "Line width", "num", 1.5, {"min": 0.5, "max": 4}),
         ("color", "Color", "fill", "", {}),
@@ -59,6 +59,8 @@ OBJECTS = [
     ("rows", "Rows", [
         ("density", "Density", "enum", "standard", {"items": [("compact", "Compact"), ("standard", "Standard"), ("comfortable", "Comfortable")]}),
         ("fontSize", "Text size", "num", 11, {"min": 8, "max": 18}),
+        # 0 = automático (el de la densidad). Si es menor que el texto, manda el texto (alto mínimo = texto + 4 px).
+        ("rowHeight", "Row height (px, 0 = automatic)", "num", 0, {"min": 0, "max": 48}),
         ("indent", "Indent per level", "num", 14, {"min": 0, "max": 40}),
         ("grandTotal", "Grand total", "bool", True, {}),
         # value/value2/value3: el visual pone en el panel el nombre de cada medida y quita las que no están.
@@ -70,8 +72,24 @@ OBJECTS = [
     ("header", "Column headers", [
         ("show", "Show column headers", "bool", True, {}),
         ("fontSize", "Text size", "num", 11, {"min": 8, "max": 18}),
+        ("fontFamily", "Font", "font", "", {}),
+        ("bold", "Bold", "bool", True, {}),
+        ("color", "Text color", "fill", "", {}),
+        ("background", "Background", "fill", "", {}),
         ("context", "Show period line", "bool", True, {}),
     ]),
+] + [
+    # Formato por nivel (Tino, 11-11): un objeto por nivel, sin selector (fiable con marcadores y temas). Vacío / 0 /
+    # Automatic = lo de siempre: subtotales con fondo suave y negrita, hojas normales, colores del tema.
+    (obj, label, [
+        ("background", "Background", "fill", "", {}),
+        ("bgOpacity", "Background opacity (%)", "num", 100, {"min": 0, "max": 100}),
+        ("color", "Text color", "fill", "", {}),
+        ("fontSize", "Text size (0 = as Rows)", "num", 0, {"min": 0, "max": 24}),
+        ("fontFamily", "Font", "font", "", {}),
+        ("bold", "Bold", "enum", "auto", {"items": [("auto", "Automatic"), ("on", "On"), ("off", "Off")]}),
+        ("italic", "Italic", "bool", False, {}),
+    ]) for obj, label in [("level1", "Level 1"), ("level2", "Level 2"), ("level3", "Level 3"), ("levelTotal", "Grand total row")]
 ]
 
 # Orden común de la colección: Style template, tarjetas propias (de lo más usado a lo menos).
@@ -81,6 +99,8 @@ PANE = [
     ("sparkline", "Sparkline", [("sparkline", None, None)]),
     ("markers", "Markers", [("markers", None, None)]),
     ("rows", "Rows", [("rows", None, None)]),
+    # Row levels: el visual la construye en código (un elemento por nivel presente), como el trazo por serie de Line Chart.
+    ("levels", "Row levels", []),
     ("header", "Column headers", [("header", None, "show")]),
 ]
 
@@ -88,7 +108,8 @@ PANE = [
 SUBTOTALS = {"properties": {
     "rowSubtotals": {"type": {"bool": True}},
     "perRowLevel": {"type": {"bool": True}},
-    "columnSubtotals": {"type": {"bool": True}},
+    # columnSubtotals = "Value shows the total of the range": el host solo pide el subtotal de columna si se enciende.
+    "columnSubtotals": {"displayName": "Value shows the total of the range", "displayNameKey": "Prop_subTotals_columnSubtotals", "type": {"bool": True}},
     "perColumnLevel": {"type": {"bool": True}},
     "levelSubtotalEnabled": {"type": {"bool": True}},
     "rowSubtotalsType": {"type": {"enumeration": [{"value": "Top", "displayName": "Top"}, {"value": "Bottom", "displayName": "Bottom"}]}},
@@ -97,7 +118,7 @@ SUBTOTALS = {"properties": {
 
 def cap_type(t):
     return {"bool": {"bool": True}, "num": {"numeric": True}, "fill": {"fill": {"solid": {"color": True}}},
-            "text": {"text": True}}.get(t)
+            "text": {"text": True}, "font": {"formatting": {"fontFamily": True}}}.get(t)
 
 
 def generar():
@@ -156,7 +177,7 @@ def generar():
           " * Tabla del panel de formato. Generado por tools/formato.py: no editar a mano.",
           " * Los nombres internos (objeto.propiedad) no se renombran nunca: los informes guardados dejarían de leerlos.",
           " */",
-          "export type PropType = \"bool\" | \"num\" | \"fill\" | \"enum\" | \"text\";",
+          "export type PropType = \"bool\" | \"num\" | \"fill\" | \"enum\" | \"text\" | \"font\";",
           "export interface PropSpec { name: string; type: PropType; def: string | number | boolean; key: string; label: string;",
           "    items?: [string, string, string][]; min?: number; max?: number; }",
           "export interface ObjSpec { name: string; key: string; label: string; props: PropSpec[]; }",
@@ -173,6 +194,7 @@ def generar():
         if r.get("descriptionKey"):
             out[r["descriptionKey"]] = r["description"]
     out.update(en)
+    out["Prop_subTotals_columnSubtotals"] = SUBTOTALS["properties"]["columnSubtotals"]["displayName"]
     enp = os.path.join(ROOT, "stringResources", "en-US", "resources.resjson")
     os.makedirs(os.path.dirname(enp), exist_ok=True)
     io.open(enp, "w", encoding="utf-8", newline="\n").write(json.dumps(out, indent=2, ensure_ascii=False) + "\n")

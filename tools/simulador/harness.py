@@ -230,7 +230,7 @@ async def main():
         res["orden_tras_3er_clic"] = await pg.evaluate("document.querySelector('.st-h2-name').textContent")
 
         # Total del rango y mismo periodo del año anterior
-        dvt2, _ = build(expanded=vista, objects={"values": {"valueMode": "total", "compare": "lastYear"}})
+        dvt2, _ = build(expanded=vista, objects={"values": {"compare": "lastYear"}, "subTotals": {"columnSubtotals": True}})
         await upd(pg, dvt2, W, H)
         await pg.screenshot(path=os.path.join(OUT, "05_total_y_ano_anterior.png"))
         res["cabecera_total_ly"] = await pg.evaluate("[...document.querySelectorAll('.st-h1, .st-h2')].map(e => e.textContent)")
@@ -367,6 +367,38 @@ async def main():
         ev = await pg.evaluate("__ev.join('')")
         res["eventos"] = {"updates": await pg.evaluate("__updates"), "S": ev.count("S"), "F": ev.count("F"), "X": ev.count("X"),
                           "pares_1a1": ev == "SF" * (await pg.evaluate("__updates"))}
+        await pg.close()
+
+        # Escenario A de Desktop (cuelgue del 12-11): 1.800 hojas × 24 meses, subtotales de filas y columnas, nivel de
+        # medidas, cargado por segmentos agregados (Create + 2 Append con segment + Append final sin segment).
+        pg = await page(W, H)
+        segs = [build(n_z=4, n_c=15, n_p=30, n_per=24, expanded={"Z0"} | {f"Z0|C{c}" for c in range(15)}, segment=True)[0],
+                build(n_z=4, n_c=15, n_p=30, n_per=24, expanded={"Z0", "Z1"} | {f"Z{z}|C{c}" for z in (0, 1) for c in range(15)}, segment=True)[0],
+                build(n_z=4, n_c=15, n_p=30, n_per=24)[0]]
+        tA = []
+        for i, d in enumerate(segs):
+            tA.append(await upd(pg, d, W, H, ok=0 if i == 0 else 1))
+        # Un update de formato a mitad de carga (mismo segmento) y el final otra vez: no debe colgar ni descuadrar.
+        tA.append(await upd(pg, segs[1], W, H, ok=1))
+        tA.append(await upd(pg, segs[2], W, H, ok=1))
+        evA = await pg.evaluate("__ev.join('')")
+        nA = await pg.evaluate("__updates")
+        res["escenario_A_1800"] = {"hojas": build(n_z=4, n_c=15, n_p=30, n_per=24)[1], "ms_por_update": tA,
+                                   "fetchMoreData": await pg.evaluate("__fetch"), "aviso_final": await pg.evaluate("document.querySelector('.st-notice').textContent"),
+                                   "pares_1a1": evA == "SF" * nA, "updates": nA}
+        await pg.screenshot(path=os.path.join(OUT, "19_escenario_A_1800_hojas.png"))
+        # Formato por niveles + cabecera + alto de fila + escala automática
+        lvl = {"level1": {"background": {"solid": {"color": "#1F4E79"}}, "color": {"solid": {"color": "#FFFFFF"}}, "fontSize": 13, "fontFamily": "Georgia, serif", "bold": "on"},
+               "level2": {"background": {"solid": {"color": "#F2C14E"}}, "bgOpacity": 35, "fontFamily": "Georgia, serif", "italic": True},
+               "level3": {"fontSize": 10},
+               "header": {"background": {"solid": {"color": "#EAF1F8"}}, "color": {"solid": {"color": "#1F4E79"}}, "fontFamily": "Georgia, serif", "fontSize": 12},
+               "rows": {"rowHeight": 30}, "sparkline": {"type": "column"}}
+        await upd(pg, build(expanded={"Z0", "Z0|C0", "Z1"}, objects=lvl)[0], W, H)
+        await pg.screenshot(path=os.path.join(OUT, "20_formato_por_niveles.png"))
+        await upd(pg, build(expanded={"Z0", "Z0|C0", "Z1"}, objects={"rows": {"rowHeight": 16}, "values": {"fontSize": 14}})[0], W, H)
+        res["alto_pedido_16_con_texto_14"] = await pg.evaluate("getComputedStyle(document.querySelector('.st-root')).getPropertyValue('--st-rh')")
+        await upd(pg, build(expanded={"Z0", "Z0|C0", "Z1"}, objects={"rows": {"rowHeight": 44}})[0], W, H)
+        await pg.screenshot(path=os.path.join(OUT, "21_alto_de_fila_44.png"))
         await pg.close()
 
         # Estrés: 10.800 hojas × 24 meses

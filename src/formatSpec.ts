@@ -2,7 +2,7 @@
  * Tabla del panel de formato. Generado por tools/formato.py: no editar a mano.
  * Los nombres internos (objeto.propiedad) no se renombran nunca: los informes guardados dejarían de leerlos.
  */
-export type PropType = "bool" | "num" | "fill" | "enum" | "text";
+export type PropType = "bool" | "num" | "fill" | "enum" | "text" | "font";
 export interface PropSpec { name: string; type: PropType; def: string | number | boolean; key: string; label: string;
     items?: [string, string, string][]; min?: number; max?: number; }
 export interface ObjSpec { name: string; key: string; label: string; props: PropSpec[]; }
@@ -47,25 +47,6 @@ export const OBJECTS: Record<string, ObjSpec> = {
         "key": "Obj_values",
         "label": "Values",
         "props": [
-            {
-                "name": "valueMode",
-                "type": "enum",
-                "def": "last",
-                "key": "Prop_values_valueMode",
-                "label": "Value shows",
-                "items": [
-                    [
-                        "last",
-                        "Enum_valueMode_last",
-                        "Last period"
-                    ],
-                    [
-                        "total",
-                        "Enum_valueMode_total",
-                        "Total of the range"
-                    ]
-                ]
-            },
             {
                 "name": "compare",
                 "type": "enum",
@@ -182,10 +163,15 @@ export const OBJECTS: Record<string, ObjSpec> = {
             {
                 "name": "scale",
                 "type": "enum",
-                "def": "level",
+                "def": "auto",
                 "key": "Prop_sparkline_scale",
                 "label": "Scale",
                 "items": [
+                    [
+                        "auto",
+                        "Enum_scale_auto",
+                        "Per row in detail rows, shared in subtotals"
+                    ],
                     [
                         "level",
                         "Enum_scale_level",
@@ -341,6 +327,15 @@ export const OBJECTS: Record<string, ObjSpec> = {
                 "max": 18
             },
             {
+                "name": "rowHeight",
+                "type": "num",
+                "def": 0,
+                "key": "Prop_rows_rowHeight",
+                "label": "Row height (px, 0 = automatic)",
+                "min": 0,
+                "max": 48
+            },
+            {
                 "name": "indent",
                 "type": "num",
                 "def": 14,
@@ -443,11 +438,347 @@ export const OBJECTS: Record<string, ObjSpec> = {
                 "max": 18
             },
             {
+                "name": "fontFamily",
+                "type": "font",
+                "def": "",
+                "key": "Prop_header_fontFamily",
+                "label": "Font"
+            },
+            {
+                "name": "bold",
+                "type": "bool",
+                "def": true,
+                "key": "Prop_header_bold",
+                "label": "Bold"
+            },
+            {
+                "name": "color",
+                "type": "fill",
+                "def": "",
+                "key": "Prop_header_color",
+                "label": "Text color"
+            },
+            {
+                "name": "background",
+                "type": "fill",
+                "def": "",
+                "key": "Prop_header_background",
+                "label": "Background"
+            },
+            {
                 "name": "context",
                 "type": "bool",
                 "def": true,
                 "key": "Prop_header_context",
                 "label": "Show period line"
+            }
+        ]
+    },
+    "level1": {
+        "name": "level1",
+        "key": "Obj_level1",
+        "label": "Level 1",
+        "props": [
+            {
+                "name": "background",
+                "type": "fill",
+                "def": "",
+                "key": "Prop_level1_background",
+                "label": "Background"
+            },
+            {
+                "name": "bgOpacity",
+                "type": "num",
+                "def": 100,
+                "key": "Prop_level1_bgOpacity",
+                "label": "Background opacity (%)",
+                "min": 0,
+                "max": 100
+            },
+            {
+                "name": "color",
+                "type": "fill",
+                "def": "",
+                "key": "Prop_level1_color",
+                "label": "Text color"
+            },
+            {
+                "name": "fontSize",
+                "type": "num",
+                "def": 0,
+                "key": "Prop_level1_fontSize",
+                "label": "Text size (0 = as Rows)",
+                "min": 0,
+                "max": 24
+            },
+            {
+                "name": "fontFamily",
+                "type": "font",
+                "def": "",
+                "key": "Prop_level1_fontFamily",
+                "label": "Font"
+            },
+            {
+                "name": "bold",
+                "type": "enum",
+                "def": "auto",
+                "key": "Prop_level1_bold",
+                "label": "Bold",
+                "items": [
+                    [
+                        "auto",
+                        "Enum_bold_auto",
+                        "Automatic"
+                    ],
+                    [
+                        "on",
+                        "Enum_bold_on",
+                        "On"
+                    ],
+                    [
+                        "off",
+                        "Enum_bold_off",
+                        "Off"
+                    ]
+                ]
+            },
+            {
+                "name": "italic",
+                "type": "bool",
+                "def": false,
+                "key": "Prop_level1_italic",
+                "label": "Italic"
+            }
+        ]
+    },
+    "level2": {
+        "name": "level2",
+        "key": "Obj_level2",
+        "label": "Level 2",
+        "props": [
+            {
+                "name": "background",
+                "type": "fill",
+                "def": "",
+                "key": "Prop_level2_background",
+                "label": "Background"
+            },
+            {
+                "name": "bgOpacity",
+                "type": "num",
+                "def": 100,
+                "key": "Prop_level2_bgOpacity",
+                "label": "Background opacity (%)",
+                "min": 0,
+                "max": 100
+            },
+            {
+                "name": "color",
+                "type": "fill",
+                "def": "",
+                "key": "Prop_level2_color",
+                "label": "Text color"
+            },
+            {
+                "name": "fontSize",
+                "type": "num",
+                "def": 0,
+                "key": "Prop_level2_fontSize",
+                "label": "Text size (0 = as Rows)",
+                "min": 0,
+                "max": 24
+            },
+            {
+                "name": "fontFamily",
+                "type": "font",
+                "def": "",
+                "key": "Prop_level2_fontFamily",
+                "label": "Font"
+            },
+            {
+                "name": "bold",
+                "type": "enum",
+                "def": "auto",
+                "key": "Prop_level2_bold",
+                "label": "Bold",
+                "items": [
+                    [
+                        "auto",
+                        "Enum_bold_auto",
+                        "Automatic"
+                    ],
+                    [
+                        "on",
+                        "Enum_bold_on",
+                        "On"
+                    ],
+                    [
+                        "off",
+                        "Enum_bold_off",
+                        "Off"
+                    ]
+                ]
+            },
+            {
+                "name": "italic",
+                "type": "bool",
+                "def": false,
+                "key": "Prop_level2_italic",
+                "label": "Italic"
+            }
+        ]
+    },
+    "level3": {
+        "name": "level3",
+        "key": "Obj_level3",
+        "label": "Level 3",
+        "props": [
+            {
+                "name": "background",
+                "type": "fill",
+                "def": "",
+                "key": "Prop_level3_background",
+                "label": "Background"
+            },
+            {
+                "name": "bgOpacity",
+                "type": "num",
+                "def": 100,
+                "key": "Prop_level3_bgOpacity",
+                "label": "Background opacity (%)",
+                "min": 0,
+                "max": 100
+            },
+            {
+                "name": "color",
+                "type": "fill",
+                "def": "",
+                "key": "Prop_level3_color",
+                "label": "Text color"
+            },
+            {
+                "name": "fontSize",
+                "type": "num",
+                "def": 0,
+                "key": "Prop_level3_fontSize",
+                "label": "Text size (0 = as Rows)",
+                "min": 0,
+                "max": 24
+            },
+            {
+                "name": "fontFamily",
+                "type": "font",
+                "def": "",
+                "key": "Prop_level3_fontFamily",
+                "label": "Font"
+            },
+            {
+                "name": "bold",
+                "type": "enum",
+                "def": "auto",
+                "key": "Prop_level3_bold",
+                "label": "Bold",
+                "items": [
+                    [
+                        "auto",
+                        "Enum_bold_auto",
+                        "Automatic"
+                    ],
+                    [
+                        "on",
+                        "Enum_bold_on",
+                        "On"
+                    ],
+                    [
+                        "off",
+                        "Enum_bold_off",
+                        "Off"
+                    ]
+                ]
+            },
+            {
+                "name": "italic",
+                "type": "bool",
+                "def": false,
+                "key": "Prop_level3_italic",
+                "label": "Italic"
+            }
+        ]
+    },
+    "levelTotal": {
+        "name": "levelTotal",
+        "key": "Obj_levelTotal",
+        "label": "Grand total row",
+        "props": [
+            {
+                "name": "background",
+                "type": "fill",
+                "def": "",
+                "key": "Prop_levelTotal_background",
+                "label": "Background"
+            },
+            {
+                "name": "bgOpacity",
+                "type": "num",
+                "def": 100,
+                "key": "Prop_levelTotal_bgOpacity",
+                "label": "Background opacity (%)",
+                "min": 0,
+                "max": 100
+            },
+            {
+                "name": "color",
+                "type": "fill",
+                "def": "",
+                "key": "Prop_levelTotal_color",
+                "label": "Text color"
+            },
+            {
+                "name": "fontSize",
+                "type": "num",
+                "def": 0,
+                "key": "Prop_levelTotal_fontSize",
+                "label": "Text size (0 = as Rows)",
+                "min": 0,
+                "max": 24
+            },
+            {
+                "name": "fontFamily",
+                "type": "font",
+                "def": "",
+                "key": "Prop_levelTotal_fontFamily",
+                "label": "Font"
+            },
+            {
+                "name": "bold",
+                "type": "enum",
+                "def": "auto",
+                "key": "Prop_levelTotal_bold",
+                "label": "Bold",
+                "items": [
+                    [
+                        "auto",
+                        "Enum_bold_auto",
+                        "Automatic"
+                    ],
+                    [
+                        "on",
+                        "Enum_bold_on",
+                        "On"
+                    ],
+                    [
+                        "off",
+                        "Enum_bold_off",
+                        "Off"
+                    ]
+                ]
+            },
+            {
+                "name": "italic",
+                "type": "bool",
+                "def": false,
+                "key": "Prop_levelTotal_italic",
+                "label": "Italic"
             }
         ]
     }
@@ -507,6 +838,12 @@ export const PANE: CardSpec[] = [
                 "toggle": null
             }
         ]
+    },
+    {
+        "uid": "levels",
+        "key": "Obj_levels",
+        "label": "Row levels",
+        "groups": []
     },
     {
         "uid": "header",

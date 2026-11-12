@@ -135,7 +135,12 @@ export class Visual implements IVisual {
     // fetchMoreData
     private loading = false;
     private ceiling = false;
-    private lastFetchRows = -1;
+    private modelMs = 0;
+    /** El alto pedido era menor que el texto y se ha subido (se avisa en el panel). */
+    private rowHClamped = false;
+    private levelStyles = new Map<number, { bg: string; color: string; fs: number; ff: string; bold: string; italic: boolean }>();
+    /** El respaldo equals/includes solo para lo que devuelve un marcador (registerOnSelectCallback). */
+    private restoreDeep = false;
 
     // Orden: el del panel, o el de un clic en la cabecera (local hasta que el panel lo recoge)
     private sortLocal: { by: string; dir: string } | null = null;
@@ -196,6 +201,7 @@ export class Visual implements IVisual {
         // Marcadores y selección desde fuera: solo derivar y repintar. Nunca persistProperties aquí.
         this.selMgr.registerOnSelectCallback((ids: ISelectionId[]) => {
             this.pendingRestore = ids || [];
+            this.restoreDeep = true;
             this.applyRestore();
             this.drawRows();
         });
@@ -271,7 +277,8 @@ export class Visual implements IVisual {
         const unit = a >= 1e12 ? 1e12 : a >= 1e9 ? 1e9 : a >= 1e6 ? 1e6 : 1e3;
         const scaled = a / unit;
         const precision = Math.max(0, Math.min(2, 3 - (Math.floor(Math.log10(Math.max(scaled, 1))) + 1)));
-        try { return this.formatter(fmt, a, precision).format(v); } catch { return this.fmtFull(v, fmt); }
+        // La caché va por unidad (no por valor): con el valor en la clave se creaba un formateador por celda.
+        try { return this.formatter(fmt, unit, precision).format(v); } catch { return this.fmtFull(v, fmt); }
     }
 
     private signed(v: number, text: string): string {
@@ -336,6 +343,9 @@ export class Visual implements IVisual {
                 out[obj][p.name] = v;
             }
         }
+        // "Value shows the total of the range" ES el interruptor de subtotales de columna: el host solo pide el total
+        // de cada fila (subtotal de columna del motor) si el usuario lo enciende.
+        out.subTotals = { columnSubtotals: o?.subTotals?.columnSubtotals === true };
         return out;
     }
 
@@ -395,11 +405,15 @@ export class Visual implements IVisual {
             this.subSelectionHelper.setFormatMode(this.formatMode);
             this.fmtCache.clear();
             if (isData) {
-                this.model = dv && dv.matrix ? buildModel(dv, (path, node, levels) => this.makeId(path, node, levels)) : null;
+                // Primero se pide el siguiente segmento (antes de construir nada): si el modelo fallara, la carga sigue.
                 this.handleSegments(dv, options);
-                // Calendar 1.2: el aviso de selección puede llegar ANTES que los datos. Se relee en cada update.
+                const t0 = performance.now();
+                this.model = dv && dv.matrix ? buildModel(dv, (path, node, levels) => this.makeId(path, node, levels)) : null;
+                this.modelMs = performance.now() - t0;
+                // Calendar 1.2: el aviso de selección puede llegar ANTES que los datos. Se relee en cada update; aquí
+                // son nuestras propias identidades (casan por clave), sin el respaldo equals, que es O(ids × filas).
                 const cur = this.selMgr.getSelectionIds() as ISelectionId[];
-                if (cur && cur.length) this.pendingRestore = cur;
+                if (cur && cur.length) { this.pendingRestore = cur; this.restoreDeep = false; }
                 else if (!this.pendingRestore) this.sel.clear();
                 this.applyRestore();
             }
@@ -407,8 +421,10 @@ export class Visual implements IVisual {
             if (this.formatMode) this.subSelectionHelper.updateOutlinesFromSubSelections((options as any).subSelections ?? [], true);
             this.events.renderingFinished(options);
         } catch (e) {
+            // Nunca colgado: todo camino de update termina con Finished o Failed, y el fallo se ve en el visual.
             this.events.renderingFailed(options, String(e));
             console.error("[SparklineTable]", e);
+            try { this.showError(String(e)); } catch { /* sin DOM */ }
         }
         // Fuera del try: un fallo de licencia nunca convierte un render correcto en renderingFailed.
         this.requestLicenseDeferred();
@@ -438,21 +454,27 @@ export class Visual implements IVisual {
     }
 
     /**
-     * fetchMoreData en modo segmentos agregados (validado: 10.738 hojas en 25 segmentos). Se pide un segmento más solo
-     * cuando ha llegado uno nuevo (más filas que en la petición anterior), para que un update de formato durante la
-     * carga no cuente como techo.
+     * fetchMoreData en modo segmentos agregados, con la regla EXACTA validada en Desktop en la prueba de viabilidad
+     * (A: 1.798 hojas en 671 ms; B: 10.738 hojas en 25 segmentos): en cada update de datos que traiga
+     * metadata.segment se pide el siguiente; si el host dice que no, es el techo. El bloque 1 había añadido "solo si
+     * llegaron filas nuevas", que no está validado y podía dejar la carga parada sin pedir el siguiente segmento.
      */
     private handleSegments(dv: DataView | null, options: VisualUpdateOptions): void {
         const ok = (options as any).operationKind as number;
-        if (ok === 0) { this.ceiling = false; this.lastFetchRows = -1; }
+        if (ok === 0) this.ceiling = false;
         const seg = (dv?.metadata as any)?.segment;
-        if (!seg || !this.model) { this.loading = false; return; }
-        const n = this.model.all.length;
-        if (this.ceiling || n === this.lastFetchRows) return;
-        this.lastFetchRows = n;
-        const more = this.host.fetchMoreData(true);
-        this.loading = !!more;
+        if (!seg) { this.loading = false; return; }
+        if (this.ceiling) { this.loading = false; return; }
+        let more = false;
+        try { more = !!this.host.fetchMoreData(true); } catch { more = false; }
+        this.loading = more;
         if (!more) this.ceiling = true;
+    }
+
+    /** Un fallo de render se ve en el visual (además de renderingFailed), nunca un spinner eterno. */
+    private showError(msg: string): void {
+        this.root.querySelectorAll(".st-landing").forEach(n => n.remove());
+        this.message(this.tf("UI_Error", "Sparkline Table could not draw this data: {0}", msg.slice(0, 200)));
     }
 
     private makeId(path: DataViewMatrixNode[], node: DataViewMatrixNode, levels: DataViewHierarchyLevel[]): ISelectionId | null {
@@ -469,7 +491,8 @@ export class Visual implements IVisual {
         const dv = this.dataView;
         this.settings = this.readSettings(dv);
         this.look = this.computeLook();
-        this.W = Math.max(0, options.viewport.width);
+        this.computeLevelStyles();
+        this.W =Math.max(0, options.viewport.width);
         this.H = Math.max(0, options.viewport.height);
         this.gen++;
         const sortSig = this.settings.rows.sortBy + "|" + this.settings.rows.sortDir;
@@ -534,7 +557,7 @@ export class Visual implements IVisual {
         const s = this.settings;
         const m0 = m.valueIdx[0];
         const last = m.lastIdx;
-        this.valueModeUsed = s.values.valueMode === "total" && m.hasTotals ? "total" : "last";
+        this.valueModeUsed = s.subTotals.columnSubtotals && m.hasTotals ? "total" : "last";
         // Base de la comparación: periodo anterior, o mismo periodo del año anterior si el eje lo permite.
         const ly = last >= 0 ? m.periods[last].ly : -1;
         this.compareUsed = s.values.compare === "lastYear" && ly >= 0 ? "lastYear" : "previous";
@@ -624,8 +647,14 @@ export class Visual implements IVisual {
         const fs = Number(s.values.fontSize);
         const nfs = Number(s.rows.fontSize);
         const dens = String(s.rows.density);
-        const base = Math.max(fs, nfs);
-        this.rowH = dens === "compact" ? Math.max(18, base + 7) : dens === "comfortable" ? Math.max(30, base + 19) : Math.max(22, base + 11);
+        // El alto de fila es fijo para todas (lo exige la virtualización): sale del texto más grande en uso.
+        let base = Math.max(fs, nfs);
+        this.levelStyles.forEach(st => { if (st.fs > base) base = st.fs; });
+        const auto = dens === "compact" ? Math.max(18, base + 7) : dens === "comfortable" ? Math.max(30, base + 19) : Math.max(22, base + 11);
+        // Row height (0 = el de la densidad). Si es más bajo que el texto, manda el texto: mínimo texto + 4 px.
+        const askH = Number(s.rows.rowHeight);
+        this.rowH = askH > 0 ? Math.max(16, Math.round(askH), Math.ceil(base + 4)) : auto;
+        this.rowHClamped = askH > 0 && this.rowH > askH;
         this.root.style.setProperty("--st-rh", this.rowH + "px");
         this.root.style.setProperty("--st-fs", nfs + "px");
         this.root.style.setProperty("--st-vfs", fs + "px");
@@ -644,7 +673,7 @@ export class Visual implements IVisual {
         const fmtM = (k: number) => (v: number) => this.fmtFull(v, m.sources[m.valueIdx[k]].format);
         const hdrW = (txt: string) => this.measure(txt, Number(s.header.fontSize), true) + 2 * PAD;
         const valW = (k: number) => Math.min(200, Math.max(widest(colOf(k), fmtM(k), k === 0, fs) + 2 * PAD,
-            Math.min(110, hdrW(m.sources[m.valueIdx[k]].displayName))));
+            Math.min(150, hdrW(m.sources[m.valueIdx[k]].displayName))));
         const dW = Math.min(120, Math.max(widest(all.map(r => r.delta), v => this.signed(v, this.fmtCompact(v, m.sources[m.valueIdx[0]].format)), false, fs) + 2 * PAD, hdrW("Δ")));
         const pW = Math.max(this.measure("+999.9%", fs) + 2 * PAD, hdrW("Δ%"));
 
@@ -694,6 +723,12 @@ export class Visual implements IVisual {
         const s = this.settings;
         h.style.display = s.header.show ? "grid" : "none";
         if (!s.header.show) return;
+        // Cabecera con su propio formato (alto contraste ignora fondo y color).
+        h.style.fontFamily = s.header.fontFamily ? String(s.header.fontFamily) : "";
+        h.style.color = !this.hc && s.header.color ? String(s.header.color) : "";
+        h.style.background = !this.hc && s.header.background ? String(s.header.background) : "";
+        h.classList.toggle("st-h-normal", s.header.bold === false);
+        h.style.minHeight = this.rowH + "px";
         const twoLines = s.header.context !== false && this.H >= 150;
         const { by, dir } = this.effectiveSort();
         const lastLbl = this.periodLabels[m.lastIdx] ?? "";
@@ -708,7 +743,8 @@ export class Visual implements IVisual {
         // Bullet: una barra con la cifra de la columna de valor (no la serie); win/loss: contra el objetivo o contra cero.
         if (type === "bullet") sparkCtx = valCtx;
         if (type === "winloss") sparkCtx += " · " + this.tf("UI_Vs", "vs {0}", this.showTarget(m) ? m.sources[m.targetIdx].displayName : "0");
-        const scaleNote = s.sparkline.scale === "row" && type !== "winloss" ? this.t("UI_ScalePerRow", "Scale: per row") : "";
+        const scaleNote = type === "winloss" ? "" : s.sparkline.scale === "row" ? this.t("UI_ScalePerRow", "Scale: per row")
+            : s.sparkline.scale === "auto" ? this.t("UI_ScalePerRowDetail", "Scale: per row in detail rows") : "";
         const sparkTitle = s.sparkline.type === "bullet" && m.targetIdx >= 0
             ? m.sources[m.valueIdx[0]].displayName + " / " + m.sources[m.targetIdx].displayName
             : this.typeName(String(s.sparkline.type)) + " · " + m.sources[m.valueIdx[0]].displayName;
@@ -812,7 +848,7 @@ export class Visual implements IVisual {
         if (this.settings.values.compare === "lastYear" && this.compareUsed !== "lastYear") {
             msgs.push({ t: this.t("UI_NoLastYear", "Same period last year is not available on this axis: compared with the previous period."), warn: false });
         }
-        if (this.settings.values.valueMode === "total" && this.valueModeUsed !== "total") {
+        if (this.settings.subTotals.columnSubtotals && this.valueModeUsed !== "total") {
             msgs.push({ t: this.t("UI_NoTotal", "Total of the range did not arrive from Power BI: showing the last period."), warn: false });
         }
         const show = msgs.length > 0 && this.H >= 90;
@@ -879,8 +915,24 @@ export class Visual implements IVisual {
         this.fillCells(el, d, m);
     }
 
+    /** Formato del nivel de la fila (Row levels). Vacío = lo de siempre (CSS: subtotal con fondo suave y negrita). */
+    private applyLevelStyle(el: HTMLElement, d: Row): void {
+        const st = this.levelStyles.get(Math.min(d.level, 2));
+        const es = el.style;
+        es.background = st && st.bg && !el.classList.contains("st-selected") ? st.bg : "";
+        es.color = st && st.color ? st.color : "";
+        es.fontFamily = st && st.ff ? st.ff : "";
+        es.fontStyle = st && st.italic ? "italic" : "";
+        if (st && st.fs) { es.fontSize = st.fs + "px"; es.setProperty("--st-vfs", st.fs + "px"); }
+        else { es.fontSize = ""; es.removeProperty("--st-vfs"); }
+        const bw = st ? st.bold : "auto";
+        el.classList.toggle("st-bw", bw !== "auto");
+        es.fontWeight = bw === "on" ? "700" : bw === "off" ? "400" : "";
+    }
+
     private fillCells(el: HTMLElement, d: Row, m: Model): void {
         const s = this.settings;
+        this.applyLevelStyle(el, d);
         const q = (c: string) => el.querySelector(c) as HTMLElement;
         const name = q(".st-c-name");
         name.style.paddingLeft = (PAD + Math.max(0, d.level) * Number(s.rows.indent)) + "px";
@@ -934,14 +986,20 @@ export class Visual implements IVisual {
         t.textContent = g.lastText;
         t.setAttribute("x", String(w - 2));
         t.setAttribute("y", String(Math.round(h / 2)));
-        t.style.fontSize = Math.max(8, Number(this.settings.values.fontSize) - 1) + "px";
+        t.style.fontSize = Math.max(7, Math.min(Number(this.settings.values.fontSize) - 1, Math.round(h * 0.55))) + "px";
+    }
+
+    /** Escala por fila: siempre, o (auto, propuesta pendiente de Tino) solo en las filas de detalle. */
+    private perRow(r: Row): boolean {
+        const sc = String(this.settings.sparkline.scale);
+        return sc === "row" || (sc === "auto" && r.isLeaf);
     }
 
     private rowExt(r: Row, m: Model): [number, number] {
         const s = this.settings;
         const type = String(s.sparkline.type);
         if (type === "bullet") {
-            if (s.sparkline.scale === "row") {
+            if (this.perRow(r)) {
                 const b: [number, number] = [0, 0];
                 for (const v of [r.shown[0], this.bulletTarget(r, m)]) if (v !== null && v !== undefined) { b[0] = Math.min(b[0], v); b[1] = Math.max(b[1], v); }
                 return b;
@@ -949,7 +1007,7 @@ export class Visual implements IVisual {
             return this.extBullet.get(r.level) ?? [0, 1];
         }
         let e: [number, number];
-        if (s.sparkline.scale === "row") {
+        if (this.perRow(r)) {
             e = [Infinity, -Infinity];
             const scan = (arr: Num[]) => { for (const v of arr) if (v !== null) { if (v < e[0]) e[0] = v; if (v > e[1]) e[1] = v; } };
             scan(r.s[m.valueIdx[0]]);
@@ -978,7 +1036,8 @@ export class Visual implements IVisual {
         const hi = hi0 > lo ? hi0 : lo + (Math.abs(lo) || 1);
         const y = (v: number) => top + (hi - v) / (hi - lo) * ph;
         const fmt0 = m.sources[m.valueIdx[0]].format;
-        const ms = Number(s.markers.size);
+        // Los marcadores crecen o encogen con el alto de fila (24 px = tamaño del panel).
+        const ms = Number(s.markers.size) * Math.max(0.7, Math.min(1.6, this.rowH / 24));
 
         if (type === "bullet") {
             const x = (v: number) => 2 + (v - lo) / (hi - lo) * (w - 4);
@@ -1172,7 +1231,8 @@ export class Visual implements IVisual {
         const rowIds = m.all.filter(r => !!r.id).map(r => r.id as ISelectionId);
         // El respaldo equals/includes es O(ids × filas): con selecciones enormes (un subtotal de miles de hojas) se
         // limita para no congelar el visual; el filtro del host no depende de esto, solo el resaltado.
-        const fallback = ids.length * rowIds.length <= 3e6;
+        const fallback = this.restoreDeep && ids.length * rowIds.length <= 5e5;
+        this.restoreDeep = false;
         for (const id of ids) {
             const k = this.rowKey(id);
             const mine = byKey.get(k) ?? (!fallback ? undefined : rowIds.find(x => { try { return x.equals(id); } catch { return false; } })
@@ -1485,15 +1545,15 @@ export class Visual implements IVisual {
         el.appendChild(titulo);
         const pie = mk("div", "st-g-foot");
         const has = (role: string) => !!this.dataView?.metadata?.columns?.some(c => c.roles?.[role]);
-        const chips = (label: string, obj: string, prop: string, items: [string, string, string][], cur: string) => {
+        const chips = (label: string, obj: string, prop: string, items: [any, string, string][], cur: string) => {
             el.appendChild(mk("div", "st-g-lbl", label));
             const row = mk("div", "st-g-chips");
             for (const [v, k, l] of items) {
                 const b = mk("button", "st-g-chip", this.t(k, l)) as HTMLButtonElement;
                 b.type = "button";
-                b.setAttribute("aria-pressed", String(v === cur));
-                b.style.borderColor = v === cur ? azul : (hc ? fg : "#C8C6C4");
-                b.style.borderWidth = v === cur ? "2px" : "1px";
+                b.setAttribute("aria-pressed", String(String(v) === cur));
+                b.style.borderColor = String(v) === cur ? azul : (hc ? fg : "#C8C6C4");
+                b.style.borderWidth = String(v) === cur ? "2px" : "1px";
                 b.style.color = fg;
                 b.style.background = hc ? this.hcBg : "#FFFFFF";
                 b.addEventListener("click", () => this.persistir(obj, { [prop]: v }));
@@ -1528,7 +1588,7 @@ export class Visual implements IVisual {
             titulo.textContent = this.t("Guide_Read", "Read it your way");
             const it = (obj: string, prop: string) => OBJECTS[obj].props.find(p => p.name === prop)?.items ?? [];
             const s = this.settings;
-            chips(this.t("Prop_values_valueMode", "Value shows"), "values", "valueMode", it("values", "valueMode"), String(s.values.valueMode));
+            chips(this.t("UI_ValueShows", "Value shows"), "subTotals", "columnSubtotals", [[false, "UI_LastPeriod", "Last period"], [true, "UI_RangeTotal", "Total of the range"]], String(!!s.subTotals.columnSubtotals));
             chips(this.t("Prop_values_compare", "Change vs"), "values", "compare", it("values", "compare"), String(s.values.compare));
             chips(this.t("Prop_sparkline_type", "Type"), "sparkline", "type", it("sparkline", "type"), String(s.sparkline.type));
             chips(this.t("Prop_sparkline_scale", "Scale"), "sparkline", "scale", it("sparkline", "scale"), String(s.sparkline.scale));
@@ -1562,6 +1622,7 @@ export class Visual implements IVisual {
         if (p.type === "num") return { ...base, control: { type: "NumUpDown" as any, properties: { descriptor, value: Number(value),
             options: { minValue: p.min !== undefined ? { type: 0, value: p.min } : undefined, maxValue: p.max !== undefined ? { type: 1, value: p.max } : undefined } } } } as any;
         if (p.type === "fill") return { ...base, control: { type: "ColorPicker" as any, properties: { descriptor, value: { value: String(value || this.fillDefault(obj, p.name)) } } } } as any;
+        if (p.type === "font") return { ...base, control: { type: "FontPicker" as any, properties: { descriptor, value: String(value || FONT) } } } as any;
         if (p.type === "enum") {
             const items = (p.items ?? []).map(([v, k, l]) => ({ value: v, displayName: this.t(k, l) }));
             const cur = items.find(it => it.value === value) ?? items[0];
@@ -1575,7 +1636,39 @@ export class Visual implements IVisual {
         const L = this.look;
         const k = obj + "." + prop;
         return k === "sparkline.color" ? L.line : k === "sparkline.accent" ? L.accent : k === "sparkline.targetColor" ? L.target
-            : k === "values.upColor" ? L.up : k === "values.downColor" ? L.down : "#000000";
+            : k === "values.upColor" ? L.up : k === "values.downColor" ? L.down
+            : k === "header.background" ? L.bg : prop === "background" ? (obj === "level3" ? L.bg : L.sub) : prop === "color" ? L.text : "#000000";
+    }
+
+    /** Tarjeta Row levels: un elemento por nivel presente (y el total), con el mismo juego de opciones. */
+    private levelsGroup(revert: powerbi.visuals.FormattingDescriptor[]): any | null {
+        const m = this.model;
+        if (!m || !m.levels.length) return null;
+        const entries: [string, string][] = m.levels.slice(0, 3).map((l, i) =>
+            ["level" + (i + 1), this.tf("UI_LevelN", "Level {0}", String(i + 1)) + " · " + l.sources.map(s => s.displayName).join(" + ")]);
+        if (m.total) entries.push(["levelTotal", this.cardLabel("levelTotal")]);
+        const containerItems = entries.map(([o, name]) => ({
+            displayName: name,
+            slices: OBJECTS[o].props.map(p => { revert.push({ objectName: o, propertyName: p.name }); return this.slice(o, p); }),
+        }));
+        return { uid: "levels-group", displayName: undefined, container: { displayName: this.t("UI_LevelPick", "Level"), containerItems } };
+    }
+
+    /** Estilo resuelto de cada nivel (-1 = total). Vacío = lo de siempre; alto contraste ignora fondos y colores. */
+    private computeLevelStyles(): void {
+        this.levelStyles.clear();
+        for (const lv of [-1, 0, 1, 2]) {
+            const s = this.settings[lv < 0 ? "levelTotal" : "level" + (lv + 1)];
+            const op = Math.max(0, Math.min(100, Number(s.bgOpacity))) / 100;
+            this.levelStyles.set(lv, {
+                bg: !this.hc && s.background ? withAlpha(String(s.background), op) : "",
+                color: !this.hc && s.color ? String(s.color) : "",
+                fs: Number(s.fontSize) > 0 ? Number(s.fontSize) : 0,
+                ff: String(s.fontFamily || ""),
+                bold: String(s.bold),
+                italic: !!s.italic,
+            });
+        }
     }
 
     public getFormattingModel(): powerbi.visuals.FormattingModel {
@@ -1592,6 +1685,9 @@ export class Visual implements IVisual {
                     .filter(p => !(g.obj === "sparkline" && (p.name === "target" || p.name === "targetColor") && m && m.targetIdx < 0))
                     .map(p => {
                         const sl: any = this.slice(g.obj, p);
+                        if (g.obj === "rows" && p.name === "rowHeight" && this.rowHClamped) {
+                            sl.displayName += " — " + this.tf("UI_RowHeightRaised", "raised to {0} px to fit the text", String(this.rowH));
+                        }
                         if (g.obj === "rows" && p.name === "sortBy" && m) {
                             // Cada "Value" con el nombre de su medida; las que no están, fuera.
                             const names: Record<string, string> = {};
@@ -1615,6 +1711,14 @@ export class Visual implements IVisual {
                 }
                 groups.push(grp);
             }
+            if (c.uid === "values" && groups.length) {
+                // "Value shows the total of the range" = subtotales de columna del host (subTotals.columnSubtotals).
+                const d = { objectName: "subTotals", propertyName: "columnSubtotals" };
+                (groups[0] as any).slices.unshift({ uid: "subTotals-columnSubtotals", displayName: this.propLabel("subTotals", "columnSubtotals"),
+                    control: { type: "ToggleSwitch", properties: { descriptor: d, value: !!this.settings.subTotals?.columnSubtotals } } });
+                revert.push(d);
+            }
+            if (c.uid === "levels") { const lv = this.levelsGroup(revert); if (!lv) continue; groups.push(lv); }
             const card: any = { uid: c.uid + "-card", displayName: this.t(c.key, c.label), groups, revertToDefaultDescriptors: revert };
             if (cardToggle) card.topLevelToggle = cardToggle;
             cards.push(card);
@@ -1630,6 +1734,7 @@ export class Visual implements IVisual {
     }
 
     private propLabel(obj: string, prop: string): string {
+        if (obj === "subTotals") return this.t("Prop_subTotals_columnSubtotals", "Value shows the total of the range");
         const p = OBJECTS[obj]?.props.find(x => x.name === prop);
         return p ? this.t(p.key, p.label) : prop;
     }
@@ -1675,7 +1780,7 @@ export class Visual implements IVisual {
         switch (name) {
             case "sparkline": return [pick("sparkline", "type"), pick("sparkline", "scale"), toggle("sparkline", "showLast"), toggle("sparkline", "target"), div, reset("sparkline"), nav("sparkline")] as any;
             case "header": return [toggle("header", "show"), toggle("header", "context"), div, reset("header"), nav("header")] as any;
-            case "values": return [pick("values", "valueMode"), pick("values", "compare"), toggle("values", "showDelta"), toggle("values", "showDeltaPct"), div, reset("values"), nav("values")] as any;
+            case "values": return [toggle("subTotals", "columnSubtotals"), pick("values", "compare"), toggle("values", "showDelta"), toggle("values", "showDeltaPct"), div, reset("values"), nav("values")] as any;
             case "rows": return [pick("rows", "density"), toggle("rows", "grandTotal"), pick("rows", "sortBy"), div, reset("rows"), nav("rows")] as any;
         }
         return undefined;
@@ -1703,6 +1808,13 @@ function mix(a: string, b: string, k: number): string {
     if (!pa || !pb) return a;
     const c = pa.map((x, i) => Math.round(x * k + pb[i] * (1 - k)));
     return "#" + c.map(x => x.toString(16).padStart(2, "0")).join("");
+}
+
+/** Color con opacidad (rgba) para el fondo de cada nivel. */
+function withAlpha(c: string, a: number): string {
+    const p = hex(c);
+    if (!p) return c;
+    return a >= 1 ? c : "rgba(" + p.join(",") + "," + a.toFixed(2) + ")";
 }
 
 function hex(c: string): number[] | null {

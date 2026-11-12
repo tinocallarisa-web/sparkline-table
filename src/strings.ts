@@ -57,7 +57,8 @@ export const STRINGS: Record<string, Record<string, string>> = {
         "UI_Selected": "seleccionado",
         "UI_SmallBase": "base pequeña ({0}): lee el % con cuidado",
         "UI_SortedBy": "Ordenado por {0} {1}",
-        "UI_ToggleHint": "haz clic en la flecha para expandir o contraer; Alt + clic para todo el nivel"
+        "UI_ToggleHint": "haz clic en la flecha para expandir o contraer; Alt + clic para todo el nivel",
+        "UI_ValueShows": "El valor muestra"
     },
     "pt-BR": {
         "Guide_Back": "Voltar",
@@ -112,7 +113,8 @@ export const STRINGS: Record<string, Record<string, string>> = {
         "UI_Selected": "selecionado",
         "UI_SmallBase": "base pequena ({0}): leia a % com cuidado",
         "UI_SortedBy": "Ordenado por {0} {1}",
-        "UI_ToggleHint": "clique na seta para expandir ou recolher; Alt + clique para todo o nível"
+        "UI_ToggleHint": "clique na seta para expandir ou recolher; Alt + clique para todo o nível",
+        "UI_ValueShows": "O valor mostra"
     },
     "pt-PT": {
         "Guide_Back": "Voltar",
@@ -167,7 +169,8 @@ export const STRINGS: Record<string, Record<string, string>> = {
         "UI_Selected": "selecionado",
         "UI_SmallBase": "base pequena ({0}): leia a % com cuidado",
         "UI_SortedBy": "Ordenado por {0} {1}",
-        "UI_ToggleHint": "clique na seta para expandir ou recolher; Alt + clique para todo o nível"
+        "UI_ToggleHint": "clique na seta para expandir ou recolher; Alt + clique para todo o nível",
+        "UI_ValueShows": "O valor mostra"
     },
     "fr-FR": {
         "Guide_Back": "Retour",
@@ -221,7 +224,8 @@ export const STRINGS: Record<string, Record<string, string>> = {
         "UI_Selected": "sélectionné",
         "UI_SmallBase": "petite base ({0}) : lisez le % avec prudence",
         "UI_SortedBy": "Trié par {0} {1}",
-        "UI_ToggleHint": "cliquez sur la flèche pour développer ou réduire ; Alt + clic pour tout le niveau"
+        "UI_ToggleHint": "cliquez sur la flèche pour développer ou réduire ; Alt + clic pour tout le niveau",
+        "UI_ValueShows": "La valeur affiche"
     },
     "de-DE": {
         "Guide_Back": "Zurück",
@@ -280,6 +284,7 @@ export const STRINGS: Record<string, Record<string, string>> = {
         "UI_SortedBy": "Sortiert nach {0} {1}",
         "UI_ToggleHint": "Pfeil anklicken zum Erweitern oder Reduzieren; Alt + Klick für die ganze Ebene",
         "UI_Total": "Gesamt",
+        "UI_ValueShows": "Wert zeigt",
         "UI_Vs": "ggü. {0}"
     },
     "it-IT": {
@@ -337,7 +342,8 @@ export const STRINGS: Record<string, Record<string, string>> = {
         "UI_SmallBase": "base piccola ({0}): leggi la % con cautela",
         "UI_SortedBy": "Ordinato per {0} {1}",
         "UI_ToggleHint": "fai clic sulla freccia per espandere o comprimere; Alt + clic per l’intero livello",
-        "UI_Total": "Totale"
+        "UI_Total": "Totale",
+        "UI_ValueShows": "Il valore mostra"
     },
     "nl-NL": {
         "Guide_Back": "Terug",
@@ -395,6 +401,7 @@ export const STRINGS: Record<string, Record<string, string>> = {
         "UI_SortedBy": "Gesorteerd op {0} {1}",
         "UI_ToggleHint": "klik op de pijl om uit of samen te vouwen; Alt + klik voor het hele niveau",
         "UI_Total": "Totaal",
+        "UI_ValueShows": "Waarde toont",
         "UI_Vs": "t.o.v. {0}"
     },
     "pl-PL": {
@@ -452,7 +459,8 @@ export const STRINGS: Record<string, Record<string, string>> = {
         "UI_SmallBase": "mała baza ({0}): czytaj % ostrożnie",
         "UI_SortedBy": "Posortowano według {0} {1}",
         "UI_ToggleHint": "kliknij strzałkę, aby rozwinąć lub zwinąć; Alt + klik dla całego poziomu",
-        "UI_Total": "Suma"
+        "UI_Total": "Suma",
+        "UI_ValueShows": "Wartość pokazuje"
     },
     "ja-JP": {
         "Guide_Back": "戻る",
@@ -511,6 +519,7 @@ export const STRINGS: Record<string, Record<string, string>> = {
         "UI_SortedBy": "{0} {1} で並べ替え",
         "UI_ToggleHint": "矢印をクリックして展開/折りたたみ。Alt + クリックでレベル全体",
         "UI_Total": "合計",
+        "UI_ValueShows": "値の表示",
         "UI_Vs": "対 {0}"
     },
     "zh-CN": {
@@ -570,6 +579,7 @@ export const STRINGS: Record<string, Record<string, string>> = {
         "UI_SortedBy": "按 {0} {1} 排序",
         "UI_ToggleHint": "单击箭头展开或折叠；Alt + 单击作用于整个层级",
         "UI_Total": "合计",
+        "UI_ValueShows": "值显示",
         "UI_Vs": "对比 {0}"
     },
     "ko-KR": {
@@ -629,6 +639,7 @@ export const STRINGS: Record<string, Record<string, string>> = {
         "UI_SortedBy": "{0} {1} 기준 정렬",
         "UI_ToggleHint": "화살표를 클릭하여 확장/축소, Alt + 클릭은 수준 전체",
         "UI_Total": "합계",
+        "UI_ValueShows": "값 표시",
         "UI_Vs": "대비 {0}"
     }
 };

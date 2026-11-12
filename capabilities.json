@@ -91,7 +91,7 @@
           },
           "dataReductionAlgorithm": {
             "window": {
-              "count": 5000
+              "count": 1000
             }
           }
         },
@@ -158,7 +158,7 @@
           "objectName": "subTotals",
           "propertyName": "columnSubtotals"
         },
-        "defaultValue": true
+        "defaultValue": false
       },
       "columnSubtotalsPerLevel": {
         "propertyIdentifier": {
@@ -233,6 +233,8 @@
           }
         },
         "columnSubtotals": {
+          "displayName": "Value shows the total of the range",
+          "displayNameKey": "Prop_subTotals_columnSubtotals",
           "type": {
             "bool": true
           }
@@ -298,24 +300,6 @@
       "displayName": "Values",
       "displayNameKey": "Obj_values",
       "properties": {
-        "valueMode": {
-          "displayName": "Value shows",
-          "displayNameKey": "Prop_values_valueMode",
-          "type": {
-            "enumeration": [
-              {
-                "value": "last",
-                "displayName": "Last period",
-                "displayNameKey": "Enum_valueMode_last"
-              },
-              {
-                "value": "total",
-                "displayName": "Total of the range",
-                "displayNameKey": "Enum_valueMode_total"
-              }
-            ]
-          }
-        },
         "compare": {
           "displayName": "Change vs",
           "displayNameKey": "Prop_values_compare",
@@ -435,6 +419,11 @@
           "displayNameKey": "Prop_sparkline_scale",
           "type": {
             "enumeration": [
+              {
+                "value": "auto",
+                "displayName": "Per row in detail rows, shared in subtotals",
+                "displayNameKey": "Enum_scale_auto"
+              },
               {
                 "value": "level",
                 "displayName": "Shared by level",
@@ -593,6 +582,13 @@
             "numeric": true
           }
         },
+        "rowHeight": {
+          "displayName": "Row height (px, 0 = automatic)",
+          "displayNameKey": "Prop_rows_rowHeight",
+          "type": {
+            "numeric": true
+          }
+        },
         "indent": {
           "displayName": "Indent per level",
           "displayNameKey": "Prop_rows_indent",
@@ -688,9 +684,371 @@
             "numeric": true
           }
         },
+        "fontFamily": {
+          "displayName": "Font",
+          "displayNameKey": "Prop_header_fontFamily",
+          "type": {
+            "formatting": {
+              "fontFamily": true
+            }
+          }
+        },
+        "bold": {
+          "displayName": "Bold",
+          "displayNameKey": "Prop_header_bold",
+          "type": {
+            "bool": true
+          }
+        },
+        "color": {
+          "displayName": "Text color",
+          "displayNameKey": "Prop_header_color",
+          "type": {
+            "fill": {
+              "solid": {
+                "color": true
+              }
+            }
+          }
+        },
+        "background": {
+          "displayName": "Background",
+          "displayNameKey": "Prop_header_background",
+          "type": {
+            "fill": {
+              "solid": {
+                "color": true
+              }
+            }
+          }
+        },
         "context": {
           "displayName": "Show period line",
           "displayNameKey": "Prop_header_context",
+          "type": {
+            "bool": true
+          }
+        }
+      }
+    },
+    "level1": {
+      "displayName": "Level 1",
+      "displayNameKey": "Obj_level1",
+      "properties": {
+        "background": {
+          "displayName": "Background",
+          "displayNameKey": "Prop_level1_background",
+          "type": {
+            "fill": {
+              "solid": {
+                "color": true
+              }
+            }
+          }
+        },
+        "bgOpacity": {
+          "displayName": "Background opacity (%)",
+          "displayNameKey": "Prop_level1_bgOpacity",
+          "type": {
+            "numeric": true
+          }
+        },
+        "color": {
+          "displayName": "Text color",
+          "displayNameKey": "Prop_level1_color",
+          "type": {
+            "fill": {
+              "solid": {
+                "color": true
+              }
+            }
+          }
+        },
+        "fontSize": {
+          "displayName": "Text size (0 = as Rows)",
+          "displayNameKey": "Prop_level1_fontSize",
+          "type": {
+            "numeric": true
+          }
+        },
+        "fontFamily": {
+          "displayName": "Font",
+          "displayNameKey": "Prop_level1_fontFamily",
+          "type": {
+            "formatting": {
+              "fontFamily": true
+            }
+          }
+        },
+        "bold": {
+          "displayName": "Bold",
+          "displayNameKey": "Prop_level1_bold",
+          "type": {
+            "enumeration": [
+              {
+                "value": "auto",
+                "displayName": "Automatic",
+                "displayNameKey": "Enum_bold_auto"
+              },
+              {
+                "value": "on",
+                "displayName": "On",
+                "displayNameKey": "Enum_bold_on"
+              },
+              {
+                "value": "off",
+                "displayName": "Off",
+                "displayNameKey": "Enum_bold_off"
+              }
+            ]
+          }
+        },
+        "italic": {
+          "displayName": "Italic",
+          "displayNameKey": "Prop_level1_italic",
+          "type": {
+            "bool": true
+          }
+        }
+      }
+    },
+    "level2": {
+      "displayName": "Level 2",
+      "displayNameKey": "Obj_level2",
+      "properties": {
+        "background": {
+          "displayName": "Background",
+          "displayNameKey": "Prop_level2_background",
+          "type": {
+            "fill": {
+              "solid": {
+                "color": true
+              }
+            }
+          }
+        },
+        "bgOpacity": {
+          "displayName": "Background opacity (%)",
+          "displayNameKey": "Prop_level2_bgOpacity",
+          "type": {
+            "numeric": true
+          }
+        },
+        "color": {
+          "displayName": "Text color",
+          "displayNameKey": "Prop_level2_color",
+          "type": {
+            "fill": {
+              "solid": {
+                "color": true
+              }
+            }
+          }
+        },
+        "fontSize": {
+          "displayName": "Text size (0 = as Rows)",
+          "displayNameKey": "Prop_level2_fontSize",
+          "type": {
+            "numeric": true
+          }
+        },
+        "fontFamily": {
+          "displayName": "Font",
+          "displayNameKey": "Prop_level2_fontFamily",
+          "type": {
+            "formatting": {
+              "fontFamily": true
+            }
+          }
+        },
+        "bold": {
+          "displayName": "Bold",
+          "displayNameKey": "Prop_level2_bold",
+          "type": {
+            "enumeration": [
+              {
+                "value": "auto",
+                "displayName": "Automatic",
+                "displayNameKey": "Enum_bold_auto"
+              },
+              {
+                "value": "on",
+                "displayName": "On",
+                "displayNameKey": "Enum_bold_on"
+              },
+              {
+                "value": "off",
+                "displayName": "Off",
+                "displayNameKey": "Enum_bold_off"
+              }
+            ]
+          }
+        },
+        "italic": {
+          "displayName": "Italic",
+          "displayNameKey": "Prop_level2_italic",
+          "type": {
+            "bool": true
+          }
+        }
+      }
+    },
+    "level3": {
+      "displayName": "Level 3",
+      "displayNameKey": "Obj_level3",
+      "properties": {
+        "background": {
+          "displayName": "Background",
+          "displayNameKey": "Prop_level3_background",
+          "type": {
+            "fill": {
+              "solid": {
+                "color": true
+              }
+            }
+          }
+        },
+        "bgOpacity": {
+          "displayName": "Background opacity (%)",
+          "displayNameKey": "Prop_level3_bgOpacity",
+          "type": {
+            "numeric": true
+          }
+        },
+        "color": {
+          "displayName": "Text color",
+          "displayNameKey": "Prop_level3_color",
+          "type": {
+            "fill": {
+              "solid": {
+                "color": true
+              }
+            }
+          }
+        },
+        "fontSize": {
+          "displayName": "Text size (0 = as Rows)",
+          "displayNameKey": "Prop_level3_fontSize",
+          "type": {
+            "numeric": true
+          }
+        },
+        "fontFamily": {
+          "displayName": "Font",
+          "displayNameKey": "Prop_level3_fontFamily",
+          "type": {
+            "formatting": {
+              "fontFamily": true
+            }
+          }
+        },
+        "bold": {
+          "displayName": "Bold",
+          "displayNameKey": "Prop_level3_bold",
+          "type": {
+            "enumeration": [
+              {
+                "value": "auto",
+                "displayName": "Automatic",
+                "displayNameKey": "Enum_bold_auto"
+              },
+              {
+                "value": "on",
+                "displayName": "On",
+                "displayNameKey": "Enum_bold_on"
+              },
+              {
+                "value": "off",
+                "displayName": "Off",
+                "displayNameKey": "Enum_bold_off"
+              }
+            ]
+          }
+        },
+        "italic": {
+          "displayName": "Italic",
+          "displayNameKey": "Prop_level3_italic",
+          "type": {
+            "bool": true
+          }
+        }
+      }
+    },
+    "levelTotal": {
+      "displayName": "Grand total row",
+      "displayNameKey": "Obj_levelTotal",
+      "properties": {
+        "background": {
+          "displayName": "Background",
+          "displayNameKey": "Prop_levelTotal_background",
+          "type": {
+            "fill": {
+              "solid": {
+                "color": true
+              }
+            }
+          }
+        },
+        "bgOpacity": {
+          "displayName": "Background opacity (%)",
+          "displayNameKey": "Prop_levelTotal_bgOpacity",
+          "type": {
+            "numeric": true
+          }
+        },
+        "color": {
+          "displayName": "Text color",
+          "displayNameKey": "Prop_levelTotal_color",
+          "type": {
+            "fill": {
+              "solid": {
+                "color": true
+              }
+            }
+          }
+        },
+        "fontSize": {
+          "displayName": "Text size (0 = as Rows)",
+          "displayNameKey": "Prop_levelTotal_fontSize",
+          "type": {
+            "numeric": true
+          }
+        },
+        "fontFamily": {
+          "displayName": "Font",
+          "displayNameKey": "Prop_levelTotal_fontFamily",
+          "type": {
+            "formatting": {
+              "fontFamily": true
+            }
+          }
+        },
+        "bold": {
+          "displayName": "Bold",
+          "displayNameKey": "Prop_levelTotal_bold",
+          "type": {
+            "enumeration": [
+              {
+                "value": "auto",
+                "displayName": "Automatic",
+                "displayNameKey": "Enum_bold_auto"
+              },
+              {
+                "value": "on",
+                "displayName": "On",
+                "displayNameKey": "Enum_bold_on"
+              },
+              {
+                "value": "off",
+                "displayName": "Off",
+                "displayNameKey": "Enum_bold_off"
+              }
+            ]
+          }
+        },
+        "italic": {
+          "displayName": "Italic",
+          "displayNameKey": "Prop_levelTotal_italic",
           "type": {
             "bool": true
           }
