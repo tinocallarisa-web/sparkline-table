@@ -344,3 +344,9 @@ P.update({
 "{0} values without a date on the axis are not drawn": ["{0} valores sem data no eixo não são desenhados", "{0} valeurs sans date sur l’axe ne sont pas tracées", "{0} Werte ohne Datum auf der Achse werden nicht gezeichnet", "{0} valori senza data sull’asse non vengono disegnati", "{0} waarden zonder datum op de as worden niet getekend", "Wartości bez daty na osi nie są rysowane: {0}", "軸に日付のない値 {0} 件は描画されません", "{0} 个轴上没有日期的值未绘制", "축에 날짜가 없는 값 {0}개는 그리지 않습니다", "{0} valores sin fecha en el eje no se dibujan"],
 "{0}: available down to {1}": ["{0}: disponível até {1}", "{0} : disponible jusqu’à {1}", "{0}: verfügbar bis {1}", "{0}: disponibile fino a {1}", "{0}: beschikbaar tot {1}", "{0}: dostępne do poziomu {1}", "{0}: {1} まで利用可能", "{0}：可用至 {1}", "{0}: {1}까지 사용 가능", "{0}: disponible hasta {1}"],
 })
+
+# --- escala explícita ---
+P.update({
+"Per row in detail": ["Por linha no detalhe", "Par ligne dans le détail", "Pro Zeile im Detail", "Per riga nel dettaglio", "Per rij in detail", "Na wiersz w szczegółach", "詳細行ごと", "明细按行", "세부 행별", "Por fila en el detalle"],
+"Scale: shared by level": ["Escala: comum por nível", "Échelle : commune par niveau", "Skala: gemeinsam je Ebene", "Scala: comune per livello", "Schaal: gedeeld per niveau", "Skala: wspólna na poziom", "スケール: レベルごとに共通", "刻度：按级别共享", "배율: 수준별 공통", "Escala: común por nivel"],
+})

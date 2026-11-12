@@ -388,14 +388,14 @@ export const OBJECTS: Record<string, ObjSpec> = {
                 "label": "Scale",
                 "items": [
                     [
-                        "auto",
-                        "Enum_scale_auto",
-                        "Per row in detail rows, shared in subtotals"
-                    ],
-                    [
                         "level",
                         "Enum_scale_level",
                         "Shared by level"
+                    ],
+                    [
+                        "auto",
+                        "Enum_scale_auto",
+                        "Per row in detail"
                     ],
                     [
                         "row",
@@ -664,7 +664,7 @@ export const OBJECTS: Record<string, ObjSpec> = {
             {
                 "name": "scale",
                 "type": "enum",
-                "def": "level",
+                "def": "auto",
                 "key": "Prop_spark2_scale",
                 "label": "Scale",
                 "items": [
@@ -672,6 +672,11 @@ export const OBJECTS: Record<string, ObjSpec> = {
                         "level",
                         "Enum_scale_level",
                         "Shared by level"
+                    ],
+                    [
+                        "auto",
+                        "Enum_scale_auto",
+                        "Per row in detail"
                     ],
                     [
                         "row",
@@ -791,7 +796,7 @@ export const OBJECTS: Record<string, ObjSpec> = {
             {
                 "name": "scale",
                 "type": "enum",
-                "def": "level",
+                "def": "auto",
                 "key": "Prop_spark3_scale",
                 "label": "Scale",
                 "items": [
@@ -799,6 +804,11 @@ export const OBJECTS: Record<string, ObjSpec> = {
                         "level",
                         "Enum_scale_level",
                         "Shared by level"
+                    ],
+                    [
+                        "auto",
+                        "Enum_scale_auto",
+                        "Per row in detail"
                     ],
                     [
                         "row",

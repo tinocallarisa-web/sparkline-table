@@ -213,7 +213,7 @@ export class Visual implements IVisual {
     /** Varianza: |Δ| máximo por nivel (escala común de la barra). */
     private varExt = new Map<number, number>();
     /** Referencias repetidas: [Plan, PY, FC] = primer nivel (0-based) en el que ya no están definidas (Infinity = todas). */
-    private refUndef: number[] = [Infinity, Infinity, Infinity];
+    private refUndef: number[] = [Infinity, Infinity, Infinity, Infinity];
     /** Filas ocultas por no tener real (Rows without actual = Hide). */
     private hiddenNoActual = 0;
     /** Estado junto al valor (en vez de en su columna). */
@@ -795,9 +795,10 @@ export class Visual implements IVisual {
      * vez detectado en un nivel, vale para los de debajo. Los subtotales no se tocan (son los del motor).
      */
     private detectRepeatedRefs(m: Model): number[] {
-        const out = [Infinity, Infinity, Infinity];
+        const out = [Infinity, Infinity, Infinity, Infinity];
         if (String(this.settings.rows.repeatedRefs) === "show") return out;
-        [m.planIdx, m.pyIdx, m.fcIdx].forEach((i, k) => {
+        // [Plan, Prior year, Forecast, Target]: el objetivo también (si no baja al nivel, no se dibuja ni aplasta la escala).
+        [m.planIdx, m.pyIdx, m.fcIdx, m.targetIdx].forEach((i, k) => {
             if (i < 0) return;
             const byLv = new Map<number, { ok: number; bad: number; pts: number }>();
             for (const p of m.all) {
@@ -1234,7 +1235,7 @@ export class Visual implements IVisual {
                 const e = this.ext.get(key) ?? [Infinity, -Infinity];
                 const scan = (arr: Num[]) => { for (const v of arr) if (v !== null) { if (v < e[0]) e[0] = v; if (v > e[1]) e[1] = v; } };
                 scan(r.s[c.mi]);
-                if (c.target && tg >= 0) scan(r.s[tg]);
+                if (c.target && tg >= 0 && this.targetHere(r)) scan(r.s[tg]);
                 this.ext.set(key, e);
                 const b = this.extBullet.get(key) ?? [0, 0];
                 const bt = c.target ? this.bulletTarget(r, m) : null;
@@ -1247,8 +1248,11 @@ export class Visual implements IVisual {
 
     private showTarget(m: Model): boolean { return m.targetIdx >= 0 && this.settings.sparkline.target !== false; }
 
+    /** El objetivo está definido en el nivel de esta fila (no repetido del padre). */
+    private targetHere(r: Row): boolean { return r.level < this.refUndef[3]; }
+
     private bulletTarget(r: Row, m: Model): Num {
-        if (m.targetIdx < 0) return null;
+        if (m.targetIdx < 0 || !this.targetHere(r)) return null;
         return this.valueModeUsed === "total" ? r.tot[m.targetIdx] : (m.lastIdx >= 0 ? r.s[m.targetIdx][m.lastIdx] : null);
     }
 
@@ -1462,7 +1466,7 @@ export class Visual implements IVisual {
         const sortName = this.sortName(by);
         const sortCtx = by === "host" ? this.hostSortText() : this.tf("UI_SortedBy", "Sorted by {0} {1}", sortName, dir === "asc" ? "↑" : "↓");
         const hiddenCtx = this.hiddenNoActual ? this.tf("UI_NoActualHidden", "{0} rows without actual hidden", this.int(this.hiddenNoActual)) : "";
-        const refI = [m.planIdx, m.pyIdx, m.fcIdx];
+        const refI = [m.planIdx, m.pyIdx, m.fcIdx, m.targetIdx];
         const downTo = refI.map((i, k) => i >= 0 && isFinite(this.refUndef[k]) && this.refUndef[k] >= 1
             ? this.tf("UI_RefDownTo", "{0}: available down to {1}", m.sources[i].displayName,
                 (m.levels[this.refUndef[k] - 1]?.sources || []).map(x => x.displayName).join(" + ")) : "").filter(x => x);
@@ -1479,8 +1483,8 @@ export class Visual implements IVisual {
         }
         if (type === "winloss") sparkCtx += " · " + this.tf("UI_Vs", "vs {0}", this.showTarget(m) ? m.sources[m.targetIdx].displayName : "0");
         const type0 = this.sparks[0]?.type ?? type;
-        const scaleNote = type0 === "horizon" || (type === "bullet" && this.showTarget(m)) ? this.t("UI_ScalePerRow", "Scale: per row") : type === "winloss" ? "" : s.sparkline.scale === "row" ? this.t("UI_ScalePerRow", "Scale: per row")
-            : s.sparkline.scale === "auto" ? this.t("UI_ScalePerRowDetail", "Scale: per row in detail rows") : "";
+        const scaleNote = type0 === "horizon" || (type === "bullet" && this.showTarget(m)) ? this.t("UI_ScalePerRow", "Scale: per row") : type === "winloss" ? ""
+            : this.scaleText(String(s.sparkline.scale));
         const sparkTitle = s.sparkline.type === "bullet" && m.targetIdx >= 0
             ? this.typeName("bullet") + " · " + m.sources[m.valueIdx[0]].displayName
             : this.typeName(type0) + " · " + m.sources[m.valueIdx[0]].displayName;
@@ -1491,7 +1495,7 @@ export class Visual implements IVisual {
             if (!c) return ["", ""];
             const ctx = c.type === "bullet" ? valCtx : range + (c.type === "winloss" ? " · " + this.tf("UI_Vs", "vs {0}", "0") : "");
             return [this.typeName(c.type) + " · " + m.sources[c.mi].displayName,
-                ctx + ((c.scale === "row" && c.type !== "winloss") || c.type === "horizon" ? " · " + this.t("UI_ScalePerRow", "Scale: per row") : "")];
+                ctx + (c.type === "winloss" ? "" : " · " + (c.type === "horizon" ? this.t("UI_ScalePerRow", "Scale: per row") : this.scaleText(c.scale)))];
         };
         const titles: Record<ColId, [string, string]> = {
             name: [levelNames, nameCtx],
@@ -1941,6 +1945,13 @@ export class Visual implements IVisual {
     }
 
     /** Escala por fila: siempre, o (auto, propuesta pendiente de Tino) solo en las filas de detalle. */
+    /** Rótulo de la escala en la cabecera, siempre explícito. */
+    private scaleText(sc: string): string {
+        return sc === "row" ? this.t("UI_ScalePerRow", "Scale: per row") : sc === "auto" ? this.t("UI_ScalePerRowDetail", "Scale: per row in detail rows")
+            : this.t("UI_ScaleShared", "Scale: shared by level");
+    }
+
+    /** Shared by level: nunca; Per row in detail: solo las hojas; Per row: TODOS los niveles, subtotales y total. */
     private perRow(r: Row, c: SparkCfg): boolean {
         const sc = c.scale;
         return sc === "row" || (sc === "auto" && r.isLeaf);
@@ -1970,7 +1981,7 @@ export class Visual implements IVisual {
             e = [Infinity, -Infinity];
             const scan = (arr: Num[]) => { for (const v of arr) if (v !== null) { if (v < e[0]) e[0] = v; if (v > e[1]) e[1] = v; } };
             scan(r.s[c.mi]);
-            if (c.target && this.showTarget(m)) scan(r.s[m.targetIdx]);
+            if (c.target && this.showTarget(m) && this.targetHere(r)) scan(r.s[m.targetIdx]);
         } else {
             const x = this.ext.get(key);
             e = x ? [x[0], x[1]] : [0, 1];
@@ -2042,7 +2053,7 @@ export class Visual implements IVisual {
             if (iMax < 0 || v > (sr[iMax] as number)) iMax = p;
             if (iMin < 0 || v < (sr[iMin] as number)) iMin = p;
         }
-        const tgS = c.target && this.showTarget(m) ? r.s[m.targetIdx] : null;
+        const tgS = c.target && this.showTarget(m) && this.targetHere(r) ? r.s[m.targetIdx] : null;
 
         if (type === "winloss") {
             const mid = Math.round(H / 2), bw = Math.max(1, step * 0.72);
@@ -2374,7 +2385,7 @@ export class Visual implements IVisual {
             out.push({ displayName: this.t("UI_Status", "Status"), value: this.statusLook(d.status).glyph + " " + this.statusLook(d.status).name + " · " + this.statusRuleText(m) });
         }
         const tIdx = [m.targetIdx, m.planIdx, m.pyIdx, m.fcIdx].concat(m.tipIdx);
-        const refI = [m.planIdx, m.pyIdx, m.fcIdx];
+        const refI = [m.planIdx, m.pyIdx, m.fcIdx, m.targetIdx];
         for (const i of tIdx) if (i >= 0) {
             const k = refI.indexOf(i);
             if (k >= 0 && d.level >= this.refUndef[k]) { out.push({ displayName: m.sources[i].displayName, value: "— · " + this.t("UI_RefNotHere", "not defined at this level (repeated from the level above)") }); continue; }

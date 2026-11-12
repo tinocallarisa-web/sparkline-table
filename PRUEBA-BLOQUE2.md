@@ -227,6 +227,21 @@ IF ( ISINSCOPE ( dim_pdv[id_comercial] ) || ISINSCOPE ( dim_pdv[id_pdv] ), BLANK
 la etiqueta del minigráfico dice ahora su mes y va atenuada ("1,22K€ · jun 2026"). El punto se dibuja en su mes real.
 Igual en las columnas de minigráfico 2 y 3 y en horizon.
 
+## 13. Gratis: escala de los minigráficos, explícita
+
+- Sparkline → *Scale* (y Sparkline 2 / 3, cada una con el suyo): **Shared by level** / **Per row in detail** (por
+  defecto: por fila en el último nivel, común por nivel en los subtotales) / **Per row** (por fila en TODOS los niveles:
+  provincias, comerciales, PDV y total). La cabecera lo rotula siempre ("Escala: común por nivel" / "por fila en el
+  detalle" / "por fila"). No hay ningún ajuste por nivel que lo pise (Row levels no tiene escala).
+- En el simulador, con *Per row*, cada fila de cada nivel usa su propio mínimo y máximo. Si en Desktop una fila de
+  comercial se ve "plana" con *Per row*, mira dos cosas que SÍ cambian la escala de esa fila:
+  1. **Columnas y área empiezan en cero** (o *Start at zero* en la línea): una serie de 40-50K se ve casi llena y sin
+     relieve. Es a propósito (una barra que no sale de cero exagera). Para ver el relieve, tipo Line sin Start at zero.
+  2. **El objetivo entra en la escala de la fila.** Si `Target` es un plan que solo existe por provincia, el motor lo
+     repetía en cada comercial y PDV (1,53M) y aplastaba la serie. Ahora se detecta como el plan repetido: en esos
+     niveles el objetivo ni se dibuja ni entra en la escala, y la cabecera dice "Objetivo: disponible hasta provincia".
+- Horizon y bullet con objetivo: por fila siempre (la cabecera lo dice).
+
 ## Rendimiento y certificación (repetir con todo puesto)
 
 - Analizador de rendimiento: un par de eventos por update; el scroll no emite nada.

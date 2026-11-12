@@ -579,6 +579,56 @@ async def main():
             res["desk3_eventos"] = await events(pg)
             await pg.close()
 
+        # ── Escala explícita (Tino, 12-11): "Per row" = por fila en TODOS los niveles ─────────────────
+        if not FREE:
+            pg = await page()
+            ext_js = """(slot) => { const m = __v.model, c = __v.sparks.find(x => x.slot === slot); const rows = __v.rows.concat(m.total ? [m.total] : []);
+                const out = {};
+                for (const r of rows) { const lv = r.level; if (out[lv] && out[lv].n >= 3) continue;
+                    const e = __v.rowExt(r, m, c); const own = r.s[c.mi].filter(v => v !== null);
+                    const t = c.target && m.targetIdx >= 0 && __v.targetHere(r) ? r.s[m.targetIdx].filter(v => v !== null) : [];
+                    const all = own.concat(t); let lo = Math.min(...all), hi = Math.max(...all);
+                    if (c.type === 'column' || c.type === 'area' || __v.settings.sparkline.zero) { lo = Math.min(0, lo); hi = Math.max(0, hi); }
+                    const propia = Math.abs(e[0] - lo) < 1e-6 && Math.abs(e[1] - hi) < 1e-6;
+                    out[lv] = out[lv] || { n: 0, propia: 0 }; out[lv].n++; if (propia) out[lv].propia++; }
+                return out; }"""
+            vis3 = {"Z0", "Z0|C0", "Z1"}
+            for sc in ("row", "auto", "level"):
+                await H.upd(pg, H.build(expanded=vis3, objects={"sparkline": {"scale": sc}, "spark2": {"show": True, "scale": sc}})[0], 1280, Hh)
+                res["esc_" + sc] = {"s1": await pg.evaluate(ext_js, 0), "s2": await pg.evaluate(ext_js, 1),
+                                    "cabecera": await pg.evaluate("[document.querySelector('.st-h2-spark') ? document.querySelector('.st-h2-spark').textContent : '', document.querySelector('.st-h2-spark2') ? document.querySelector('.st-h2-spark2').textContent : '']")}
+                if sc == "row": await shot(pg, "32_escala_por_fila_todos_los_niveles")
+            await H.upd(pg, H.build(expanded=vis3, objects={"sparkline": {"scale": "row", "type": "column"}})[0], W, Hh)
+            res["esc_row_columnas"] = await pg.evaluate(ext_js, 0)
+            await H.upd(pg, H.build(expanded=vis3, objects={"sparkline": {"scale": "row", "zero": True}})[0], W, Hh)
+            res["esc_row_cero"] = await pg.evaluate(ext_js, 0)
+            # El panel: Sparkline → Scale con las tres opciones, y ningún objeto de nivel tiene una escala propia.
+            res["esc_panel"] = await pg.evaluate("""() => { const fm = __v.getFormattingModel(); const sl = [];
+                for (const c of fm.cards) for (const g of c.groups) for (const s of (g.slices || [])) if (s.uid.endsWith('-scale')) sl.push(s.uid + ': ' + s.control.properties.items.map(i => i.displayName).join(' / '));
+                const lvl = fm.cards.find(c => c.uid === 'levels-card'); const lvlScale = lvl ? JSON.stringify(lvl).includes('scale') : false;
+                return { selectores: sl, escala_en_niveles: lvlScale }; }""")
+            # Objetivo repetido del padre (no baja al nivel): ni se dibuja ni entra en la escala de esas filas.
+            def objetivo_por_zona(dv):
+                mx = dv["matrix"]; ti = 2
+                for z in mx["rows"]["root"]["children"]:
+                    if z.get("isSubtotal"): continue
+                    sub = [c for c in z.get("children", []) if c.get("isSubtotal")]
+                    zv = {k: v for k, v in (sub[0]["values"] if sub else z.get("values", {})).items() if v.get("valueSourceIndex") == ti}
+                    def put(n):
+                        if "values" in n:
+                            for k in [k for k, v in n["values"].items() if v.get("valueSourceIndex") == ti]: del n["values"][k]
+                            n["values"].update(copy.deepcopy(zv))
+                        for c in n.get("children", []): put(c)
+                    for c in z.get("children", []): put(c)
+                return dv
+            await H.upd(pg, objetivo_por_zona(H.build(expanded=vis3, objects={"sparkline": {"scale": "row"}})[0]), W, Hh)
+            res["esc_objetivo_repetido"] = {"niveles": await pg.evaluate("__v.refUndef"), "nota": await pg.evaluate("document.querySelector('.st-h2-name').textContent"),
+                                            "escala_propia": await pg.evaluate(ext_js, 0),
+                                            "linea_objetivo_en_hojas": await pg.evaluate("[...document.querySelectorAll('.st-row.st-l2 .st-c-spark .st-tgt')].filter(p => p.getAttribute('d')).length")}
+            await shot(pg, "33_objetivo_repetido_por_zona")
+            res["esc_eventos"] = await events(pg)
+            await pg.close()
+
         # ── Parte 1 bis (hallazgo de Tino en Desktop): filas sin real y unidades distintas ────────────
         pg = await page()
         def ghosts(dv):

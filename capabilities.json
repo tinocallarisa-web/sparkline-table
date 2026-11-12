@@ -696,14 +696,14 @@
           "type": {
             "enumeration": [
               {
-                "value": "auto",
-                "displayName": "Per row in detail rows, shared in subtotals",
-                "displayNameKey": "Enum_scale_auto"
-              },
-              {
                 "value": "level",
                 "displayName": "Shared by level",
                 "displayNameKey": "Enum_scale_level"
+              },
+              {
+                "value": "auto",
+                "displayName": "Per row in detail",
+                "displayNameKey": "Enum_scale_auto"
               },
               {
                 "value": "row",
@@ -981,6 +981,11 @@
                 "displayNameKey": "Enum_scale_level"
               },
               {
+                "value": "auto",
+                "displayName": "Per row in detail",
+                "displayNameKey": "Enum_scale_auto"
+              },
+              {
                 "value": "row",
                 "displayName": "Per row",
                 "displayNameKey": "Enum_scale_row"
@@ -1105,6 +1110,11 @@
                 "value": "level",
                 "displayName": "Shared by level",
                 "displayNameKey": "Enum_scale_level"
+              },
+              {
+                "value": "auto",
+                "displayName": "Per row in detail",
+                "displayNameKey": "Enum_scale_auto"
               },
               {
                 "value": "row",

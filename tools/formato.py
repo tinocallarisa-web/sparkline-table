@@ -20,6 +20,7 @@ TEMPLATES = [("report", "Report theme"), ("classic", "Classic"), ("boardroom", "
              ("editorial", "Editorial (Pro)"), ("signal", "Signal (Pro)"), ("aurora", "Aurora (Pro)"), ("terrace", "Terrace (Pro)")]
 
 # Horizon (Pro, bloque 2): sexto tipo. Bandas por signo alrededor de una base, escala siempre por fila.
+SCALES = [("level", "Shared by level"), ("auto", "Per row in detail"), ("row", "Per row")]
 SPARK_TYPES = [("line", "Line"), ("area", "Area"), ("column", "Column"), ("winloss", "Win/loss"), ("bullet", "Bullet"), ("horizon", "Horizon (Pro)")]
 
 # (propiedad, etiqueta, tipo, por defecto, extra)   tipo: bool | num | fill | enum | text
@@ -73,7 +74,9 @@ OBJECTS = [
     ("sparkline", "Sparkline", [
         ("type", "Type", "enum", "line", {"items": SPARK_TYPES}),
         # auto (propuesta, pendiente de Tino): por fila en el último nivel, común por nivel en los subtotales.
-        ("scale", "Scale", "enum", "auto", {"items": [("auto", "Per row in detail rows, shared in subtotals"), ("level", "Shared by level"), ("row", "Per row")]}),
+        # Escala, explícita (Tino, 12-11): común por nivel / por fila solo en el detalle (subtotales comunes por nivel) /
+        # por fila en TODOS los niveles (subtotales y total incluidos). La misma en los minigráficos 2 y 3.
+        ("scale", "Scale", "enum", "auto", {"items": SCALES}),
         ("zero", "Start at zero", "bool", False, {}),
         # Curva de línea y área (gratis, 12-11): Smooth = monótona (nunca se pasa de los datos); Step = escalón centrado.
         ("curve", "Curve", "enum", "linear", {"items": [("linear", "Linear"), ("smooth", "Smooth"), ("step", "Step")]}),
@@ -100,7 +103,7 @@ OBJECTS = [
         ("measure", "Measure", "enum", dflt, {"items": [("value1", "Value 1"), ("value2", "Value 2"), ("value3", "Value 3")]}),
         ("type", "Type", "enum", "line", {"items": SPARK_TYPES}),
         ("curve", "Curve", "enum", "linear", {"items": [("linear", "Linear"), ("smooth", "Smooth"), ("step", "Step")]}),
-        ("scale", "Scale", "enum", "level", {"items": [("level", "Shared by level"), ("row", "Per row")]}),
+        ("scale", "Scale", "enum", "auto", {"items": SCALES}),
         ("color", "Color", "fill", "", {}),
     ]) for obj, label, dflt in [("spark2", "Sparkline 2 (Pro)", "value2"), ("spark3", "Sparkline 3 (Pro)", "value3")]
 ] + [
