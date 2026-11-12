@@ -118,6 +118,20 @@ export const OBJECTS: Record<string, ObjSpec> = {
                 "label": "Text size",
                 "min": 8,
                 "max": 18
+            },
+            {
+                "name": "dataBars",
+                "type": "bool",
+                "def": false,
+                "key": "Prop_values_dataBars",
+                "label": "Data bars behind the value"
+            },
+            {
+                "name": "barColor",
+                "type": "fill",
+                "def": "",
+                "key": "Prop_values_barColor",
+                "label": "Data bar color"
             }
         ]
     },
@@ -619,6 +633,20 @@ export const OBJECTS: Record<string, ObjSpec> = {
                 "def": true,
                 "key": "Prop_header_context",
                 "label": "Show period line"
+            },
+            {
+                "name": "search",
+                "type": "bool",
+                "def": false,
+                "key": "Prop_header_search",
+                "label": "Search box"
+            },
+            {
+                "name": "expandButtons",
+                "type": "bool",
+                "def": true,
+                "key": "Prop_header_expandButtons",
+                "label": "Expand / collapse all buttons"
             }
         ]
     },

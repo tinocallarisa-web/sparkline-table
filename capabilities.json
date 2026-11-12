@@ -390,6 +390,24 @@
           "type": {
             "numeric": true
           }
+        },
+        "dataBars": {
+          "displayName": "Data bars behind the value",
+          "displayNameKey": "Prop_values_dataBars",
+          "type": {
+            "bool": true
+          }
+        },
+        "barColor": {
+          "displayName": "Data bar color",
+          "displayNameKey": "Prop_values_barColor",
+          "type": {
+            "fill": {
+              "solid": {
+                "color": true
+              }
+            }
+          }
         }
       }
     },
@@ -891,6 +909,20 @@
         "context": {
           "displayName": "Show period line",
           "displayNameKey": "Prop_header_context",
+          "type": {
+            "bool": true
+          }
+        },
+        "search": {
+          "displayName": "Search box",
+          "displayNameKey": "Prop_header_search",
+          "type": {
+            "bool": true
+          }
+        },
+        "expandButtons": {
+          "displayName": "Expand / collapse all buttons",
+          "displayNameKey": "Prop_header_expandButtons",
           "type": {
             "bool": true
           }

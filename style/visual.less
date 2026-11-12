@@ -175,3 +175,21 @@
     .st-l-title { font-size: 14px; }
     .st-l-inline { font-size: 12px; }
 }
+
+// Barras de fondo en la celda del valor (Data bars)
+.st-c-val { position: relative; }
+.st-vbar { position: absolute; top: 22%; bottom: 22%; display: none; background: var(--st-vbar, #118DFF); opacity: 0.28; border-radius: 1px; pointer-events: none; }
+.st-vbar.st-vneg { background: var(--st-down); }
+.st-vtext { position: relative; }
+// Buscador (solo a la vista) y botones de expandir/contraer todo
+.st-search { flex: 0 0 auto; display: none; align-items: center; gap: 8px; padding: 3px 6px; border-bottom: 1px solid var(--st-band); }
+.st-search-in { flex: 1 1 auto; min-width: 60px; max-width: 280px; font: inherit; font-size: 11px; padding: 2px 6px; border: 1px solid var(--st-rule);
+    border-radius: 3px; background: var(--st-bg, #fff); color: var(--st-text); }
+.st-search-in:focus-visible { outline: 2px solid var(--st-focus); outline-offset: 0; }
+.st-search-n { font-size: 10.5px; color: var(--st-soft); white-space: nowrap; }
+.st-row.st-match .st-label { text-decoration: underline; text-decoration-color: var(--st-accent); text-underline-offset: 2px; }
+.st-h-name { position: relative; }
+.st-xbtns { position: absolute; right: 4px; top: 0; display: flex; gap: 2px; }
+.st-xbtn { border: 1px solid var(--st-rule); background: transparent; color: var(--st-soft); font-size: 11px; line-height: 1; padding: 1px 4px;
+    border-radius: 3px; cursor: pointer; }
+.st-xbtn:hover, .st-xbtn:focus-visible { color: var(--st-text); border-color: var(--st-text); outline: none; }

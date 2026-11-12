@@ -34,6 +34,9 @@ OBJECTS = [
         # Regla documentada en PRUEBA-BLOQUE1.md: |base| < umbral % × mediana de |base| de las filas del mismo nivel.
         ("smallBase", "Dim Δ% on small bases (% of level median)", "num", 10, {"min": 0, "max": 100}),
         ("fontSize", "Text size", "num", 11, {"min": 8, "max": 18}),
+        # Barras de fondo en la celda del valor (gratis): desde cero, escala común por nivel, negativos a la izquierda.
+        ("dataBars", "Data bars behind the value", "bool", False, {}),
+        ("barColor", "Data bar color", "fill", "", {}),
     ]),
     ("sparkline", "Sparkline", [
         ("type", "Type", "enum", "line", {"items": [("line", "Line"), ("area", "Area"), ("column", "Column"),
@@ -98,6 +101,10 @@ OBJECTS = [
         ("color", "Text color", "fill", "", {}),
         ("background", "Background", "fill", "", {}),
         ("context", "Show period line", "bool", True, {}),
+        # Buscador (gratis): filtra a la vista las filas cargadas; no filtra el informe ni se guarda.
+        ("search", "Search box", "bool", False, {}),
+        # Botones de expandir/contraer todo en la cabecera (los guarda el host, como el ▸ de cada fila).
+        ("expandButtons", "Expand / collapse all buttons", "bool", True, {}),
     ]),
 ] + [
     # Formato por nivel (Tino, 11-11): un objeto por nivel, sin selector (fiable con marcadores y temas). Vacío / 0 /

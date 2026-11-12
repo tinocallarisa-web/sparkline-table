@@ -513,6 +513,35 @@ async def main():
         res["eventos_pagina_curvas"] = {"updates": nu, "pares_1a1": ev == "SF" * nu}
         await pg.close()
 
+        # Fase A (gratis): barras de fondo, buscador, expandir/contraer todo
+        pg = await page(W, H)
+        await upd(pg, build(expanded=vis, objects={"values": {"dataBars": True}})[0], W, H)
+        await pg.screenshot(path=os.path.join(OUT, "34_barras_de_fondo.png"))
+        res["barras_visibles"] = await pg.evaluate("[...document.querySelectorAll('.st-vbar')].filter(b => b.style.display === 'block').length")
+        await upd(pg, build(objects={"header": {"search": True}})[0], W, H)
+        await pg.fill(".st-search-in", "kam-02")
+        await pg.wait_for_timeout(80)
+        res["buscador"] = {"contador": await pg.evaluate("document.querySelector('.st-search-n').textContent"),
+                           "filas": await pg.evaluate("parseInt(document.querySelector('.st-spacer').style.height) / parseInt(getComputedStyle(document.querySelector('.st-root')).getPropertyValue('--st-rh'))"),
+                           "eventos_extra": (await pg.evaluate("__ev.join('')")).count("S") - await pg.evaluate("__updates")}
+        await pg.screenshot(path=os.path.join(OUT, "35_buscador.png"))
+        await pg.fill(".st-search-in", "")
+        await pg.evaluate("__toggles = []")
+        await upd(pg, build(expanded=set())[0], W, H)  # todo contraído
+        await pg.click(".st-xbtn >> nth=0")
+        t1 = await pg.evaluate("__toggles.slice()")
+        await upd(pg, build(expanded={f"Z{z}" for z in range(8)})[0], W, H)  # el host expande el nivel 1
+        await pg.wait_for_timeout(50)
+        t2 = await pg.evaluate("__toggles.slice()")
+        await upd(pg, build()[0], W, H)  # y el nivel 2
+        await pg.wait_for_timeout(50)
+        t3 = await pg.evaluate("__toggles.slice()")
+        await pg.click(".st-xbtn >> nth=1")
+        res["expandir_todo"] = {"tras_clic": t1, "tras_update_1": t2, "tras_update_2": t3, "contraer_todo": await pg.evaluate("__toggles.slice(-1)")}
+        ev = await pg.evaluate("__ev.join('')"); nu = await pg.evaluate("__updates")
+        res["eventos_pagina_faseA"] = {"updates": nu, "pares_1a1": ev == "SF" * nu}
+        await pg.close()
+
         # Banderas en el nivel 1 (rol Row image, data URI); una zona con URL http (no se carga) y el aviso editando.
         pg = await page(W, H)
         dvi = add_images(build(expanded={"Z1"}, objects={"level1": {"imageShape": "round"}})[0])

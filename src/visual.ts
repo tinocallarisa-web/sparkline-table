@@ -138,6 +138,14 @@ export class Visual implements IVisual {
     private loading = false;
     private ceiling = false;
     private modelMs = 0;
+    private barExt = new Map<number, [number, number]>();
+    private searchBar: HTMLDivElement;
+    private searchInput: HTMLInputElement;
+    private searchCount: HTMLDivElement;
+    private query = "";
+    private matchSet = new Set<Row>();
+    /** Expandir todo: un paso por nivel, el siguiente tras el update del host (nunca dentro de update). */
+    private expandChain: { steps: number } | null = null;
     // Gestos (ver constructor) y tooltips
     private rowsByKey = new Map<string, Row>();
     private downKey: string | null = null;
@@ -191,6 +199,17 @@ export class Visual implements IVisual {
         this.root = this.div("st-root", options.element);
         this.root.tabIndex = 0;
         this.root.setAttribute("role", "treegrid");
+        this.searchBar = this.div("st-search", this.root);
+        this.searchInput = document.createElement("input");
+        this.searchInput.type = "search";
+        this.searchInput.className = "st-search-in";
+        this.searchBar.appendChild(this.searchInput);
+        this.searchCount = this.div("st-search-n", this.searchBar);
+        this.searchInput.addEventListener("input", () => { this.query = this.searchInput.value; this.scroller.scrollTop = 0; this.repaint(); });
+        this.searchInput.addEventListener("keydown", (e: KeyboardEvent) => {
+            e.stopPropagation();
+            if (e.key === "Escape") { this.searchInput.value = ""; this.query = ""; this.repaint(); }
+        });
         this.header = this.div("st-header", this.root);
         this.header.setAttribute("role", "row");
         this.notice = this.div("st-notice", this.root);
@@ -481,6 +500,8 @@ export class Visual implements IVisual {
             this.render(options);
             if (this.formatMode) this.subSelectionHelper.updateOutlinesFromSubSelections((options as any).subSelections ?? [], true);
             this.events.renderingFinished(options);
+            // Expandir todo: el siguiente nivel, fuera de este update.
+            if (isData && this.expandChain) window.setTimeout(() => this.stepExpand(), 0);
         } catch (e) {
             // Nunca colgado: todo camino de update termina con Finished o Failed, y el fallo se ve en el visual.
             this.events.renderingFailed(options, String(e));
@@ -536,6 +557,50 @@ export class Visual implements IVisual {
         try { more = !!this.host.fetchMoreData(true); } catch { more = false; }
         this.loading = more;
         if (!more) this.ceiling = true;
+    }
+
+    // ── Barras de fondo, expandir todo ──────────────────────────────────────
+
+    /** Barra de fondo bajo el valor: desde cero, escala común por nivel; los negativos crecen hacia la izquierda. */
+    private paintValueBar(bar: HTMLElement, d: Row): void {
+        const v = d.shown[0];
+        const col = this.cols.find(c => c.id === "val");
+        const e = this.barExt.get(d.level);
+        if (!this.settings.values.dataBars || this.hc || v === null || v === undefined || !col || !e) { bar.style.display = "none"; return; }
+        const pos = Math.max(0, e[1]), neg = Math.max(0, -e[0]), tot = pos + neg || 1;
+        const cw = Math.max(4, col.w - this.gap - 2);
+        const left = this.gap + (v >= 0 ? neg : neg + v) / tot * cw;
+        bar.style.display = "block";
+        bar.style.left = left.toFixed(1) + "px";
+        bar.style.width = Math.max(1, Math.abs(v) / tot * cw).toFixed(1) + "px";
+        bar.classList.toggle("st-vneg", v < 0);
+    }
+
+    /**
+     * Expandir todo: el host expande un nivel entero con toggleExpandCollapse(id, true) sobre un nodo contraído de ese
+     * nivel. Los niveles de abajo solo existen tras su update, así que se encadena: un paso por update de datos, desde
+     * un setTimeout fuera de update() (sus eventos siguen 1:1), y como mucho 3 pasos. Contraer todo = un paso en el
+     * nivel 1.
+     */
+    private expandAll(expand: boolean): void {
+        if (!this.canInteract || !this.model) return;
+        if (!expand) {
+            this.expandChain = null;
+            const r = this.model.all.find(x => x.level === 0 && x.expandable && !x.collapsed && x.id);
+            if (r && r.id) this.selMgr.toggleExpandCollapse(r.id, true);
+            return;
+        }
+        this.expandChain = { steps: 0 };
+        this.stepExpand();
+    }
+
+    private stepExpand(): void {
+        const ch = this.expandChain, m = this.model;
+        if (!ch || !m) return;
+        const r = m.all.find(x => x.expandable && x.collapsed && !!x.id);
+        if (!r || ch.steps >= 3) { this.expandChain = null; return; }
+        ch.steps++;
+        this.selMgr.toggleExpandCollapse(r.id as ISelectionId, true);
     }
 
     // ── Imagen por fila (Pro, con vista previa) ─────────────────────────────
@@ -630,6 +695,10 @@ export class Visual implements IVisual {
         const sortSig = this.settings.rows.sortBy + "|" + this.settings.rows.sortDir;
         if (sortSig !== this.lastSettingsSort) { this.sortLocal = null; this.lastSettingsSort = sortSig; }
         this.applyLookVars();
+        this.searchBar.style.display = this.settings.header.search ? "flex" : "none";
+        if (!this.settings.header.search && this.query) { this.query = ""; this.searchInput.value = ""; }
+        this.searchInput.placeholder = this.t("UI_Search", "Search rows…");
+        this.searchInput.setAttribute("aria-label", this.searchInput.placeholder);
         this.root.querySelectorAll(".st-landing").forEach(n => n.remove());
 
         const m = this.model;
@@ -653,6 +722,16 @@ export class Visual implements IVisual {
         }
         this.derive(m);
         this.rows = flatten(m.roots, this.comparator());
+        // Buscador: solo a la vista (no filtra el informe ni se guarda). Coincidencias en cualquier nivel con su ruta.
+        this.matchSet.clear();
+        const q = this.settings.header.search ? norm(this.query) : "";
+        if (q) {
+            const keep = new Set<Row>();
+            for (const r of m.all) if (norm(r.label).indexOf(q) >= 0) { this.matchSet.add(r); for (let p: Row | null = r; p; p = p.parent) keep.add(p); }
+            this.rows = this.rows.filter(r => keep.has(r));
+            this.rows.forEach((r, i) => { r.index = i; });
+        }
+        this.searchCount.textContent = q ? this.tf("UI_Matches", "{0} matches", this.int(this.matchSet.size)) : "";
         this.rowsByKey.clear();
         for (const r of this.rows) this.rowsByKey.set(r.key, r);
         this.imgUrlSeen = m.imgIdx >= 0 && m.all.some(r => !!r.img && /^https?:/i.test(r.img));
@@ -687,6 +766,7 @@ export class Visual implements IVisual {
         set("--st-line", L.line); set("--st-accent", L.accent); set("--st-up", L.up); set("--st-down", L.down);
         set("--st-target", L.target); set("--st-sub", L.sub); set("--st-sel", L.sel); set("--st-hover", L.hover);
         set("--st-band", L.band);
+        set("--st-vbar", String(this.settings.values.barColor || L.accent));
         const bs = this.settings.bands;
         set("--st-b1", this.hc ? "transparent" : String(bs.band1Color || "#F6CFCB"));
         set("--st-b2", this.hc ? "transparent" : String(bs.band2Color || "#FBE7B5"));
@@ -739,7 +819,14 @@ export class Visual implements IVisual {
             }
         }
         // Escalas por nivel (la común por defecto): un subtotal no aplasta a sus hijos.
-        this.ext.clear(); this.extBullet.clear();
+        this.ext.clear(); this.extBullet.clear(); this.barExt.clear();
+        for (const r of all) {
+            const v = r.shown[0];
+            if (v === null || v === undefined) continue;
+            const e = this.barExt.get(r.level) ?? [0, 0];
+            if (v < e[0]) e[0] = v; if (v > e[1]) e[1] = v;
+            this.barExt.set(r.level, e);
+        }
         const tg = this.showTarget(m) ? m.targetIdx : -1;
         for (const r of all) {
             const e = this.ext.get(r.level) ?? [Infinity, -Infinity];
@@ -944,6 +1031,19 @@ export class Visual implements IVisual {
             const label = this.div("st-h1", cell);
             // Una sola línea: "Ventas netas · sep 2026"
             label.textContent = (twoLines || !t2 || c.id === "name" || c.id === "spark" ? t1 : t1 + " · " + t2) + (sorted ? (dir === "asc" ? " ↑" : " ↓") : "");
+            if (c.id === "name" && s.header.expandButtons !== false && this.canInteract && m.levels.length > 1) {
+                // Expandir / contraer todo (lo guarda el host). Cada botón para la propagación: el clic en la cabecera ordena.
+                const box = this.div("st-xbtns", cell);
+                const btn = (txt: string, tip: string, fn: () => void) => {
+                    const b = document.createElement("button");
+                    b.type = "button"; b.className = "st-xbtn"; b.textContent = txt; b.title = tip; b.setAttribute("aria-label", tip);
+                    b.addEventListener("pointerdown", ev => ev.stopPropagation());
+                    b.addEventListener("click", ev => { ev.stopPropagation(); fn(); });
+                    box.appendChild(b);
+                };
+                btn("⊞", this.t("UI_ExpandAll", "Expand all"), () => this.expandAll(true));
+                btn("⊟", this.t("UI_CollapseAll", "Collapse all"), () => this.expandAll(false));
+            }
             cell.title = t1 + (t2 ? " · " + t2 : "") + (c.id === "spark" && scaleNote ? " · " + scaleNote : "");
             if (c.sortKey) {
                 cell.classList.add("st-sortable");
@@ -1049,7 +1149,11 @@ export class Visual implements IVisual {
         const ib = name.append("span").attr("class", "st-imgbox").attr("aria-hidden", "true").style("display", "none");
         ib.append("svg").append("image").attr("preserveAspectRatio", "xMidYMid slice");
         name.append("span").attr("class", "st-label");
-        for (const c of ["val", "delta", "pct", "m2", "m3"]) rowSel.append("div").attr("class", "st-c st-c-" + c).attr("role", "gridcell");
+        // Celda de valor: la barra de fondo (Data bars) debajo y el texto encima.
+        const val = rowSel.append("div").attr("class", "st-c st-c-val").attr("role", "gridcell");
+        val.append("span").attr("class", "st-vbar").attr("aria-hidden", "true");
+        val.append("span").attr("class", "st-vtext");
+        for (const c of ["delta", "pct", "m2", "m3"]) rowSel.append("div").attr("class", "st-c st-c-" + c).attr("role", "gridcell");
         const sp = rowSel.append("div").attr("class", "st-c st-c-spark").attr("role", "gridcell");
         const svg = sp.append("svg").attr("class", "st-svg").attr("aria-hidden", "true");
         for (const c of ["st-b1", "st-b2", "st-b3", "st-band", "st-area", "st-pos", "st-neg", "st-tgt", "st-line", "st-mk-neg", "st-mk-first", "st-mk-max", "st-mk-min", "st-mk-last", "st-hover"]) {
@@ -1086,7 +1190,7 @@ export class Visual implements IVisual {
         el.setAttribute("data-key", d.key);
         el.id = "st-r-" + d.index;
         el.style.transform = "translateY(" + d.index * this.rowH + "px)";
-        el.className = "st-row" + (d.isLeaf ? "" : " st-subtotal") + (selected ? " st-selected" : "") +
+        el.className = "st-row" + (d.isLeaf ? "" : " st-subtotal") + (selected ? " st-selected" : "") + (this.matchSet.has(d) ? " st-match" : "") +
             (!d.highlighted ? " st-dim" : "") + (this.hasFocus && this.kbFocus && d.index === this.focusIdx ? " st-focus" : "") + " st-l" + Math.min(d.level, 3);
         el.setAttribute("aria-level", String(d.level + 1));
         el.setAttribute("aria-selected", String(selected));
@@ -1125,7 +1229,8 @@ export class Visual implements IVisual {
         this.paintImage(name, d);
         q(".st-label").textContent = d.level < 0 ? this.t("UI_GrandTotal", "Total") : d.label;
         const fmt0 = d.shownFmt[0];
-        q(".st-c-val").textContent = this.fmtFull(d.shown[0] ?? null, fmt0);
+        q(".st-c-val .st-vtext").textContent = this.fmtFull(d.shown[0] ?? null, fmt0);
+        this.paintValueBar(q(".st-c-val .st-vbar"), d);
         const up = s.values.invert ? "st-bad" : "st-good", down = s.values.invert ? "st-good" : "st-bad";
         const dc = q(".st-c-delta");
         dc.textContent = d.delta === null ? "" : this.signed(d.delta, this.fmtCompact(d.delta, d.shownFmt[0] && this.valueModeUsed === "last" ? fmt0 : m.sources[m.valueIdx[0]].format));
@@ -2073,6 +2178,11 @@ function mix(a: string, b: string, k: number): string {
     if (!pa || !pb) return a;
     const c = pa.map((x, i) => Math.round(x * k + pb[i] * (1 - k)));
     return "#" + c.map(x => x.toString(16).padStart(2, "0")).join("");
+}
+
+/** Texto para buscar: minúsculas y sin acentos. */
+function norm(s: string): string {
+    return String(s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
 }
 
 /** Color con opacidad (rgba) para el fondo de cada nivel. */

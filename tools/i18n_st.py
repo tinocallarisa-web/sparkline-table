@@ -210,3 +210,15 @@ P.update({
 "Step": ["Degraus", "Escalier", "Stufen", "A gradini", "Trap", "Schodkowa", "階段", "阶梯", "계단", "Escalonada"],
 "of target": ["da meta", "de l’objectif", "des Ziels", "dell’obiettivo", "van doel", "celu", "目標比", "目标的", "목표 대비", "del objetivo"],
 })
+
+# --- 12-11 (4): fase A gratis: barras de fondo, buscador, expandir/contraer todo ---
+P.update({
+"Collapse all": ["Recolher tudo", "Tout réduire", "Alle reduzieren", "Comprimi tutto", "Alles samenvouwen", "Zwiń wszystko", "すべて折りたたむ", "全部折叠", "모두 축소", "Contraer todo"],
+"Data bar color": ["Cor da barra de dados", "Couleur de la barre de données", "Farbe des Datenbalkens", "Colore barra dati", "Kleur van gegevensbalk", "Kolor paska danych", "データ バーの色", "数据条颜色", "데이터 막대 색", "Color de la barra de datos"],
+"Data bars behind the value": ["Barras de dados atrás do valor", "Barres de données derrière la valeur", "Datenbalken hinter dem Wert", "Barre dati dietro il valore", "Gegevensbalken achter de waarde", "Paski danych za wartością", "値の背後にデータ バー", "值后面的数据条", "값 뒤 데이터 막대", "Barras de datos detrás del valor"],
+"Expand / collapse all buttons": ["Botões expandir/recolher tudo", "Boutons tout développer/réduire", "Schaltflächen Alle erweitern/reduzieren", "Pulsanti espandi/comprimi tutto", "Knoppen alles uit-/samenvouwen", "Przyciski rozwiń/zwiń wszystko", "すべて展開/折りたたみボタン", "全部展开/折叠按钮", "모두 확장/축소 단추", "Botones expandir/contraer todo"],
+"Expand all": ["Expandir tudo", "Tout développer", "Alle erweitern", "Espandi tutto", "Alles uitvouwen", "Rozwiń wszystko", "すべて展開", "全部展开", "모두 확장", "Expandir todo"],
+"Search box": ["Caixa de pesquisa", "Zone de recherche", "Suchfeld", "Casella di ricerca", "Zoekvak", "Pole wyszukiwania", "検索ボックス", "搜索框", "검색 상자", "Cuadro de búsqueda"],
+"Search rows…": ["Pesquisar linhas…", "Rechercher des lignes…", "Zeilen suchen…", "Cerca righe…", "Rijen zoeken…", "Szukaj wierszy…", "行を検索…", "搜索行…", "행 검색…", "Buscar filas…"],
+"{0} matches": ["{0} resultados", "{0} résultats", "{0} Treffer", "{0} risultati", "{0} overeenkomsten", "Wyniki: {0}", "{0} 件一致", "{0} 个匹配项", "{0}개 일치", "{0} coincidencias"],
+})

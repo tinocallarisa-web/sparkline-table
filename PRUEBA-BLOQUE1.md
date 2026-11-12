@@ -274,3 +274,24 @@ lo honesto. Para ver la forma, usa línea.
     banda buena.
   - El tooltip dice la banda: "Malo (53,9 % del objetivo)".
   - En alto contraste, solo los contornos.
+
+## 12-11 (4): fase A, gratis — barras de fondo, expandir/contraer todo, buscador
+- **Values → Data bars behind the value** (apagado por defecto, como la matriz nativa), con su color propio.
+  - Barra tenue bajo la cifra, desde cero, con escala común por nivel (un subtotal no aplasta a sus hijos).
+  - Los negativos crecen hacia la izquierda, en el rojo de la columna Δ.
+  - No se pinta en alto contraste.
+- **Expandir / contraer todo:** botones ⊞ / ⊟ en la cabecera de la jerarquía (Column headers → *Expand / collapse
+  all buttons*, encendido por defecto).
+  - ⊞ llama a `toggleExpandCollapse(id, true)` sobre un nodo contraído. Como los niveles de abajo solo existen tras su
+    update, se encadena: un paso por update de datos, lanzado con `setTimeout` fuera de `update()` (eventos 1:1),
+    como mucho 3 pasos.
+  - ⊟ contrae el nivel 1.
+  - Por nivel: Alt + clic en el nombre de una fila, o el menú contextual del propio Power BI (Expandir/Contraer → Todo
+    el nivel), que sale porque el visual declara `expandCollapse`.
+  - Qué probar: que ⊞ abra los 3 niveles de A en 2 pasos y que ⊟ los cierre. Si en Desktop el toggle de nivel entero
+    con un nodo contraído no expandiera todo el nivel, apúntalo.
+- **Buscador:** Column headers → *Search box* (apagado por defecto).
+  - Filtra solo a la vista las filas cargadas, en cualquier nivel, sin tener en cuenta mayúsculas ni acentos.
+  - Enseña cada coincidencia con su ruta (antepasados), subrayada, con el contador "N coincidencias".
+  - No filtra el informe, no se guarda y no emite eventos de render. Escape lo borra.
+  - Solo busca en lo cargado: lo que está contraído no se encuentra hasta expandirlo.
