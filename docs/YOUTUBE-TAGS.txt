@@ -1,0 +1,19 @@
+==========================================
+YOUTUBE TAGS — PASTE THIS BLOCK (under 500 characters)
+==========================================
+
+Power BI,Power BI custom visual,sparkline table,Power BI sparklines,sparklines in table,KPI scorecard,KPI tracking,in-cell charts,actual vs plan,variance analysis,bullet chart,win loss sparkline,matrix with sparklines,AppSource,data visualization,TCViz,Sparkline Table by TCViz
+
+
+==========================================
+EXTRA TAGS (swap in by audience)
+==========================================
+
+Retail / sales:
+store performance, sales by store, sales rep performance, monthly sales review
+
+Operations:
+plant KPIs, production tracking, KPI dashboard
+
+Power BI general:
+Power BI tutorial, Power BI tips, Power BI table, Power BI matrix, horizon chart

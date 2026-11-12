@@ -1,0 +1,105 @@
+==========================================
+TITLE (pick one)
+==========================================
+
+1. Sparkline table for Power BI: which rows are off plan, and is it a trend?
+2. Power BI KPI tracking table with a sparkline on every row
+3. One bad month or a trend? A Power BI table that shows it on every row
+4. Power BI sparkline table: hierarchy, subtotals, bullet with bands and variance vs plan
+
+(Recommended: 1 for the release video, 3 for a short.)
+
+
+==========================================
+YOUTUBE DESCRIPTION — FULL VIDEO
+==========================================
+
+The monthly review has fifty stores, twelve sales reps or two hundred products on the screen, and one question: which of them are drifting from plan, and is it a trend or one bad month? Sparkline Table by TCViz puts your hierarchy in rows with the subtotals Power BI calculates, the value of the last period, the change against the previous period or last year, and a sparkline on every row.
+
+Get it on Microsoft AppSource: [APPSOURCE LINK — once the offer is published]
+Documentation and FAQ: https://tinocallarisa-web.github.io/sparkline-table/support.html
+
+──────────────────────────────────────────
+CHAPTERS
+──────────────────────────────────────────
+0:00 The question a table of numbers does not answer
+0:00 Rows, Period, Values: a sparkline on every row
+0:00 Levels 1 · 2 · 3, expand and collapse, Power BI's subtotals
+0:00 Δ and Δ% against the previous period or last year
+0:00 Sparkline types: line, area, column, win/loss, bullet with bands
+0:00 Scale: shared by level or per row
+0:00 Plan as a reference column, and a plan defined only by region
+0:00 Variance vs plan with a bar, and status icons (Pro)
+0:00 Three sparkline columns, styles, row images and horizon (Pro)
+0:00 Free and Pro
+
+(Fill in the timestamps from the final edit. Delete any chapter the video does not show.)
+
+──────────────────────────────────────────
+WHAT IT DOES
+──────────────────────────────────────────
+✅ Every row: rows load in segments, with no cut-off
+✅ Up to 3 levels with Power BI's own subtotals, level buttons 1 · 2 · 3
+✅ Value of the last period or total of the range; Δ and Δ% with a sign
+✅ Five sparkline types, curve, line colour, markers and scale
+✅ Bullet with qualitative bands and % of target; target line
+✅ Plan, prior year and forecast as grey reference columns
+✅ A plan defined only by region shows "—" below, not a meaningless variance
+✅ Data bars, search box, sort by any column
+✅ Click to filter (subtotals too), highlight, bookmarks, keyboard and high contrast
+✅ The measure's number format, dynamic format strings included; twelve languages
+✅ No network requests: everything is computed inside your report
+
+──────────────────────────────────────────
+FREE AND PRO
+──────────────────────────────────────────
+FREE — a complete tracking table:
+• Every row, 3 levels with subtotals, value, Δ and Δ%
+• Line, area, column, win/loss and bullet with bands
+• Plan / prior year / forecast in grey, data bars, search, formatting per level
+• Report theme colours and Classic
+
+PRO — the control reading:
+• Variance vs plan, prior year or forecast: ΔPL, ΔPL% and a bar on every row and subtotal
+• Status icons by threshold, with shape and colour
+• Up to 3 sparkline columns
+• Six style templates that match the rest of the TCViz collection
+• Conditional formatting (fx), row images (Base64) and the horizon sparkline
+
+Turn on a Pro feature while editing without a licence and it is drawn working on your own data, under a "Pro preview" watermark. Report readers without a licence see the free table.
+
+──────────────────────────────────────────
+PLAN ONLY BY REGION?
+──────────────────────────────────────────
+Power BI repeats the region's plan on every store. Blank it below its level:
+Plan (region only) = IF ( ISINSCOPE ( Stores[Sales rep] ) || ISINSCOPE ( Stores[Store] ), BLANK (), [Sales plan] )
+
+──────────────────────────────────────────
+LINKS
+──────────────────────────────────────────
+Documentation: https://tinocallarisa-web.github.io/sparkline-table/support.html
+Questions: https://github.com/tinocallarisa-web/sparkline-table/discussions
+All TCViz visuals: https://tcviz.com
+Support: support@tcviz.com
+
+#PowerBI #Sparklines #DataVisualization
+
+
+==========================================
+SHORT (under 60 s) — DESCRIPTION
+==========================================
+
+Fifty stores, one question: which are off plan, and is it a trend or one bad month? A sparkline on every row, Power BI's own subtotals, and Δ% against last month or last year.
+Sparkline Table by TCViz: [APPSOURCE LINK]
+
+#PowerBI #Sparklines #Shorts
+
+
+==========================================
+NOTE
+==========================================
+The AppSource link and the documentation pages work once the offer and the GitHub repo are published. Until then,
+upload the video as UNLISTED. After uploading, send the canonical URL (https://www.youtube.com/watch?v=…): it goes
+in Partner Center (Offer listing → Videos), in tools/gen_docs.py (VIDEO), README.md, docs/TIPS-AND-HINTS.md,
+docs/WEBSITE-PRODUCT-PAGE.md, docs/APPSOURCE-LISTING.md and docs/CERTIFICATION-NOTES-SHORT.txt
+(search "[VIDEO URL"). Never a short link.

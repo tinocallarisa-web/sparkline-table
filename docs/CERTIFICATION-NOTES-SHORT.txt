@@ -1,0 +1,44 @@
+Sparkline Table by TCViz 1.0.0.0 - GUID matrixSparklinesFAB7608B939348B490060433D1A28FA6
+
+SOURCE CODE
+https://github.com/tinocallarisa-web/sparkline-table, branch "certification". Public.
+
+SAMPLE REPORT: SparklineTable_sample.pbix, 5 pages
+[PENDIENTE - lista provisional: revisar contra el .pbix real y borrar esta linea]
+1. Scorecard by region: 3-level hierarchy, engine subtotals, variance vs plan.
+2. Sparkline types: line, area, column, win/loss, bullet, horizon.
+3. Bullet with bands: per-row target, bands, % of target.
+4. Row images and levels: Base64 flags, formatting per level.
+5. Hints & tips.
+
+TESTING PRO - NO KEY NEEDED
+Pro is granted by the AppSource plan through IVisualLicenseManager; no key exists.
+In EDIT mode without a licence, each Pro feature (variance, status icons, extra
+sparklines, styles, fx, row images, horizon) is drawn WORKING under a "Pro preview"
+watermark that names it, with Power BI's licence notice. Intentional. Reading view
+shows the free table (Plan / Prior year / Forecast in grey, no variance). Without
+licence information (not signed in to Desktop): free table.
+
+WHAT TO CHECK
+- Empty visual: start screen.
+- Click a row: other visuals filter; click a subtotal's value: all its rows. Ctrl+click
+adds; Esc clears. Bookmark, clear, apply: selection and expanded rows return.
+- Right-click: context menu. Level buttons 1 2 3; Alt + click a row name: whole level.
+- Keyboard: arrows move and expand/collapse, Enter selects, Esc clears.
+- High contrast: status differs by shape; negative variance bar hatched.
+- Format mode: click a header, a row name or a sparkline.
+
+ROWS: matrix mapping, window of 1,000; fetchMoreData (aggregated segments) until all
+rows arrive. Subtotals from the engine. Expand/collapse stored by the host
+(expandCollapse). persistProperties only on an explicit click (setup guide, header
+sort while editing), never in the selection callback.
+
+PRIVACY: privileges []. No network, telemetry, browser storage or innerHTML. Row images
+only from Base64 data URIs, never URLs. Start-screen links open on click via launchUrl.
+
+Rendering events: one started/finished pair per update(), fetchMoreData included;
+scroll, hover, selection and sort do not call update().
+
+Video: [VIDEO URL — pendiente]
+Support: https://tinocallarisa-web.github.io/sparkline-table/support.html
+Privacy: https://tinocallarisa-web.github.io/sparkline-table/privacy.html

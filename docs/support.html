@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Documentation – Sparkline Table by TCViz</title>
+<style>
+  :root {
+    --bg: #FAF9F5; --bg2: #EDE9DE; --bd: #F5F3ED; --line: #DAD9D4;
+    --t1: #3D3929; --t2: #535146; --t3: #83827D;
+    --acc: #2B6CB0; --accd: #1F4E80; --acc2: #3E9C5B;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--t1); line-height: 1.65; }
+
+  /* ── Header ── */
+  header { background: var(--t1); color: #fff; padding: 28px 48px; display: flex; align-items: center; gap: 20px; }
+  header svg { flex-shrink: 0; }
+  header .title { font-size: 22px; font-weight: 700; }
+  header .sub   { font-size: 13px; color: #b5b3aa; margin-top: 2px; }
+
+  /* ── Nav ── */
+  nav { background: var(--bg2); border-bottom: 1px solid var(--line); padding: 0 48px; display: flex; gap: 0; overflow-x: auto; }
+  nav a { display: block; padding: 14px 14px; white-space: nowrap; font-size: 13px; font-weight: 600; color: var(--t2);
+          text-decoration: none; border-bottom: 3px solid transparent; transition: color .2s, border-color .2s; }
+  nav a:hover, nav a.active { color: var(--acc); border-bottom-color: var(--acc); }
+
+  /* ── Layout ── */
+  .wrap { max-width: 900px; margin: 0 auto; padding: 48px 24px 80px; }
+  h1 { font-size: 26px; font-weight: 700; margin-bottom: 8px; }
+  h2 { font-size: 17px; font-weight: 700; color: var(--t1); margin: 40px 0 12px; padding-bottom: 8px;
+       border-bottom: 2px solid var(--acc); display: inline-block; }
+  h3 { font-size: 14px; font-weight: 700; color: var(--t1); margin: 18px 0 6px; }
+  p  { font-size: 14px; color: var(--t2); margin-bottom: 10px; }
+  ul { font-size: 14px; color: var(--t2); padding-left: 20px; margin-bottom: 10px; }
+  li { margin-bottom: 5px; }
+  code { font-family: monospace; background: var(--bg2); padding: 1px 6px; border-radius: 4px;
+         font-size: 12px; color: var(--acc); }
+
+  /* ── Cards ── */
+  .card { background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 24px 28px; margin-bottom: 16px; }
+
+  /* ── Badges ── */
+  .badge { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 20px;
+           text-transform: uppercase; letter-spacing: .5px; vertical-align: middle; margin-left: 6px; }
+  .badge-pro  { background: var(--acc2); color: #fff; }
+  .badge-free { background: var(--acc);  color: #fff; }
+
+  /* ── Field wells table ── */
+  table { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 16px; }
+  th { background: var(--bg2); color: var(--t1); font-weight: 700; padding: 10px 14px; text-align: left;
+       border-bottom: 2px solid var(--line); }
+  td { padding: 9px 14px; border-bottom: 1px solid var(--bd); color: var(--t2); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+
+  /* ── FAQ ── */
+  details { border: 1px solid var(--line); border-radius: 8px; margin-bottom: 10px; background: #fff; }
+  summary { padding: 14px 18px; font-size: 14px; font-weight: 600; cursor: pointer; list-style: none;
+            display: flex; align-items: center; justify-content: space-between; color: var(--t1); }
+  summary::-webkit-details-marker { display: none; }
+  summary::after { content: '+'; font-size: 18px; font-weight: 300; color: var(--acc); transition: transform .2s; }
+  details[open] summary::after { content: '−'; }
+  details[open] summary { border-bottom: 1px solid var(--line); }
+  .faq-body { padding: 14px 18px; font-size: 14px; color: var(--t2); }
+  .faq-body p { margin-bottom: 6px; }
+  .faq-body ul { margin-top: 6px; }
+
+  /* ── Contact box ── */
+  .contact-box { background: var(--acc); color: #fff; border-radius: 10px; padding: 24px 28px;
+                  display: flex; align-items: center; gap: 20px; }
+  .contact-box .icon { font-size: 36px; flex-shrink: 0; }
+  .contact-box h3 { font-size: 16px; font-weight: 700; margin-bottom: 4px; color: #fff; }
+  .contact-box p  { font-size: 13px; color: rgba(255,255,255,.85); margin: 0; }
+  .contact-box a  { color: #fff; font-weight: 700; text-decoration: underline; }
+
+  /* ── Video embed ── */
+  .video-wrap { position: relative; padding-bottom: 56.25%; height: 0; border-radius: 10px; overflow: hidden;
+                border: 1px solid var(--line); margin-bottom: 20px; }
+  .video-wrap iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
+
+  /* ── CTA strip ── */
+  .cta { display: flex; gap: 12px; flex-wrap: wrap; margin: 16px 0; }
+  .btn { display: inline-block; padding: 10px 22px; border-radius: 6px; font-size: 13px; font-weight: 700;
+          text-decoration: none; transition: background .2s; }
+  .btn-primary { background: var(--acc); color: #fff; }
+  .btn-primary:hover { background: var(--accd); }
+  .btn-outline { background: transparent; color: var(--acc); border: 2px solid var(--acc); }
+  .btn-outline:hover { background: var(--acc); color: #fff; }
+
+  /* ── Search ── */
+  .searchbar { background: var(--bg2); border-bottom: 1px solid var(--line); padding: 14px 48px 16px; }
+  .searchbox { position: relative; max-width: 900px; margin: 0 auto; display: flex; align-items: center;
+               gap: 10px; background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 0 12px; }
+  .searchbox:focus-within { border-color: var(--acc); box-shadow: 0 0 0 3px rgba(43,108,176,.16); }
+  .searchbox svg { color: var(--t3); flex-shrink: 0; }
+  .searchbox input { flex: 1; border: none; outline: none; background: transparent; font: inherit;
+                     font-size: 14px; color: var(--t1); padding: 11px 0; }
+  .searchbox input::placeholder { color: var(--t3); }
+  .searchbox button { border: none; background: transparent; color: var(--t3); font-size: 20px;
+                      line-height: 1; cursor: pointer; padding: 0 2px; }
+  .searchbox button:hover { color: var(--acc); }
+  .search-status { max-width: 900px; margin: 8px auto 0; font-size: 12px; color: var(--t3); min-height: 16px; }
+  mark { background: #FCE8A8; color: var(--t1); border-radius: 2px; padding: 0 2px; }
+  .is-hidden { display: none !important; }
+
+  /* ── Version pill ── */
+  .verpill { display: block; width: fit-content; font-size: 11px; font-weight: 700; letter-spacing: .4px;
+             background: var(--bg2); color: var(--t2); border: 1px solid var(--line);
+             padding: 3px 10px; border-radius: 20px; margin-bottom: 14px; }
+  .verpill a { color: var(--acc); text-decoration: none; }
+  .lead { font-size: 14px; line-height: 1.6; color: var(--t2); margin: 0 0 22px; }
+  .lead a { color: var(--acc); }
+
+  /* ── Footer ── */
+  footer { background: var(--t1); color: var(--t3); text-align: center; padding: 24px 48px; font-size: 12px; }
+  footer a { color: #b5b3aa; text-decoration: none; margin: 0 8px; }
+  footer a:hover { color: #fff; }
+.prose h2{display:block}
+</style>
+</head>
+<body>
+<header>
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 828 362" width="90" height="40">
+    <defs><linearGradient id="g" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#1F4E80"/>
+      <stop offset=".55" stop-color="#2B6CB0"/>
+      <stop offset="1" stop-color="#3E9C5B"/>
+    </linearGradient></defs>
+    <g transform="translate(40,46)">
+      <rect x="22" y="20" width="150" height="150" rx="30" fill="none" stroke="url(#g)" stroke-width="11"/>
+      <g fill="url(#g)">
+        <rect x="42" y="110" width="20" height="58" rx="5"/>
+        <rect x="70" y="86" width="20" height="82" rx="5"/>
+        <rect x="98" y="62" width="20" height="106" rx="5"/>
+        <rect x="126" y="38" width="20" height="130" rx="5"/>
+      </g>
+    </g>
+    <text x="258" y="246" font-family="Poppins,sans-serif" font-weight="700" font-size="196" letter-spacing="-4">
+      <tspan fill="url(#g)">tc</tspan><tspan fill="#fff">viz</tspan>
+    </text>
+    <text x="264" y="306" font-family="Poppins,sans-serif" font-weight="500" font-size="31" letter-spacing="6.5" fill="#83827D">VISUALS TO POWER BI</text>
+  </svg>
+  <div>
+    <div class="title">Sparkline Table by TCViz</div>
+    <div class="sub">Documentation</div>
+  </div>
+</header>
+<nav>
+  <a href="#quickstart" class="active">Quick Start</a>
+  <a href="#read">How to read it</a>
+  <a href="#usecases">Use cases</a>
+  <a href="#fields">Field Wells</a>
+  <a href="#freepro">Free and Pro</a>
+  <a href="#plan">Plan in one minute</a>
+  <a href="#format">Format Pane</a>
+  <a href="#interaction">Selection and levels</a>
+  <a href="#accessibility">Accessibility</a>
+  <a href="#troubleshooting">Troubleshooting</a>
+  <a href="#faq">FAQ</a>
+  <a href="changelog.html">Changelog</a>
+  <a href="#contact">Contact</a>
+</nav>
+<div class="searchbar">
+  <div class="searchbox">
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"
+         stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <input id="docsearch" type="search" placeholder="Search the documentation — try &quot;plan&quot;, &quot;scale&quot;, &quot;image&quot;, &quot;level&quot;…"
+           autocomplete="off" aria-label="Search the documentation">
+    <button id="searchclear" type="button" aria-label="Clear search" hidden>&times;</button>
+  </div>
+  <div id="searchstatus" class="search-status" role="status" aria-live="polite"></div>
+</div>
+<div class="wrap">
+
+<div class="verpill">Visual v1.0.0.0 &nbsp;·&nbsp; docs updated 12 November 2026 &nbsp;·&nbsp; <a href="changelog.html">what's new</a></div>
+
+<p class="lead">A table for KPI tracking and actual against plan across many rows — stores, sales reps, products, plants. It answers the
+question of the monthly review: which rows are drifting from plan, and is it a trend or one bad month? Your hierarchy with Power BI's own
+subtotals, the value, the change against the previous period or last year, and a sparkline on every row. The free version loads every row.
+<strong>Pro</strong> adds the variance against plan, prior year or forecast with a bar per row, status icons, up to three sparkline columns,
+six collection styles, conditional formatting (fx), row images and the horizon sparkline.</p>
+
+<h2 id="quickstart">Quick Start</h2>
+<div class="card">
+<ol style="padding-left:20px;font-size:14px;color:var(--t2)">
+<li>Add <strong>Sparkline Table by TCViz</strong> to the page. With no fields it shows a start screen with these steps.</li>
+<li>Drag one to three fields to <strong>Rows</strong>, outermost first — Region › Sales rep › Store.</li>
+<li>Drag a month or date to <strong>Period</strong>: it becomes the sparkline axis.</li>
+<li>Drag one to three measures to <strong>Values</strong> — Sales first. Add <strong>Target</strong> for a target line on every sparkline.</li>
+<li>Optional: your plan measure in <strong>Plan</strong>. It shows as a grey column; with Pro, the variance and its bar appear next to it.</li>
+</ol>
+<p>While editing, a setup guide in the corner walks through your fields, how to read the table and the style.</p>
+</div>
+
+<h2 id="read">How to read it</h2>
+<div class="card">
+<figure style="margin:0 0 14px">
+<svg viewBox="0 0 660 200" role="img" aria-label="Annotated table: hierarchy, value, change, grey plan column, variance bar and one sparkline per row" style="width:100%;max-width:660px;display:block;margin:0 auto">
+  <g font-family="Segoe UI, sans-serif" font-size="12" fill="#252423">
+    <g font-weight="700" fill="#605E5C" font-size="11">
+      <text x="8" y="18">Region › Store</text><text x="200" y="18" text-anchor="end">Sales</text><text x="250" y="18" text-anchor="end">Δ%</text>
+      <text x="310" y="18" text-anchor="end">Plan</text><text x="372" y="18" text-anchor="middle">ΔPL</text><text x="420" y="18">Sales · Jan–Sep</text>
+    </g>
+    <path d="M4 26 H530" stroke="#C8C6C4"/>
+    <text x="8" y="48" font-weight="700">▾ North</text><text x="200" y="48" text-anchor="end" font-weight="700">1.54M</text>
+    <text x="250" y="48" text-anchor="end" fill="#107C10">+3.1%</text><text x="310" y="48" text-anchor="end" fill="#8A8886">1.53M</text>
+    <rect x="372" y="38" width="10" height="12" fill="#107C10"/><path d="M372 34 V54" stroke="#8A8886"/>
+    <path d="M420 50 L440 46 L460 47 L480 42 L500 41 L520 38" fill="none" stroke="#8A8886" stroke-width="1.5"/><circle cx="520" cy="38" r="2.5" fill="#118DFF"/>
+    <text x="24" y="78">Store 12</text><text x="200" y="78" text-anchor="end">276K</text><text x="250" y="78" text-anchor="end" fill="#107C10">+5.4%</text>
+    <text x="310" y="78" text-anchor="end" fill="#8A8886">262K</text><rect x="372" y="68" width="14" height="12" fill="#107C10"/><path d="M372 64 V84" stroke="#8A8886"/>
+    <path d="M420 82 L440 80 L460 76 L480 74 L500 70 L520 66" fill="none" stroke="#8A8886" stroke-width="1.5"/><circle cx="520" cy="66" r="2.5" fill="#118DFF"/>
+    <text x="24" y="108">Store 31</text><text x="200" y="108" text-anchor="end">198K</text><text x="250" y="108" text-anchor="end" fill="#C4314B">−8.2%</text>
+    <text x="310" y="108" text-anchor="end" fill="#8A8886">231K</text><rect x="352" y="98" width="20" height="12" fill="#C4314B"/><path d="M372 94 V114" stroke="#8A8886"/>
+    <path d="M420 100 L440 101 L460 99 L480 102 L500 101 L520 112" fill="none" stroke="#8A8886" stroke-width="1.5"/><circle cx="520" cy="112" r="2.5" fill="#118DFF"/>
+    <path d="M4 124 H530" stroke="#C8C6C4"/>
+    <text x="8" y="146" font-weight="700">▸ South</text><text x="200" y="146" text-anchor="end" font-weight="700">0.98M</text>
+    <text x="250" y="146" text-anchor="end" fill="#C4314B">−1.2%</text><text x="310" y="146" text-anchor="end" fill="#8A8886">1.02M</text>
+    <rect x="362" y="136" width="10" height="12" fill="#C4314B"/><path d="M372 132 V152" stroke="#8A8886"/>
+    <path d="M420 140 L440 144 L460 141 L480 145 L500 146 L520 147" fill="none" stroke="#8A8886" stroke-width="1.5"/><circle cx="520" cy="147" r="2.5" fill="#118DFF"/>
+    <text x="545" y="50" font-size="11" fill="#605E5C">Subtotal row:</text><text x="545" y="64" font-size="11" fill="#605E5C">from Power BI</text>
+    <text x="545" y="100" font-size="11" fill="#605E5C">One bad month,</text><text x="545" y="114" font-size="11" fill="#605E5C">or a trend?</text>
+    <text x="8" y="186" font-size="11" fill="#605E5C">Grey = reference column (free) · ΔPL bar = variance against plan (Pro) · dot = last point</text>
+  </g>
+</svg>
+</figure>
+<p>The value is the last period (or the total of the range); Δ and Δ% compare it with the previous period or the same period last year, with a sign as well as
+a colour. The sparkline shows the whole range, so a row that is down this month can be read at once as a dip or as a slide. Subtotal rows are calculated by Power BI.</p>
+</div>
+
+<h2 id="usecases">Use cases</h2>
+<div class="card"><h3>Stores against plan</h3><p>Rows = Region › Store, Period = Month, Values = Sales, Plan = Sales plan. With Pro, ΔPL% and the variance bar show which stores are off plan; the sparkline shows whether it is a trend or one bad month. Subtotal rows are the ones Power BI calculates for each region.</p></div><div class="card"><h3>Sales reps month by month</h3><p>Rows = Area › Sales rep, Values = Sales, Margin %, Orders. The value column shows the last month, Δ% compares with the month before (or with the same month last year). Sort by Δ% with a click on its header to put the biggest drops first.</p></div><div class="card"><h3>Products against a target</h3><p>Rows = Category › Product, Target = the target measure, Sparkline type = Bullet. Each row is compared with its own target; the bands say poor, fair or good, and the label reads “1.54M · 101%”.</p></div><div class="card"><h3>Plants and KPIs with status (Pro)</h3><p>Rows = Plant › Line, Values = Output, Plan = Output plan, Status icons on: ● good, ▲ fair, ◆ poor, by your own thresholds. Up to three sparkline columns show output, scrap rate and downtime side by side.</p></div><div class="card"><h3>Long lists</h3><p>Thousands of rows (stores, customers, SKUs): rows arrive in segments and the table scrolls without redrawing everything. The search box finds a row among the loaded ones and shows it with its path.</p></div>
+
+<h2 id="fields">Field Wells</h2>
+<table><thead><tr><th>Field</th><th>Kind</th><th>Required / limit</th><th>What it does</th></tr></thead><tbody><tr><td><strong>Rows</strong></td><td>Grouping</td><td>Yes, 1 to 3 fields</td><td>Your hierarchy, outermost first (region › sales rep › store). Each level expands and collapses; subtotal rows are calculated by Power BI, never added up by the visual.</td></tr><tr><td><strong>Period</strong></td><td>Grouping</td><td>Yes, one field</td><td>The sparkline axis: month, quarter, week or date. The value column shows the last period (or the total of the range). Up to 400 periods are drawn.</td></tr><tr><td><strong>Values</strong></td><td>Measure</td><td>Yes, up to 3</td><td>The first measure draws the sparkline, the value, Δ and Δ%. The second and third appear as extra columns (with Pro, each can also have its own sparkline column).</td></tr><tr><td><strong>Target</strong></td><td>Measure</td><td>No, one field</td><td>A target line on each sparkline, the marker of the bullet and the reference for win/loss. Free.</td></tr><tr><td><strong>Plan (Pro)</strong></td><td>Measure</td><td>No, one field</td><td>Shown free as a grey reference column. With Pro: variance ΔPL, ΔPL% and a variance bar per row and in subtotals.</td></tr><tr><td><strong>Prior year (Pro)</strong></td><td>Measure</td><td>No, one field</td><td>Same as Plan. Variance uses it when there is no Plan, or when you choose it.</td></tr><tr><td><strong>Forecast (Pro)</strong></td><td>Measure</td><td>No, one field</td><td>Same as Plan; choose it in <em>Variance → Compare with</em>.</td></tr><tr><td><strong>Row image (Pro)</strong></td><td>Measure</td><td>No, one field</td><td>An image at the start of the row: a measure, or a text column set to <strong>First</strong>, that returns a Base64 data URI (<code>data:image/png;base64,…</code>). Web links are never loaded.</td></tr><tr><td><strong>Tooltips</strong></td><td>Measure</td><td>No, up to 5</td><td>Extra measures in the tooltip. Report page tooltips are supported.</td></tr></tbody></table>
+<p>Rows arrive in segments of 1,000; the visual asks for the next segment until every row has arrived (“Loading N of …” while it does). If Power BI stops sending rows,
+a note says how many are shown. Up to 400 periods are drawn. The limits are the same in the free version and in Pro.</p>
+
+<h2 id="freepro">Free and Pro</h2>
+<table><thead><tr><th>Capability</th><th>Free</th><th>Pro</th></tr></thead><tbody><tr><td>Every row: Power BI sends rows in segments of 1,000 and the visual asks for the next until all have arrived — no cut-off by the visual</td><td>✓</td><td>✓</td></tr><tr><td>Row hierarchy up to 3 levels with subtotals calculated by Power BI, level buttons 1 · 2 · 3, expand and collapse</td><td>✓</td><td>✓</td></tr><tr><td>Value of the last period or total of the range; Δ and Δ% against the previous period or the same period last year</td><td>✓</td><td>✓</td></tr><tr><td>Five sparkline types — line, area, column, win/loss, bullet — with curve, line colour, markers and scale (shared by level, per row in detail rows, per row)</td><td>✓</td><td>✓</td></tr><tr><td>Bullet with qualitative bands and % of target; target line on every sparkline</td><td>✓</td><td>✓</td></tr><tr><td>Data bars behind the value, search box, rows without actual hidden, repeated references hidden</td><td>✓</td><td>✓</td></tr><tr><td>Grey reference columns for Plan, Prior year and Forecast</td><td>✓</td><td>✓</td></tr><tr><td>Formatting per level, row height, column spacing, gridlines; Report theme and Classic templates</td><td>✓</td><td>✓</td></tr><tr><td>Selection, highlight, keyboard, context menu, bookmarks, format on the canvas, high contrast, 12 languages</td><td>✓</td><td>✓</td></tr><tr><td>Number format of each measure, dynamic format strings included; no network access</td><td>✓</td><td>✓</td></tr><tr><td>Variance against Plan, Prior year or Forecast: ΔPL, ΔPL% and a variance bar, per row and in subtotals</td><td>—</td><td>✓</td></tr><tr><td>Status icons by threshold, with shape and colour</td><td>—</td><td>✓</td></tr><tr><td>Up to 3 sparkline columns, each with its own measure, type, curve, scale and colour</td><td>—</td><td>✓</td></tr><tr><td>Six collection styles: Boardroom, Ledger, Editorial, Signal, Aurora, Terrace</td><td>—</td><td>✓</td></tr><tr><td>Conditional formatting (fx) on the value colour, the value background and the sparkline colour</td><td>—</td><td>✓</td></tr><tr><td>Image at the start of each row (Base64 data URI)</td><td>—</td><td>✓</td></tr><tr><td>Horizon sparkline</td><td>—</td><td>✓</td></tr></tbody></table>
+<p>Turn on a Pro capability without a licence while editing and it is drawn working on your own data under a “Pro preview” watermark that
+names it. Reading view shows the free table. Pro is sold per user on Microsoft AppSource.</p>
+
+<h2 id="plan">Plan in one minute</h2>
+<div class="card">
+<ol style="padding-left:20px;font-size:14px;color:var(--t2)">
+<li>Drag your plan measure to <strong>Plan</strong> (and, if you have it, last year to <strong>Prior year</strong>).</li>
+<li>Free: the plan appears as a grey reference column with the figure of the same period as the value.</li>
+<li>Pro: <strong>ΔPL</strong>, a variance bar (right and green when favourable, left and red when not) and <strong>ΔPL%</strong>, on every row and subtotal. <em>Values → A decrease is good</em> swaps the colours for costs.</li>
+<li>Pro: <em>Status icons</em> on — ● good, ▲ fair, ◆ poor, by your thresholds on ΔPL%.</li>
+</ol>
+<p>Plan defined only by region? The visual shows “—” below that level instead of a meaningless variance. The FAQ has the DAX to make the measure stop there.</p>
+</div>
+
+<h2 id="format">Format Pane</h2>
+<table><thead><tr><th>Card</th><th>Settings</th></tr></thead><tbody><tr><td><strong>Style template</strong></td><td>Report theme (default: the colours of your report theme, like a native visual), Classic, and the six collection styles Boardroom, Ledger, Editorial, Signal, Aurora and Terrace (Pro). Setup guide: turn it back on to see the guide again.</td></tr><tr><td><strong>Values</strong></td><td><strong>Value shows the total of the range</strong> (off: the last period); Change vs — previous period or same period last year; show Δ and Δ%; <strong>A decrease is good</strong> (for costs: swaps the colours); increase and decrease colours; dim Δ% on small bases (% of the level median, 0 turns it off); text size; value colour and value background, both with conditional formatting (fx) rules (Pro); data bars behind the value and their colour.</td></tr><tr><td><strong>Variance (Pro)</strong></td><td>Show; Compare with — Plan, else prior year (default), Plan, Prior year or Forecast; reference columns; variance (Δ), variance % (Δ%) and the variance bar, each on or off; favourable and unfavourable colours.</td></tr><tr><td><strong>Status icons (Pro)</strong></td><td>Show; position — own column or next to the value; good from (Δ% ≥, default 0%) and poor below (Δ% &lt;, default −5%); good, fair and poor colours. The rule uses the variance % against the reference, or the period Δ% when there is no Plan or Prior year.</td></tr><tr><td><strong>Sparkline</strong></td><td>Type — Line, Area, Column, Win/loss, Bullet, Horizon (Pro); scale — Shared by level, Per row in detail (default), Per row; start at zero (line); curve — Linear, Smooth, Step (line and area); line colour — Neutral, Per row, By trend; line width; horizon bands (2 or 3) and baseline — zero, row average or target (Pro); colour, with conditional formatting (fx) rules (Pro); last point colour; show last value; bullet label — value, % of target or both; show target line and its colour.</td></tr><tr><td><strong>Sparkline 2 (Pro), Sparkline 3 (Pro)</strong></td><td>Show; measure (Value 1, 2 or 3); type; curve; scale; colour.</td></tr><tr><td><strong>Qualitative bands</strong></td><td>For the Bullet type with a positive target. Show; poor below (default 80% of target); good from (default 95%); lower is better (mirrors the thresholds around 100%); three band colours.</td></tr><tr><td><strong>Markers</strong></td><td>Last point (on by default), first point, maximum, minimum and negative points, each with its own shape; marker size.</td></tr><tr><td><strong>Rows</strong></td><td>Density — Compact, Standard, Comfortable; text size; row height (0 = automatic; raised to fit the text); indent per level; column spacing; reserve space for row images; grand total; rows without actual — Hide (default) or Show; repeated references — Hide (default) or Show; tooltips — sparkline only, whole row or off; sort by and sort direction.</td></tr><tr><td><strong>Row levels</strong></td><td>Pick Level 1, 2, 3 or the grand total row: background and its opacity, text colour, text size, font, bold, italic; show row image, image size and shape — square or round (Pro).</td></tr><tr><td><strong>Column headers</strong></td><td>Show; text size, font, bold, colour, background; show period line; search box; expand / collapse buttons (the level buttons 1 · 2 · 3).</td></tr><tr><td><strong>Gridlines</strong></td><td>Vertical lines — off, between groups (default) or between all columns, with colour, width (1–3 px) and style; horizontal lines with colour and width.</td></tr></tbody></table>
+<p>Format on the canvas: in format mode, click the column headers, a row name, a value, a variance column, a status icon, a sparkline, the bullet bands or the table background to open its card.</p>
+
+<h2 id="interaction">Selection, levels and interaction</h2>
+<div class="card">
+<ul>
+<li>Click a row to filter the rest of the page. Click the value or the sparkline of a subtotal row to select it: it passes all its rows. Ctrl/Cmd + click adds; click again, click the background or press Esc to clear.</li>
+<li>Click the arrow or the name of a row to expand or collapse it; Alt + click for the whole level. Level buttons 1 · 2 · 3 in the header open the table to that level.</li>
+<li>Highlight: when another visual filters this one, rows without highlighted data are faded.</li>
+<li>Tooltip on the sparkline with the period under the mouse; <em>Rows → Tooltips</em> can show the whole row or nothing. Report page tooltips are supported.</li>
+<li>Click a column header to sort by it; the search box (Column headers → Search box) finds rows among those loaded, with their path, without filtering the report.</li>
+<li>Bookmarks restore the selection and the expanded rows. Right-click opens the Power BI context menu.</li>
+<li>When the report author turns interactions off, clicks do not filter.</li>
+</ul>
+</div>
+
+<h2 id="accessibility">Accessibility</h2>
+<div class="card">
+<ul>
+<li>Keyboard: Tab into the visual; up and down move between rows; PageUp/PageDown and Home/End jump; right expands (or goes to the first child), left collapses (or goes to the parent); Enter or Space selects (Ctrl adds); Esc clears.</li>
+<li>The focused row is announced to screen readers with its name, level, value, Δ%, status and whether it is expanded or selected.</li>
+<li>High contrast: the visual uses the colours of the Windows contrast theme; status is told apart by shape, a negative variance bar is hatched and the selection is outlined.</li>
+<li>Δ and Δ% carry a sign as well as a colour; status icons differ in shape as well as colour.</li>
+<li>The layout adapts to the size of the visual: when it narrows, the extra columns give way first; the sparkline stays.</li>
+</ul>
+</div>
+
+<h2 id="troubleshooting">Troubleshooting</h2>
+<details><summary>The plan shows “—” below a certain level</summary><div class="faq-body"><p>Your plan measure is defined at one level only (for example by region), and Power BI repeats the region's plan on every store under it. With <em>Rows → Repeated references = Hide</em> (default) the visual detects the level where the plan stops being defined and shows “—” from there on, with no variance against it; the header says “Plan: available down to Region”. See the recipe in the FAQ to stop the measure going down.</p></div></details><details><summary>Rows with only the plan appear</summary><div class="faq-body"><p>A measure defined at another level of detail returns a value for every row of the dimension, also where nothing was sold. <em>Rows → Rows without actual = Hide</em> (default) hides rows where all Values are blank; the header says how many. Subtotals do not change: they are Power BI's. The FAQ has the DAX fix.</p></div></details><details><summary>“Same period last year is not available on this axis”</summary><div class="faq-body"><p>The visual needs to know which period is the same one a year earlier. It recognises dates, <code>2026-09</code>, <code>202609</code>, <code>09-2026</code>, <code>2026-Q3</code> / <code>Q3 2026</code>, <code>Sep 2026</code> and years. With another format it compares with the previous period and says so.</p></div></details><details><summary>Δ% is empty for a row</summary><div class="faq-body"><p>The base is zero or negative, so a percentage would not mean anything. The tooltip says so. Δ% is also shown dimmed when the base is very small compared with the rest of its level (<em>Values → Dim Δ% on small bases</em>).</p></div></details><details><summary>The value column is empty but the sparkline has data</summary><div class="faq-body"><p>The value column shows the last period of the axis, the same for every row. A row without data in that period has an empty value; its sparkline ends at its own last point, and the label next to it shows that month, dimmed (“1.22K · Jun 2026”).</p></div></details><details><summary>“n values without a date on the axis are not drawn”</summary><div class="faq-body"><p>Some rows of your data have a blank period. They are left out of the sparkline, of the header range, of the last period and of Δ. With <em>Value shows the total of the range</em>, the total comes from Power BI and does include them: the header says “Total (incl. no date)”. Check the relationship between your fact table and the calendar.</p></div></details><details><summary>“Row limit reached: showing N rows”</summary><div class="faq-body"><p>The visual keeps asking Power BI for more rows until all have arrived. If Power BI stops sending them, the note says how many are shown. Filter the page or collapse a level.</p></div></details><details><summary>“Total of the range did not arrive from Power BI”</summary><div class="faq-body"><p><em>Value shows the total of the range</em> asks Power BI for the total of each row. If it does not arrive, the value shows the last period. Turn the option off and on again, or reduce the number of rows.</p></div></details><details><summary>A row looks flat on its sparkline</summary><div class="faq-body"><p>Columns and area start at zero, so a series that moves between 40K and 50K looks almost full: a bar that does not start at zero exaggerates. For the shape, use Line without <em>Start at zero</em>. With <em>Shared by level</em>, rows share one scale; <em>Per row</em> gives each row its own.</p></div></details><details><summary>“Plan and Sales use different formats”</summary><div class="faq-body"><p>While editing, the visual warns when the reference and the actual have different number formats (litres against euros, for example): the variance may not make sense. It blocks nothing and is not shown to readers.</p></div></details><details><summary>Images do not appear</summary><div class="faq-body"><p>Only Base64 data URIs are drawn (<code>data:image/png;base64,…</code>, also jpeg, gif, webp, bmp and svg+xml). A web address is never loaded; while editing, a note says so. Check also <em>Row levels → Show row image</em> for that level. Row images are part of Pro.</p></div></details><details><summary>I see a “Pro preview” watermark</summary><div class="faq-body"><p>A Pro feature is turned on (or Plan / Prior year / Forecast is in its field with the Variance card on) and you are editing without a licence. Turn it off to remove the watermark, or get a licence. Readers of the report without a licence see the free table, with no watermark.</p></div></details>
+
+<h2 id="faq">FAQ</h2>
+<details><summary>My plan exists only by region: why “—” on stores, and how do I stop it going down?</summary><div class="faq-body"><p>When a plan measure has no detail below region, Power BI cannot split it and repeats the region's figure on every sales rep and store. A variance of −90% on each store against the whole region's plan would mean nothing, so with <em>Rows → Repeated references = Hide</em> the visual shows “—” in grey from the level where the plan stops being defined: no variance, no bar, no status against it. Regions and the total do not change.</p><p>To make the measure itself return a value only where it is defined, blank it below its level with ISINSCOPE:</p><pre style="background:var(--bg2);border-radius:6px;padding:10px 12px;margin:8px 0 12px;overflow-x:auto;white-space:pre-wrap;font-size:12.5px;line-height:1.5"><code style="background:none;padding:0">Plan (region only) =
+IF (
+    ISINSCOPE ( Stores[Sales rep] ) || ISINSCOPE ( Stores[Store] ),
+    BLANK (),
+    [Sales plan]
+)</code></pre><p>Use the columns of your own Rows hierarchy. The same works for Prior year, Forecast and Target.</p></div></details><details><summary>How do I show a flag or logo on each row?</summary><div class="faq-body"><p>Row images (Pro) take a Base64 data URI, not a web address: the visual has no network access, so an image on a web server is never loaded. That is what keeps the privacy promise literal.</p><ol style="padding-left:20px"><li>Make a small table <strong>Flags</strong> with two columns: <strong>Country</strong> and <strong>Image</strong>, where Image is text such as <code>data:image/svg+xml;base64,PHN2Zy…</code> or <code>data:image/png;base64,iVBOR…</code>.</li><li>Create a measure that looks the image up for the country in scope:</li></ol><pre style="background:var(--bg2);border-radius:6px;padding:10px 12px;margin:8px 0 12px;overflow-x:auto;white-space:pre-wrap;font-size:12.5px;line-height:1.5"><code style="background:none;padding:0">Flag =
+IF (
+    ISINSCOPE ( Geography[Country] ),
+    LOOKUPVALUE ( Flags[Image], Flags[Country], SELECTEDVALUE ( Geography[Country] ) )
+)</code></pre><ol start="3" style="padding-left:20px"><li>Drag the measure to <strong>Row image</strong>. Turn images on or off per level in <em>Row levels → Show row image</em>, with size and a square or round shape.</li></ol><p>Keep images small (an icon of a few KB); very long text values can be cut by Power BI when the model loads. <em>Rows → Reserve space for row images</em> keeps names aligned when a row has no image.</p></div></details><details><summary>Why do “phantom” rows with only a plan appear?</summary><div class="faq-body"><p>A measure at another level of detail than the rows (a plan by region, rows down to sales rep) returns a value for every member of the dimension, also those that sold nothing there. The native matrix does the same with measures that never return BLANK. The visual hides rows where every measure in Values is blank (<em>Rows → Rows without actual = Hide</em>, default), and the header says how many. The fix in the model is to return the plan only where there is actual:</p><pre style="background:var(--bg2);border-radius:6px;padding:10px 12px;margin:8px 0 12px;overflow-x:auto;white-space:pre-wrap;font-size:12.5px;line-height:1.5"><code style="background:none;padding:0">Plan (where there is actual) =
+IF ( NOT ISBLANK ( [Sales] ), [Sales plan] )</code></pre></div></details><details><summary>Why does a row show its last value from an earlier month?</summary><div class="faq-body"><p>The value column always shows the same period for every row: the last period of the axis. A store that has no data that month has an empty value — the visual never takes an older month without saying so. Its sparkline does end at its real last point, and the label next to it carries that month, dimmed: “1.22K · Jun 2026”. The same applies to sparkline columns 2 and 3 and to horizon.</p></div></details><details><summary>What happens with an empty period or rows without a date?</summary><div class="faq-body"><p>A blank period, shown as “(Blank)” by Power BI, is left out of the sparkline axis, of the header range, of the last period and of Δ. While editing, a note says how many values have no date. With <em>Value shows the total of the range</em> the total is Power BI's and does include them; the header says “Total (incl. no date)”. Nothing is subtracted. To get rid of the blank period, fix the relationship between the fact table and the calendar.</p></div></details><details><summary>Who calculates the subtotals?</summary><div class="faq-body"><p>Power BI. Each subtotal row is the measure evaluated for that region or sales rep, so Margin % of a region is the region's margin, not the sum or average of its stores. ΔPL of a subtotal is that row's actual minus that row's plan.</p></div></details><details><summary>Value: last period or total of the range?</summary><div class="faq-body"><p>By default the value column shows the last period with data. <em>Values → Value shows the total of the range</em> asks Power BI for the total of each row over the whole period axis. Δ and Δ% always refer to the last period (against the previous one or the same one last year); the header says which.</p></div></details><details><summary>How does the scale of the sparklines work?</summary><div class="faq-body"><p><strong>Per row in detail</strong> (default): each row of the last level has its own scale, and subtotal rows share one scale per level, so a region does not flatten its stores. <strong>Shared by level</strong>: every row of a level on one scale, to compare sizes. <strong>Per row</strong>: every row of every level on its own scale, to compare shapes. The header always says which. Horizon and the bullet with a target are always per row.</p></div></details><details><summary>How do the level buttons and expand/collapse work?</summary><div class="faq-body"><p>The buttons 1 · 2 · 3 in the header work like Excel's outline levels: 3 opens everything, 2 opens the first level and leaves the second closed, 1 collapses everything. Click the arrow or the name of a row to expand or collapse it; Alt + click opens or closes the whole level. Power BI's own context menu also has Expand / Collapse. Power BI keeps the expanded state, so it is saved with the report and with bookmarks.</p></div></details><details><summary>How many fields and rows can it use?</summary><div class="faq-body"><p>Rows up to 3 fields; Period one; Values up to 3 measures; Target, Plan, Prior year, Forecast and Row image one each; Tooltips up to 5. Rows arrive from Power BI in segments of 1,000 and the visual asks for the next segment until all have arrived; while loading, a note says “Loading N of …”. Up to 400 periods are drawn. The limits are the same in the free version and in Pro.</p></div></details><details><summary>Does sorting change the report?</summary><div class="faq-body"><p>Click a column header to sort by the figure you see: descending, ascending, then back to Power BI's order, always within each parent. While editing, the sort is saved with the report. When the order comes from Power BI's own Sort by menu, a line under the header says so, because Power BI sorts by the total of the range.</p></div></details><details><summary>Does it use my number formats?</summary><div class="faq-body"><p>Yes: the number format of each measure from the model, <strong>dynamic format strings</strong> included, in the report's language. Δ% and % of target use a percentage format.</p></div></details><details><summary>Does it follow my report theme?</summary><div class="faq-body"><p>Yes. <strong>Report theme</strong> is the default template: colours and text come from your theme, like a native visual. Colours you set yourself always win.</p></div></details><details><summary>What is the “Pro preview” watermark?</summary><div class="faq-body"><p>While you edit a report without a licence, Pro features you turn on are drawn working on your own data under a watermark that names them, and Power BI shows its licence notice. Reading view shows the free table: Plan, Prior year and Forecast stay visible as grey reference columns, without variance, status, extra sparklines, styles, fx, images or horizon (a horizon falls back to a line). Where Power BI provides no licence information (for example when you are not signed in to Power BI Desktop), the free table is shown.</p></div></details><details><summary>How do I get Pro?</summary><div class="faq-body"><p>On the visual's Microsoft AppSource page, choose <strong>Buy now</strong> (not Install free). Licences are per user and managed by Microsoft; every person who should see the Pro features needs one. Restart Power BI Desktop after the licence is assigned. See <a href="https://tcviz.com/licensing.html">tcviz.com/licensing</a>.</p></div></details><details><summary>Is my data sent anywhere?</summary><div class="faq-body"><p>No. The visual declares no privileges, so Power BI does not let it make any network request, and it stores nothing outside your report. The links on the start screen open only when you click them, through Power BI.</p></div></details>
+
+<h2 id="contact">Contact</h2>
+<div class="contact-box"><div class="icon">✉</div><div>
+<h3>Questions, bugs, ideas</h3>
+<p>Ask in <a href="https://github.com/tinocallarisa-web/sparkline-table/discussions" target="_blank">GitHub Discussions</a>, report a bug in <a href="https://github.com/tinocallarisa-web/sparkline-table/issues" target="_blank">GitHub Issues</a>,
+or write to <a href="mailto:support@tcviz.com">support@tcviz.com</a>. Product page: <a href="https://tcviz.com/product/sparkline-table/" target="_blank">tcviz.com/product/sparkline-table</a>.</p>
+</div></div>
+
+</div>
+<footer>
+  <div style="margin-bottom:10px;">
+    <a href="https://tinocallarisa-web.github.io/sparkline-table/support.html">Documentation</a>
+    <a href="https://tinocallarisa-web.github.io/sparkline-table/privacy.html">Privacy Policy</a>
+    <a href="https://tinocallarisa-web.github.io/sparkline-table/terms.html">Terms of Use</a>
+    <a href="https://tinocallarisa-web.github.io/sparkline-table/changelog.html">Changelog</a>
+    <a href="https://github.com/tinocallarisa-web/sparkline-table/discussions" target="_blank">Discussions</a>
+    <a href="https://github.com/tinocallarisa-web/sparkline-table/issues" target="_blank">Issues</a>
+    <a href="https://tcviz.com/product/sparkline-table/" target="_blank">tcviz.com</a>
+  </div>
+  <p>© 2026 TCViz · Sparkline Table by TCViz · <a href="mailto:support@tcviz.com">support@tcviz.com</a></p>
+</footer>
+<script>
+(function () {
+  'use strict';
+
+  // ── Nav highlight (in-page anchors only) ────────────────────────────────────
+  document.querySelectorAll('nav a[href^="#"]').forEach(function (a) {
+    a.addEventListener('click', function () {
+      document.querySelectorAll('nav a').forEach(function (x) { x.classList.remove('active'); });
+      a.classList.add('active');
+    });
+  });
+
+  // ── Documentation search ────────────────────────────────────────────────────
+  var input  = document.getElementById('docsearch');
+  var clear  = document.getElementById('searchclear');
+  var status = document.getElementById('searchstatus');
+  var wrap   = document.querySelector('.wrap');
+  if (!input || !wrap) { return; }
+
+  var HIDE = 'is-hidden';
+
+  // Atomic searchable units: one FAQ entry, one table row, one card.
+  var units = [];
+  function add(el) {
+    if (units.some(function (u) { return u.el === el; })) { return; }
+    units.push({ el: el, html: el.innerHTML, text: (el.textContent || '').toLowerCase() });
+  }
+  wrap.querySelectorAll('details').forEach(add);
+  wrap.querySelectorAll('table tr').forEach(function (tr) {
+    if (tr.querySelector('th')) { return; }   // header rows follow their table
+    add(tr);
+  });
+  wrap.querySelectorAll('.card, .contact-box').forEach(add);
+
+  // Sections: an <h2> plus every sibling up to the next <h2>.
+  var sections = [];
+  var current = null;
+  Array.prototype.forEach.call(wrap.children, function (el) {
+    if (el.tagName === 'H2') {
+      current = { head: el, body: [] };
+      sections.push(current);
+    } else if (current) {
+      current.body.push(el);
+    }
+  });
+  // Each body element remembers which units live inside it.
+  sections.forEach(function (sec) {
+    sec.body.forEach(function (b) {
+      b._units = units.filter(function (u) { return b === u.el || b.contains(u.el); });
+      if (!b._units.length) { b._html = b.innerHTML; }
+    });
+  });
+
+  function escapeRe(t) { return t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+  function escapeHtml(t) {
+    return t.replace(/[&<>]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; });
+  }
+
+  function highlight(el, terms) {
+    var re = new RegExp('(' + terms.map(escapeRe).join('|') + ')', 'gi');
+    var walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null);
+    var nodes = [], n;
+    while ((n = walker.nextNode())) { nodes.push(n); }
+    nodes.forEach(function (node) {
+      var txt = node.nodeValue;
+      re.lastIndex = 0;
+      if (!re.test(txt)) { return; }
+      re.lastIndex = 0;
+      var span = document.createElement('span');
+      span.innerHTML = escapeHtml(txt).replace(re, '<mark>$1</mark>');
+      node.parentNode.replaceChild(span, node);
+    });
+  }
+
+  function showAll() {
+    units.forEach(function (u) { u.el.classList.remove(HIDE); u.el.innerHTML = u.html; });
+    sections.forEach(function (sec) {
+      sec.head.classList.remove(HIDE);
+      sec.body.forEach(function (b) {
+        b.classList.remove(HIDE);
+        if (b._html !== undefined) { b.innerHTML = b._html; }
+      });
+    });
+    status.textContent = '';
+    clear.hidden = true;
+  }
+
+  function run(q) {
+    q = (q || '').trim();
+    if (q.length < 2) { showAll(); return; }
+    clear.hidden = false;
+
+    var terms = q.toLowerCase().split(/\s+/).filter(Boolean);
+    var hits = 0;
+
+    units.forEach(function (u) {
+      u.el.innerHTML = u.html;
+      var match = terms.every(function (t) { return u.text.indexOf(t) !== -1; });
+      u.el.classList.toggle(HIDE, !match);
+      if (match) {
+        hits++;
+        highlight(u.el, terms);
+        if (u.el.tagName === 'DETAILS') { u.el.open = true; }
+      }
+    });
+
+    sections.forEach(function (sec) {
+      var anyVisible = false;
+      sec.body.forEach(function (b) {
+        var visible;
+        if (b._units.length) {
+          visible = b._units.some(function (u) { return !u.el.classList.contains(HIDE); });
+        } else {
+          b.innerHTML = b._html;
+          var txt = (b.textContent || '').toLowerCase();
+          visible = terms.every(function (t) { return txt.indexOf(t) !== -1; });
+          if (visible) { highlight(b, terms); }
+        }
+        b.classList.toggle(HIDE, !visible);
+        if (visible) { anyVisible = true; }
+      });
+      sec.head.classList.toggle(HIDE, !anyVisible);
+    });
+
+    status.textContent = hits
+      ? hits + ' result' + (hits === 1 ? '' : 's') + ' for “' + q + '”'
+      : 'No results for “' + q + '”. Try a Format pane setting name, or email support@tcviz.com.';
+  }
+
+  var timer;
+  input.addEventListener('input', function () {
+    clearTimeout(timer);
+    timer = setTimeout(function () { run(input.value); }, 120);
+  });
+  input.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') { input.value = ''; showAll(); }
+  });
+  clear.addEventListener('click', function () { input.value = ''; showAll(); input.focus(); });
+
+  // Deep link: support.html?q=license
+  var qp = new URLSearchParams(location.search).get('q');
+  if (qp) { input.value = qp; run(qp); }
+})();
+</script>
+</body>
+</html>
