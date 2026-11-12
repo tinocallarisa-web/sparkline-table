@@ -3,7 +3,7 @@
 A Power BI custom visual for KPI tracking and actual against plan across many rows — stores, sales reps, products, plants. It
 answers "which rows are drifting from plan, and is it a trend or one bad month?": your hierarchy with Power BI's own subtotals,
 the value of the last period (or the total of the range), Δ and Δ% against the previous period or last year, and a sparkline on
-every row. Free: every row (loaded in segments, no cut-off), up to 3 levels with level buttons 1 · 2 · 3, five sparkline types
+every row. Free: every row Power BI sends (loaded in segments of 1,000), up to 3 levels with level buttons 1 · 2 · 3, five sparkline types
 (line, area, column, win/loss, bullet with bands), target line, data bars, search, grey reference columns for Plan / Prior year /
 Forecast, formatting per level, Report theme and Classic. Pro adds the variance against plan, prior year or forecast with a bar
 per row and in subtotals, status icons, up to 3 sparkline columns, six collection styles, conditional formatting (fx), row images

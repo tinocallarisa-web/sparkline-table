@@ -127,7 +127,7 @@ def general():
   </div>
   <div class="col">
     <div class="card" style="flex:1"><h3>Free <span class="chip free">FREE</span></h3><ul class="l">
-      <li><strong>Every row</strong>: it keeps asking Power BI until all rows have arrived, with no cut&#8209;off</li>
+      <li><strong>Every row</strong>: it keeps asking until Power BI has sent them all</li>
       <li><strong>Up to 3 levels</strong> with subtotals calculated by Power BI, level buttons <strong>1 · 2 · 3</strong></li>
       <li>Value of the <strong>last period</strong> or the total of the range</li>
       <li><strong>Δ and Δ%</strong> with a sign, vs the previous period or the same period last year</li>
@@ -141,7 +141,7 @@ def general():
     <div class="shot"><img src="{data_uri('levels.png', 1000)}" alt=""><div class="cap"><b>Formatting per level</b> · background, font and size for each level and the total.</div></div>
   </div>
 </div>
-{FOOT.format(izq="<b>Pro</b> adds variance vs plan, status icons, 3 sparkline columns, horizon, six styles, fx and row images.")}
+{FOOT.format(izq="<b>Pro</b> adds variance vs plan, status icons, up to 3 sparkline columns, horizon, six styles, fx and row images.")}
 """
     return page("Sparkline Table by TCViz — Visual Guide", body)
 

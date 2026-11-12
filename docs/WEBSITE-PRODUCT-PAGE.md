@@ -20,7 +20,7 @@ your hierarchy in rows with the subtotals Power BI calculates, the value of the 
 previous period or last year, and a sparkline on every row.
 
 ### Key highlights
-- **Every row, free.** Rows arrive in segments and the visual keeps asking until all have arrived: no cut-off.
+- **Every row, free.** Rows arrive in segments of 1,000 and the visual keeps asking until Power BI has sent them all.
 - **Your hierarchy, Power BI's subtotals.** Up to 3 levels, level buttons 1 · 2 · 3, expand and collapse; a region's
   margin is the region's margin, not the sum of its stores.
 - **The history on the same line.** Line, area, column, win/loss or bullet with bands, with a scale shared by level or
@@ -36,7 +36,7 @@ Video: https://www.youtube.com/watch?v=qrqWbeswF4Y
 ## TAB 2: FEATURES
 
 ### Free: a complete tracking table
-- Every row, loaded in segments of 1,000 with a "Loading N of …" note; no cut-off by the visual
+- Every row, loaded in segments of 1,000 with a "Loading N of …" note, until Power BI has sent them all
 - Row hierarchy up to 3 levels with subtotals calculated by Power BI, level buttons 1 · 2 · 3, expand and collapse, grand total
 - Value of the last period or total of the range; Δ and Δ% with a sign, against the previous period or the same period last year
 - Five sparkline types: line, area, column, win/loss, bullet; curve (linear, smooth, step), line colour (neutral, per row, by trend), markers
@@ -99,7 +99,7 @@ The visual shows "—" below that level. To make the measure stop there:
 - **Stores against plan** — which stores are off plan, and since when.
 - **Sales reps month by month** — sort by Δ% to put the biggest drops first.
 - **Products against a target** — bullet with bands, each row against its own target.
-- **Plants and KPIs with status (Pro)** — ● ▲ ◆ by your thresholds and three sparkline columns side by side.
+- **Plants and KPIs with status (Pro)** — ● ▲ ◆ by your thresholds and up to three sparkline columns side by side.
 - **Long lists** — thousands of rows, a search box, smooth scrolling.
 
 ---

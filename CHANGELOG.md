@@ -6,7 +6,7 @@ All notable changes to Sparkline Table by TCViz. Power BI four-part version numb
 
 - First release: a table for KPI tracking and actual against plan across many rows, with one sparkline per row over the period axis.
 - Row hierarchy up to 3 levels with subtotals calculated by Power BI, level buttons 1 · 2 · 3, expand and collapse (Alt + click for a whole level), grand total row.
-- Every row: rows arrive in segments of 1,000 and the visual asks for the next segment until all have arrived, with a "Loading N of …" note; no cut-off by the visual.
+- Every row: rows arrive in segments of 1,000 and the visual asks for the next segment until Power BI has sent them all, with a "Loading N of …" note; if Power BI stops, a note says how many rows are shown.
 - Value of the last period or total of the range; Δ and Δ% with a sign against the previous period or the same period last year; Δ% left empty on a zero or negative base and dimmed on small bases.
 - Five sparkline types (line, area, column, win/loss, bullet) with curve (linear, smooth, step), line colour (neutral, per row, by trend), markers and scale (shared by level, per row in detail rows, per row).
 - Bullet with qualitative bands and % of target; target line on every sparkline; data bars behind the value.

@@ -30,7 +30,7 @@ CHAPTERS
 0:00 Scale: shared by level or per row
 0:00 Plan as a reference column, and a plan defined only by region
 0:00 Variance vs plan with a bar, and status icons (Pro)
-0:00 Three sparkline columns, styles, row images and horizon (Pro)
+0:00 Up to three sparkline columns, styles, row images and horizon (Pro)
 0:00 Free and Pro
 
 (Fill in the timestamps from the final edit. Delete any chapter the video does not show.)
@@ -38,7 +38,7 @@ CHAPTERS
 ──────────────────────────────────────────
 WHAT IT DOES
 ──────────────────────────────────────────
-✅ Every row: rows load in segments, with no cut-off
+✅ Every row: rows load in segments until Power BI has sent them all
 ✅ Up to 3 levels with Power BI's own subtotals, level buttons 1 · 2 · 3
 ✅ Value of the last period or total of the range; Δ and Δ% with a sign
 ✅ Five sparkline types, curve, line colour, markers and scale

@@ -63,7 +63,7 @@ The monthly review has fifty stores, twelve sales reps or two hundred products o
 Sparkline Table by TCViz puts your hierarchy in rows with the subtotals Power BI calculates, the value of the last period, the change against the previous period or last year, and a sparkline on every row. Plan and prior year sit next to the actual, so you read the gap and its history on the same line.
 
 FREE: A COMPLETE TRACKING TABLE
-• Every row: rows arrive in segments and the visual keeps asking until all have arrived, with no cut-off
+• Every row: rows arrive in segments of 1,000 and the visual keeps asking until Power BI has sent them all; if Power BI stops, a note says how many are shown
 • Up to 3 levels with subtotals calculated by Power BI, level buttons 1 · 2 · 3, expand and collapse
 • Value of the last period or total of the range; Δ and Δ% with a sign, against the previous period or the same period last year
 • Five sparkline types: line, area, column, win/loss and bullet, with curve, line colour, markers and a scale shared by level or per row
@@ -82,7 +82,7 @@ PRO: THE CONTROL READING
 • An image at the start of each row (flags, logos) and the horizon sparkline
 
 FREE AND PRO
-The free version loads every row and gives a complete, correct table; field and row limits are the same in both. Pro adds the variance and the status. Turn on a Pro feature while editing without a licence and it is drawn working on your own data under a "Pro preview" watermark; report readers without a licence see the free table.
+The free version loads every row and gives a complete, correct table; field and row limits are the same in both. Pro adds variance, status icons, extra sparkline columns, six styles, fx, row images and horizon. Adding Plan or Prior year turns on the variance preview; switch the Variance card off to keep only the grey reference columns. Turn on a Pro feature while editing without a licence and it is drawn working on your own data under a "Pro preview" watermark; report readers without a licence see the free table.
 
 WORKS LIKE A NATIVE VISUAL
 • Click a row or a subtotal to filter the page, Ctrl+click for several, highlight, bookmarks, context menu, report page tooltips
@@ -153,7 +153,7 @@ Screenshots are 1366x768, in this order. The infographics are regenerated with `
 |---|---|---|
 | Logo | `assets/icon_300x300.png` | Product icon, 300x300 |
 | 1 | `assets/infographic.png` | Free: "Which rows are drifting from plan — and is it a trend or one bad month?" Region › Store with Power BI subtotals, Δ/Δ%, sparkline per row; bullet with bands; the five sparkline types; search box; formatting per level; list of everything that is free |
-| 2 | `assets/infographic-pro.png` | Pro: variance vs Plan / Prior year / Forecast (ΔPL, bar, ΔPL%) and status; 3 sparkline columns; horizon; row images; fx; the six styles; Pro preview while editing, free table for readers without a licence |
+| 2 | `assets/infographic-pro.png` | Pro: variance vs Plan / Prior year / Forecast (ΔPL, bar, ΔPL%) and status; up to 3 sparkline columns; horizon; row images; fx; the six styles; Pro preview while editing, free table for readers without a licence |
 | 3 | `assets/Image_1.png` | Scorecard by region in Power BI Desktop: variance to plan, status, sparklines; card and table filtered by the selection |
 | 4 | `assets/Image_2.png` | Sparkline types: line, column, win/loss in three columns; area and horizon in a second copy |
 | 5 | `assets/Image_3.png` | Bullet with qualitative bands and % of target, each store against its own target |

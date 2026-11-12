@@ -83,7 +83,7 @@ FIELDS = [
 ]
 
 FREE_PRO = [
-    ("Every row: Power BI sends rows in segments of 1,000 and the visual asks for the next until all have arrived — no cut-off by the visual", "✓", "✓"),
+    ("Every row Power BI sends: rows arrive in segments of 1,000 and the visual asks for the next until Power BI has sent them all; if Power BI stops, a note says how many are shown", "✓", "✓"),
     ("Row hierarchy up to 3 levels with subtotals calculated by Power BI, level buttons 1 · 2 · 3, expand and collapse", "✓", "✓"),
     ("Value of the last period or total of the range; Δ and Δ% against the previous period or the same period last year", "✓", "✓"),
     ("Five sparkline types — line, area, column, win/loss, bullet — with curve, line colour, markers and scale (shared by level, per row in detail rows, per row)", "✓", "✓"),
@@ -406,7 +406,7 @@ happens inside Power BI, on the data of your report. Subtotals are calculated by
 <p>The visual declares <strong>no network privileges</strong> (<code>"privileges": []</code>), so Power BI does not let it make any web request.
 Everything it draws, including the start-screen icon, is bundled inside the visual. Row images are drawn only from Base64 data embedded in your
 model; a web address is never loaded.</p>
-<p>The <em>Guide</em> and <em>Product page</em> links on the start screen ask Power BI to open those pages in your browser, only when you click
+<p>The <em>Guide</em>, <em>Product page</em> and <em>Video</em> (YouTube) links on the start screen ask Power BI to open those pages in your browser, only when you click
 them (Power BI Desktop asks first). The visual sends nothing.</p>
 <h2>4. Cookies and storage</h2>
 <p>No cookies and no browser storage. Formatting settings and the sort you choose while editing are saved in your report by Power BI, like those of any visual.</p>
@@ -425,8 +425,8 @@ no data from this check. See the <a href="https://privacy.microsoft.com/privacys
 def terms():
     def plain(t):
         return html.unescape(re.sub(r"<[^>]+>", "", t))
-    corto = {"Every row: Power BI sends rows in segments of 1,000 and the visual asks for the next until all have arrived — no cut-off by the visual":
-             "every row, loaded in segments with no cut-off by the visual"}
+    corto = {"Every row Power BI sends: rows arrive in segments of 1,000 and the visual asks for the next until Power BI has sent them all; if Power BI stops, a note says how many are shown":
+             "every row Power BI sends, loaded in segments of 1,000"}
     free = "; ".join(plain(corto.get(r[0], r[0][0].lower() + r[0][1:])) for r in FREE_PRO if r[1] == "✓")
     pro = "; ".join(plain(r[0][0].lower() + r[0][1:]) for r in FREE_PRO if r[1] == "—")
     body = f'''<div class="wrap prose">
