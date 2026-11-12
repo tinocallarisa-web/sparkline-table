@@ -39,6 +39,8 @@
   "Prop_values_downColor": "Colore del calo",
   "Prop_values_smallBase": "Attenua Δ% su basi piccole (% della mediana del livello)",
   "Prop_values_fontSize": "Dimensione testo",
+  "Prop_values_valueColor": "Colore del valore",
+  "Prop_values_valueBackground": "Sfondo del valore",
   "Prop_values_dataBars": "Barre dati dietro il valore",
   "Prop_values_barColor": "Colore barra dati",
   "Obj_variance": "Scostamento (Pro)",

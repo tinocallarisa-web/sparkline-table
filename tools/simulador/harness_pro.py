@@ -292,6 +292,48 @@ async def main():
         res["p4_eventos"] = await events(pg)
         await pg.close()
 
+        # ── Parte 5: formato condicional fx ─────────────────────────────────────────────────────────
+        # Imita lo que Power BI deja con una regla fx y selector comodín: objects evaluados en CADA celda (value) del
+        # nodo de matriz. No reproduce el motor: es la forma que el visual espera (verificar en Desktop).
+        def with_fx(dv, prop="valueColor", obj="values"):
+            def walk(n):
+                for k, v in (n.get("values") or {}).items():
+                    if v.get("valueSourceIndex") == 0 and isinstance(v.get("value"), (int, float)):
+                        col = "#107C10" if v["value"] >= 3000 else "#C4314B"
+                        v.setdefault("objects", {}).setdefault(obj, {})[prop] = {"solid": {"color": col}}
+                for c in n.get("children", []):
+                    walk(c)
+            walk(dv["matrix"]["rows"]["root"])
+            return dv
+        pg = await page()
+        if not FREE:
+            await H.upd(pg, with_fx(with_fx(dvp({"variance": {"showReference": False}})), "valueBackground"), W, Hh)
+            # El fondo de regla con el texto en blanco (color fijo, gratis) para que se lea.
+            await H.upd(pg, with_fx(dvp({"variance": {"showReference": False}, "values": {"valueColor": {"solid": {"color": "#FFFFFF"}}}}), "valueBackground"), W, Hh)
+            await shot(pg, "15_fx_fondo_del_valor")
+            res["p5_fondo"] = await pg.evaluate("[...document.querySelectorAll('.st-row .st-c-val')].slice(0, 6).map(c => [c.textContent, c.style.background, c.style.color])")
+            await H.upd(pg, with_fx(dvp({"variance": {"showReference": False}})), W, Hh)
+            await shot(pg, "16_fx_color_del_valor")
+            res["p5_color"] = await pg.evaluate("[...document.querySelectorAll('.st-row .st-c-val')].slice(0, 6).map(c => [c.textContent, c.style.color])")
+            await H.upd(pg, with_fx(dvp({"variance": {"showReference": False}, "sparkline": {"scale": "row"}}), "color", "sparkline"), W, Hh)
+            await shot(pg, "17_fx_color_del_minigrafico")
+            res["p5_minigrafico"] = await pg.evaluate("[...document.querySelectorAll('.st-row .st-c-spark svg')].slice(0, 6).map(s => s.style.getPropertyValue('--st-line'))")
+            res["p5_descriptores"] = await pg.evaluate("""() => { const fm = __v.getFormattingModel(); const out = {};
+                for (const c of fm.cards) for (const g of c.groups) for (const s of (g.slices || [])) if (['values-valueColor', 'values-valueBackground', 'sparkline-color'].includes(s.uid)) {
+                    const d = s.control.properties.descriptor; out[s.uid] = { instanceKind: d.instanceKind, alt: d.altConstantValueSelector, selector: JSON.stringify(d.selector) }; }
+                return out; }""")
+        else:
+            await H.upd(pg, with_fx(dvp({"variance": {"show": False}})), W, Hh, view=0)
+            await pg.wait_for_timeout(80)
+            await H.upd(pg, with_fx(dvp({"variance": {"show": False}})), W, Hh, view=0)
+            res["p5_lectura_sin_regla"] = await pg.evaluate("[...document.querySelectorAll('.st-row .st-c-val')].slice(0, 4).map(c => c.style.color)")
+            await H.upd(pg, with_fx(dvp({"variance": {"show": False}})), W, Hh, view=1)
+            await pg.evaluate("() => { const g = document.querySelector('.st-guide'); if (g) g.style.display = 'none'; }")
+            res["p5_edicion_marca"] = await pg.evaluate("document.querySelector('.st-watermark').textContent")
+            await shot(pg, "08_edicion_fx_marca")
+        res["p5_eventos"] = await events(pg)
+        await pg.close()
+
         # ── Parte 1 bis (hallazgo de Tino en Desktop): filas sin real y unidades distintas ────────────
         pg = await page()
         def ghosts(dv):

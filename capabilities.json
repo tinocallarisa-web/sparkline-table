@@ -437,6 +437,28 @@
             "numeric": true
           }
         },
+        "valueColor": {
+          "displayName": "Value color",
+          "displayNameKey": "Prop_values_valueColor",
+          "type": {
+            "fill": {
+              "solid": {
+                "color": true
+              }
+            }
+          }
+        },
+        "valueBackground": {
+          "displayName": "Value background",
+          "displayNameKey": "Prop_values_valueBackground",
+          "type": {
+            "fill": {
+              "solid": {
+                "color": true
+              }
+            }
+          }
+        },
         "dataBars": {
           "displayName": "Data bars behind the value",
           "displayNameKey": "Prop_values_dataBars",

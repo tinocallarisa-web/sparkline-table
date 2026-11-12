@@ -39,6 +39,8 @@
   "Prop_values_downColor": "감소 색",
   "Prop_values_smallBase": "기준값이 작을 때 Δ% 흐리게(수준 중앙값의 %)",
   "Prop_values_fontSize": "텍스트 크기",
+  "Prop_values_valueColor": "값 색",
+  "Prop_values_valueBackground": "값 배경",
   "Prop_values_dataBars": "값 뒤 데이터 막대",
   "Prop_values_barColor": "데이터 막대 색",
   "Obj_variance": "차이(Pro)",

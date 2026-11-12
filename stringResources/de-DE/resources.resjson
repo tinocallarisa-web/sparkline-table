@@ -39,6 +39,8 @@
   "Prop_values_downColor": "Farbe für Rückgang",
   "Prop_values_smallBase": "Δ% bei kleiner Basis abschwächen (% des Medians der Ebene)",
   "Prop_values_fontSize": "Textgröße",
+  "Prop_values_valueColor": "Wertfarbe",
+  "Prop_values_valueBackground": "Werthintergrund",
   "Prop_values_dataBars": "Datenbalken hinter dem Wert",
   "Prop_values_barColor": "Farbe des Datenbalkens",
   "Obj_variance": "Abweichung (Pro)",

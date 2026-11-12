@@ -150,6 +150,20 @@ export const OBJECTS: Record<string, ObjSpec> = {
                 "max": 18
             },
             {
+                "name": "valueColor",
+                "type": "fill",
+                "def": "",
+                "key": "Prop_values_valueColor",
+                "label": "Value color"
+            },
+            {
+                "name": "valueBackground",
+                "type": "fill",
+                "def": "",
+                "key": "Prop_values_valueBackground",
+                "label": "Value background"
+            },
+            {
                 "name": "dataBars",
                 "type": "bool",
                 "def": false,

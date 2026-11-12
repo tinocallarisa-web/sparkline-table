@@ -23,6 +23,7 @@ import powerbi from "powerbi-visuals-api";
 import { select, Selection } from "d3-selection";
 import { line as d3line, area as d3area, curveLinear, curveMonotoneX, curveStep } from "d3-shape";
 import { valueFormatter } from "powerbi-visuals-utils-formattingutils";
+import { dataViewWildcard } from "powerbi-visuals-utils-dataviewutils";
 import {
     HtmlSubSelectableClass, HtmlSubSelectionHelper, SubSelectableDisplayNameAttribute,
     SubSelectableObjectNameAttribute, SubSelectableTypeAttribute,
@@ -729,6 +730,18 @@ export class Visual implements IVisual {
         return m.planIdx >= 0 ? m.planIdx : m.pyIdx;
     }
 
+    /**
+     * Color de una regla fx para la fila (objeto.propiedad), en la celda de la cifra a la vista (último periodo o total
+     * del rango); si no, la del propio nodo. Solo con Pro o en la vista previa, y nunca en alto contraste.
+     */
+    private fxColor(r: Row, obj: string, prop: string): string {
+        if (this.hc || !this.previewOf("fx")) return "";
+        const m = this.model;
+        const pick = (o: any): string => { const c = o?.[obj]?.[prop]?.solid?.color; return typeof c === "string" ? c : ""; };
+        const key = this.valueModeUsed === "total" ? "t" : String(m ? m.lastIdx : -1);
+        return pick(r.fx?.[key]) || pick(r.fxNode);
+    }
+
     /** Posición en Values de la medida del minigráfico 2 (i = 1) o 3 (i = 2), o -1 si está apagado o no existe. */
     private extraSparkK(m: Model, i: number): number {
         const st = this.settings["spark" + (i + 1)];
@@ -800,6 +813,7 @@ export class Visual implements IVisual {
         groups.push(["status", !!m && s.status?.show === true, "st"]);
         const extra = !!m && [1, 2].some(i => this.extraSparkK(m, i) >= 0);
         groups.push(["sparklines", extra, "sp=" + (m ? [1, 2].map(i => this.extraSparkK(m, i)).join(",") : "")]);
+        groups.push(["fx", !!m && m.hasFx, "fx"]);
         groups.push(["images", !!m && m.imgIdx >= 0, "img"]);
         const labels: ProFeature[] = [], parts: string[] = [], set = new Set<ProFeature>();
         for (const [f, on, sig] of groups) if (on) { labels.push(f); set.add(f); parts.push(sig); }
@@ -1587,6 +1601,9 @@ export class Visual implements IVisual {
         q(".st-label").textContent = d.level < 0 ? this.t("UI_GrandTotal", "Total") : d.label;
         const fmt0 = d.shownFmt[0];
         q(".st-c-val .st-vtext").textContent = this.fmtFull(d.shown[0] ?? null, fmt0);
+        const vc = q(".st-c-val");
+        vc.style.color = this.hc ? "" : (this.fxColor(d, "values", "valueColor") || String(s.values.valueColor || ""));
+        vc.style.background = this.hc ? "" : (this.fxColor(d, "values", "valueBackground") || String(s.values.valueBackground || ""));
         this.paintValueBar(q(".st-c-val .st-vbar"), d);
         const up = s.values.invert ? "st-bad" : "st-good", down = s.values.invert ? "st-good" : "st-bad";
         const dc = q(".st-c-delta");
@@ -1793,7 +1810,7 @@ export class Visual implements IVisual {
         // Los marcadores crecen o encogen con el alto de fila (24 px = tamaño del panel).
         const ms = Number(s.markers.size) * Math.max(0.7, Math.min(1.6, this.rowH / 24));
 
-        g.color = c.slot === 0 ? this.rowLineColor(r) : c.color;
+        g.color = c.slot === 0 ? (this.fxColor(r, "sparkline", "color") || this.rowLineColor(r)) : c.color;
         if (type === "bullet") {
             const x = (v: number) => 2 + (Math.max(lo, Math.min(hi, v)) - lo) / (hi - lo) * (w - 4);
             const bh = Math.max(3, Math.round(ph * 0.55)), by = Math.round((H - bh) / 2);
@@ -2434,6 +2451,7 @@ export class Visual implements IVisual {
         return k === "sparkline.color" || k === "spark2.color" || k === "spark3.color" ? L.line : k === "sparkline.accent" ? L.accent : k === "sparkline.targetColor" ? L.target
             : k === "values.upColor" || k === "variance.goodColor" || k === "status.goodColor" ? L.up
             : k === "values.downColor" || k === "variance.badColor" || k === "status.badColor" ? L.down : k === "status.neutralColor" ? L.neutral
+            : k === "values.valueColor" ? L.text : k === "values.valueBackground" ? L.bg
             : k === "header.background" ? L.bg : prop === "background" ? (obj === "level3" ? L.bg : L.sub) : prop === "color" ? L.text : "#000000";
     }
 
@@ -2484,6 +2502,15 @@ export class Visual implements IVisual {
                         const sl: any = this.slice(g.obj, p);
                         if (g.obj === "rows" && p.name === "rowHeight" && this.rowHClamped) {
                             sl.displayName += " — " + this.tf("UI_RowHeightRaised", "raised to {0} px to fit the text", String(this.rowH));
+                        }
+                        if (!this.hc && ((g.obj === "values" && (p.name === "valueColor" || p.name === "valueBackground")) || (g.obj === "sparkline" && p.name === "color"))) {
+                            // fx (F04): regla evaluada por fila con el selector comodín. altConstantValueSelector null: el
+                            // color FIJO se sigue guardando a nivel general (si no, llegaría fila a fila y el panel no lo
+                            // recordaría: memoria fx-color-fijo-altconstant).
+                            const d0 = sl.control.properties.descriptor;
+                            sl.control.properties.descriptor = { ...d0, instanceKind: powerbi.VisualEnumerationInstanceKinds.ConstantOrRule,
+                                selector: dataViewWildcard.createDataViewWildcardSelector(dataViewWildcard.DataViewWildcardMatchingOption.InstancesAndTotals),
+                                altConstantValueSelector: null };
                         }
                         if ((g.obj === "spark2" || g.obj === "spark3") && p.name === "measure" && m) {
                             // Cada "Value N" con el nombre de su medida; las que no están, fuera.

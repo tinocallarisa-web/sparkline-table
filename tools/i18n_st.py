@@ -288,3 +288,9 @@ P.update({
 # --- bloque 2: parte 4, estilos (nombres propios de la colección: no se traducen, como en Line Chart) ---
 for _n in ("Boardroom", "Ledger", "Editorial", "Signal", "Aurora", "Terrace"):
     P[_n + " (Pro)"] = [_n + " (Pro)"] * 10
+
+# --- bloque 2: parte 5, formato condicional ---
+P.update({
+"Value color": ["Cor do valor", "Couleur de la valeur", "Wertfarbe", "Colore del valore", "Kleur van de waarde", "Kolor wartości", "値の色", "值颜色", "값 색", "Color del valor"],
+"Value background": ["Fundo do valor", "Arrière-plan de la valeur", "Werthintergrund", "Sfondo del valore", "Achtergrond van de waarde", "Tło wartości", "値の背景", "值背景", "값 배경", "Fondo del valor"],
+})

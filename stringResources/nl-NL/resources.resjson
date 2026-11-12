@@ -39,6 +39,8 @@
   "Prop_values_downColor": "Kleur van daling",
   "Prop_values_smallBase": "Δ% dimmen bij kleine basis (% van mediaan van het niveau)",
   "Prop_values_fontSize": "Tekstgrootte",
+  "Prop_values_valueColor": "Kleur van de waarde",
+  "Prop_values_valueBackground": "Achtergrond van de waarde",
   "Prop_values_dataBars": "Gegevensbalken achter de waarde",
   "Prop_values_barColor": "Kleur van gegevensbalk",
   "Obj_variance": "Afwijking (Pro)",

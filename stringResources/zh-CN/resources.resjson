@@ -39,6 +39,8 @@
   "Prop_values_downColor": "下降颜色",
   "Prop_values_smallBase": "小基数时淡化 Δ%（层级中位数的 %）",
   "Prop_values_fontSize": "文本大小",
+  "Prop_values_valueColor": "值颜色",
+  "Prop_values_valueBackground": "值背景",
   "Prop_values_dataBars": "值后面的数据条",
   "Prop_values_barColor": "数据条颜色",
   "Obj_variance": "差异 (Pro)",

@@ -52,6 +52,12 @@ export interface Row {
     totFmt: (string | undefined)[] | null;
     /** Highlight de la primera medida de Values, por periodo (null si no hay highlight en el dataView). */
     hl: Num[] | null;
+    /**
+     * Formato condicional (fx) que Power BI evalúa por celda: objects de cada value por periodo (clave = índice del
+     * periodo, "t" = total del rango) y los del propio nodo. Solo se guarda si trae values/sparkline.
+     */
+    fx: Record<string, any> | null;
+    fxNode: any;
     /** Valor de texto del rol Row image (el primero no vacío del nodo); se valida al dibujar. */
     img: string | null;
     /** Orden en el que lo mandó el host entre sus hermanos. */
@@ -94,6 +100,8 @@ export interface Model {
     imgIdx: number;
     hasTotals: boolean;
     hasHighlights: boolean;
+    /** Llega alguna regla fx evaluada (celda o nodo). */
+    hasFx: boolean;
     leaves: number;
     /** El último nivel recibido se puede seguir expandiendo (jerarquía a medias). */
     lastLevelExpandable: boolean;
@@ -158,7 +166,8 @@ export function buildModel(dv: DataView, mkId: IdMaker): Model | null {
     const nP = periods.length;
     linkLastYear(periods);
 
-    let hasTotals = false, hasHighlights = false, anyFmt = false;
+    let hasTotals = false, hasHighlights = false, anyFmt = false, hasFx = false;
+    const isFx = (o: any): boolean => !!o && (!!o.values || !!o.sparkline);
     const fill = (vals: { [id: number]: DataViewMatrixNodeValue } | undefined, r: Row): void => {
         if (!vals) return;
         for (const k of Object.keys(vals)) {
@@ -173,6 +182,12 @@ export function buildModel(dv: DataView, mkId: IdMaker): Model | null {
             if (m === imgIdx) { if (!r.img && typeof v.value === "string" && v.value) r.img = v.value; continue; }
             const num = typeof v.value === "number" && isFinite(v.value) ? v.value : null;
             const f = (v.objects as any)?.general?.formatString;
+            if (isFx(v.objects)) {
+                if (!r.fx) r.fx = {};
+                const key = p === -2 ? "t" : String(p);
+                r.fx[key] = Object.assign(r.fx[key] || {}, v.objects);
+                hasFx = true;
+            }
             if (p === -2) {
                 r.tot[m] = num;
                 hasTotals = true;
@@ -195,7 +210,7 @@ export function buildModel(dv: DataView, mkId: IdMaker): Model | null {
     };
     const newRow = (key: string, level: number, label: string, parent: Row | null, order: number): Row => ({
         key, level, label, isLeaf: false, expandable: false, collapsed: false, parent, children: [], id: null,
-        s: sources.map(() => new Array(nP).fill(null)), tot: sources.map(() => null), fmt: null, totFmt: null, hl: null, img: null,
+        s: sources.map(() => new Array(nP).fill(null)), tot: sources.map(() => null), fmt: null, totFmt: null, hl: null, img: null, fx: null, fxNode: null,
         hostOrder: order, index: -1, shown: [], shownFmt: [], cur: null, base: null, delta: null, deltaPct: null,
         refs: [null, null, null], vref: null, vabs: null, vpct: null, status: 0, small: false,
         highlighted: false, spark: null,
@@ -234,6 +249,7 @@ export function buildModel(dv: DataView, mkId: IdMaker): Model | null {
         else if (subChild) fill(subChild.values, r);
         else fill(n.values, r);
         r.id = mkId(path, n, levels);
+        if (isFx((n as any).objects)) { r.fxNode = (n as any).objects; hasFx = true; }
         all.push(r);
         if (parent) parent.children.push(r); else roots.push(r);
         const sub = path.concat([n]);
@@ -252,7 +268,7 @@ export function buildModel(dv: DataView, mkId: IdMaker): Model | null {
     void anyFmt;
     return {
         roots, all, total, levels, rowFields, periods, sources, valueIdx, targetIdx, planIdx, pyIdx, fcIdx, tipIdx, imgIdx,
-        hasTotals, hasHighlights, leaves, lastLevelExpandable, lastIdx,
+        hasTotals, hasHighlights, hasFx, leaves, lastLevelExpandable, lastIdx,
     };
 }
 

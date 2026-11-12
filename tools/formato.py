@@ -38,6 +38,9 @@ OBJECTS = [
         # Regla documentada en PRUEBA-BLOQUE1.md: |base| < umbral % × mediana de |base| de las filas del mismo nivel.
         ("smallBase", "Dim Δ% on small bases (% of level median)", "num", 10, {"min": 0, "max": 100}),
         ("fontSize", "Text size", "num", 11, {"min": 8, "max": 18}),
+        # Color del valor y fondo de su celda: el color fijo es gratis; con fx (regla por fila) es Pro.
+        ("valueColor", "Value color", "fill", "", {}),
+        ("valueBackground", "Value background", "fill", "", {}),
         # Barras de fondo en la celda del valor (gratis): desde cero, escala común por nivel, negativos a la izquierda.
         ("dataBars", "Data bars behind the value", "bool", False, {}),
         ("barColor", "Data bar color", "fill", "", {}),

@@ -39,6 +39,8 @@
   "Prop_values_downColor": "Kolor spadku",
   "Prop_values_smallBase": "Przyciemnij Δ% przy małej bazie (% mediany poziomu)",
   "Prop_values_fontSize": "Rozmiar tekstu",
+  "Prop_values_valueColor": "Kolor wartości",
+  "Prop_values_valueBackground": "Tło wartości",
   "Prop_values_dataBars": "Paski danych za wartością",
   "Prop_values_barColor": "Kolor paska danych",
   "Obj_variance": "Odchylenie (Pro)",

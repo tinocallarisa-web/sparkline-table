@@ -39,6 +39,8 @@
   "Prop_values_downColor": "減少の色",
   "Prop_values_smallBase": "小さい基準値の Δ% を淡色表示 (レベル中央値の %)",
   "Prop_values_fontSize": "テキスト サイズ",
+  "Prop_values_valueColor": "値の色",
+  "Prop_values_valueBackground": "値の背景",
   "Prop_values_dataBars": "値の背後にデータ バー",
   "Prop_values_barColor": "データ バーの色",
   "Obj_variance": "差異 (Pro)",

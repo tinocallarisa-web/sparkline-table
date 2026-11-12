@@ -39,6 +39,8 @@
   "Prop_values_downColor": "Decrease color",
   "Prop_values_smallBase": "Dim Δ% on small bases (% of level median)",
   "Prop_values_fontSize": "Text size",
+  "Prop_values_valueColor": "Value color",
+  "Prop_values_valueBackground": "Value background",
   "Prop_values_dataBars": "Data bars behind the value",
   "Prop_values_barColor": "Data bar color",
   "Obj_variance": "Variance (Pro)",
