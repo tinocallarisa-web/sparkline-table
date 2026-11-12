@@ -432,6 +432,38 @@ async def main():
             res["bullet_eventos"] = await events(pg)
             await pg.close()
 
+        # ── Líneas de cuadrícula y botones de nivel con su sitio (gratis) ───────────────────────────
+        if not FREE:
+            pg = await page()
+            vl_js = "[...document.querySelector('.st-root').classList].filter(c => c.startsWith('st-vl-')).map(c => c.slice(6))"
+            hdr_js = """() => { const h = document.querySelector('.st-h-name'); const t = h.querySelector('.st-h1').getBoundingClientRect(), b = h.querySelector('.st-xbtns').getBoundingClientRect();
+                return { solapan: !(b.right <= t.left || b.left >= t.right), titulo: h.querySelector('.st-h1').textContent, recortado: h.querySelector('.st-h1').scrollWidth > h.querySelector('.st-h1').clientWidth }; }"""
+            await H.upd(pg, dvp({"status": {"show": True}}), W, Hh)
+            await shot(pg, "24_lineas_entre_grupos")
+            res["grid_grupos"] = await pg.evaluate(vl_js)
+            res["grid_cabecera"] = await pg.evaluate(hdr_js)
+            # La línea va centrada en el hueco: posición del ::before respecto al borde izquierdo de su celda.
+            res["grid_posicion"] = await pg.evaluate("""() => { const c = document.querySelector('.st-row .st-c-pl'); const cs = getComputedStyle(c, '::before');
+                return [cs.left, cs.borderLeftWidth, cs.borderLeftStyle, getComputedStyle(document.querySelector('.st-root')).getPropertyValue('--st-gap')]; }""")
+            res["grid_anchos_iguales"] = await pg.evaluate("getComputedStyle(document.querySelector('.st-root')).getPropertyValue('--st-cols')")
+            await H.upd(pg, dvp({"status": {"show": True}, "grid": {"vertical": "all", "vStyle": "dashed", "vWidth": 2, "hWidth": 2, "hColor": {"solid": {"color": "#8A8886"}}}}), W, Hh)
+            await shot(pg, "25_lineas_todas_discontinuas")
+            res["grid_todas"] = await pg.evaluate(vl_js)
+            res["grid_anchos_todas"] = await pg.evaluate("getComputedStyle(document.querySelector('.st-root')).getPropertyValue('--st-cols')")
+            await H.upd(pg, dvp({"grid": {"vertical": "off", "horizontal": False}}), W, Hh)
+            res["grid_off"] = [await pg.evaluate(vl_js), await pg.evaluate("getComputedStyle(document.querySelector('.st-row')).borderBottomWidth")]
+            await pg.evaluate("Object.assign(__pal, {isHighContrast: true, foreground: {value: '#FFFFFF'}, background: {value: '#000000'}}); document.body.style.background = '#000';")
+            await H.upd(pg, dvp(), W, Hh)
+            await shot(pg, "26_lineas_alto_contraste")
+            res["grid_hc_color"] = await pg.evaluate("getComputedStyle(document.querySelector('.st-row .st-c-pl'), '::before').borderLeftColor")
+            await pg.evaluate("Object.assign(__pal, {isHighContrast: false, foreground: {value: '#252423'}, background: {value: '#FFFFFF'}}); document.body.style.background = '#fff';")
+            # Columna de nombres estrecha: el título se recorta, los botones no se pisan.
+            await H.upd(pg, dvp({"status": {"show": True}}), 760, Hh)
+            await shot(pg, "27_cabecera_estrecha_botones")
+            res["grid_cabecera_estrecha"] = await pg.evaluate(hdr_js)
+            res["grid_eventos"] = await events(pg)
+            await pg.close()
+
         # ── Parte 1 bis (hallazgo de Tino en Desktop): filas sin real y unidades distintas ────────────
         pg = await page()
         def ghosts(dv):

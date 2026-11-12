@@ -38,7 +38,7 @@
 .st-layer { position: absolute; top: 0; left: 0; right: 0; }
 .st-row {
     position: absolute; left: 0; right: 0; top: 0; height: var(--st-rh, 24px); will-change: transform; cursor: default;
-    border-bottom: 1px solid var(--st-band);
+    border-bottom: var(--st-hlw, 1px) solid var(--st-hlc, var(--st-band));
     &:hover { background: var(--st-hover); }
     &.st-subtotal { background: var(--st-sub); .st-label { font-weight: 600; } }
     &.st-subtotal:hover { background: var(--st-hover); }
@@ -228,3 +228,29 @@
 .st-header .st-h-spark2, .st-header .st-h-spark3, .st-header .st-h2-spark2, .st-header .st-h2-spark3 { text-align: left; padding-right: 6px; }
 .st-xbtn { min-width: 1.5em; font-variant-numeric: tabular-nums; }
 .st-xbtn.st-xbtn-on { color: var(--st-text); border-color: var(--st-text); font-weight: 700; }
+
+// Líneas de cuadrícula verticales: centradas en el hueco izquierdo de la columna (Column spacing sigue mandando).
+.st-c, .st-header .st-h, .st-header .st-h2 { position: relative; }
+.st-header { row-gap: 0; }
+.st-root.st-vl-val .st-c-val::before, .st-root.st-vl-val .st-h-val::before, .st-root.st-vl-val .st-h2-val::before,
+.st-root.st-vl-delta .st-c-delta::before, .st-root.st-vl-delta .st-h-delta::before, .st-root.st-vl-delta .st-h2-delta::before,
+.st-root.st-vl-pct .st-c-pct::before, .st-root.st-vl-pct .st-h-pct::before, .st-root.st-vl-pct .st-h2-pct::before,
+.st-root.st-vl-pl .st-c-pl::before, .st-root.st-vl-pl .st-h-pl::before, .st-root.st-vl-pl .st-h2-pl::before,
+.st-root.st-vl-py .st-c-py::before, .st-root.st-vl-py .st-h-py::before, .st-root.st-vl-py .st-h2-py::before,
+.st-root.st-vl-fc .st-c-fc::before, .st-root.st-vl-fc .st-h-fc::before, .st-root.st-vl-fc .st-h2-fc::before,
+.st-root.st-vl-vabs .st-c-vabs::before, .st-root.st-vl-vabs .st-h-vabs::before, .st-root.st-vl-vabs .st-h2-vabs::before,
+.st-root.st-vl-vbar .st-c-vbar::before, .st-root.st-vl-vbar .st-h-vbar::before, .st-root.st-vl-vbar .st-h2-vbar::before,
+.st-root.st-vl-vpct .st-c-vpct::before, .st-root.st-vl-vpct .st-h-vpct::before, .st-root.st-vl-vpct .st-h2-vpct::before,
+.st-root.st-vl-stat .st-c-stat::before, .st-root.st-vl-stat .st-h-stat::before, .st-root.st-vl-stat .st-h2-stat::before,
+.st-root.st-vl-m2 .st-c-m2::before, .st-root.st-vl-m2 .st-h-m2::before, .st-root.st-vl-m2 .st-h2-m2::before,
+.st-root.st-vl-m3 .st-c-m3::before, .st-root.st-vl-m3 .st-h-m3::before, .st-root.st-vl-m3 .st-h2-m3::before,
+.st-root.st-vl-spark .st-c-spark::before, .st-root.st-vl-spark .st-h-spark::before, .st-root.st-vl-spark .st-h2-spark::before,
+.st-root.st-vl-spark2 .st-c-spark2::before, .st-root.st-vl-spark2 .st-h-spark2::before, .st-root.st-vl-spark2 .st-h2-spark2::before,
+.st-root.st-vl-spark3 .st-c-spark3::before, .st-root.st-vl-spark3 .st-h-spark3::before, .st-root.st-vl-spark3 .st-h2-spark3::before {
+    content: ""; position: absolute; top: 0; bottom: 0; left: calc(var(--st-gap, 16px) / 2 - var(--st-vlw, 1px) / 2);
+    border-left: var(--st-vlw, 1px) var(--st-vls, solid) var(--st-vlc, #C8C6C4); pointer-events: none;
+}
+// Botones de nivel: su propio sitio a la izquierda del título; el título se recorta con "…" antes que pisarlos.
+.st-header .st-h-name { display: flex; align-items: center; gap: 6px; }
+.st-header .st-h-name .st-h1 { flex: 1 1 auto; min-width: 0; }
+.st-header .st-h-name .st-xbtns { position: static; order: -1; flex: 0 0 auto; }

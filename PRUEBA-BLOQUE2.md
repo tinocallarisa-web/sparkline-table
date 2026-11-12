@@ -155,6 +155,19 @@ IF ( ISINSCOPE ( dim_pdv[id_comercial] ), BLANK (), [Plan ventas netas] )
 - Cabecera: "Bullet · Ventas netas" y "sep 2026 · vs Plan ventas netas · % del objetivo · Escala: por fila".
 - Tooltip: valor, objetivo, % del objetivo y banda.
 
+## 10. Gratis: líneas de cuadrícula y sitio de los botones de nivel
+
+- Formato → **Gridlines**. *Vertical lines*: Off / **Between groups** (por defecto, muy suaves: el color de las reglas
+  del tema) / Between all columns. Grupos: nombre | cifras (valor, Δ, Δ%) | referencias, varianza y estado | otras
+  medidas | minigráficos. Color, grosor 1-3 px y estilo (sólido, discontinuo, punteado).
+- *Horizontal lines* (la línea bajo cada fila): on/off, color y grosor 1-3 px.
+- Las verticales van centradas en el hueco de *Column spacing*: los anchos de columna no cambian (comprueba que con y sin
+  líneas las cifras no se mueven). Cruzan cabecera, filas y total. En alto contraste, color de primer plano.
+- Scroll en el escenario B con *Between all columns*: igual de fluido (las líneas son CSS por columna, sin trabajo por
+  fila).
+- Botones 1 · 2 · 3: a la izquierda del título de la jerarquía, nunca encima. Con la columna estrecha, el título se
+  recorta con "…" y los botones se ven enteros.
+
 ## Rendimiento y certificación (repetir con todo puesto)
 
 - Analizador de rendimiento: un par de eventos por update; el scroll no emite nada.

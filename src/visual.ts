@@ -1065,6 +1065,13 @@ export class Visual implements IVisual {
         set("--st-line", L.line); set("--st-accent", L.accent); set("--st-up", L.up); set("--st-down", L.down);
         set("--st-target", L.target); set("--st-sub", L.sub); set("--st-sel", L.sel); set("--st-hover", L.hover);
         set("--st-band", L.band);
+        // Líneas de cuadrícula: verticales (suaves por defecto) y horizontales bajo cada fila; alto contraste = primer plano.
+        const gd = this.settings.grid;
+        set("--st-vlc", this.hc ? this.hcFg : String(gd.vColor || mix(L.rule, L.bg, 0.55)));
+        set("--st-vlw", Math.round(Number(gd.vWidth) || 1) + "px");
+        set("--st-vls", String(gd.vStyle || "solid"));
+        set("--st-hlc", this.hc ? this.hcFg : String(gd.hColor || L.band));
+        set("--st-hlw", gd.horizontal === false ? "0px" : Math.round(Number(gd.hWidth) || 1) + "px");
         set("--st-vbar", String(this.settings.values.barColor || L.accent));
         const tk = this.styleTokens();
         set("--st-hzpos", this.hc ? this.hcFg : tk ? tk.up : "#2166AC");
@@ -1351,6 +1358,16 @@ export class Visual implements IVisual {
         this.root.style.setProperty("--st-cols", tpl);
         const has = (id: ColId) => want.some(c => c.id === id);
         for (const id of OPTIONAL_COLS) this.root.classList.toggle("st-hide-" + id, !has(id));
+        // Separadores verticales: en la columna que abre cada grupo (o en todas). Clases en la raíz: ningún trabajo por
+        // fila (la virtualización no cambia) y la línea va centrada en el hueco izquierdo de la columna.
+        const vmode = String(s.grid.vertical);
+        const grp = (id: ColId): string => id === "name" ? "n" : id === "val" || id === "delta" || id === "pct" ? "f"
+            : id === "m2" || id === "m3" ? "m" : id === "spark" || id === "spark2" || id === "spark3" ? "s" : "r";
+        want.forEach((c, i) => {
+            const on = i > 0 && vmode !== "off" && (vmode === "all" || grp(want[i - 1].id) !== grp(c.id));
+            this.root.classList.toggle("st-vl-" + c.id, on);
+        });
+        for (const id of COL_ORDER) if (!has(id)) this.root.classList.remove("st-vl-" + id);
     }
 
     // ── Cabecera ─────────────────────────────────────────────────────────────
@@ -2607,6 +2624,7 @@ export class Visual implements IVisual {
         return k === "sparkline.color" || k === "spark2.color" || k === "spark3.color" ? L.line : k === "sparkline.accent" ? L.accent : k === "sparkline.targetColor" ? L.target
             : k === "values.upColor" || k === "variance.goodColor" || k === "status.goodColor" ? L.up
             : k === "values.downColor" || k === "variance.badColor" || k === "status.badColor" ? L.down : k === "status.neutralColor" ? L.neutral
+            : k === "grid.vColor" ? mix(L.rule, L.bg, 0.55) : k === "grid.hColor" ? L.band
             : k === "values.valueColor" ? L.text : k === "values.valueBackground" ? L.bg
             : k === "header.background" ? L.bg : prop === "background" ? (obj === "level3" ? L.bg : L.sub) : prop === "color" ? L.text : "#000000";
     }

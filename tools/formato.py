@@ -145,6 +145,18 @@ OBJECTS = [
                                                         ("varAbs", "Variance (Δ)"), ("varPct", "Variance % (Δ%)")]}),
         ("sortDir", "Sort direction", "enum", "desc", {"items": [("desc", "Descending"), ("asc", "Ascending")]}),
     ]),
+    # Líneas de cuadrícula (gratis, Tino 12-11). Verticales centradas en el hueco de Column spacing (no cambian anchos);
+    # "Between groups" = nombre | cifras | referencias y varianza | otras medidas | minigráficos, como las matrices
+    # financieras. Por defecto entre grupos y muy suaves. Horizontales = la línea bajo cada fila.
+    ("grid", "Gridlines", [
+        ("vertical", "Vertical lines", "enum", "groups", {"items": [("off", "Off"), ("groups", "Between groups"), ("all", "Between all columns")]}),
+        ("vColor", "Vertical color", "fill", "", {}),
+        ("vWidth", "Vertical width (px)", "num", 1, {"min": 1, "max": 3}),
+        ("vStyle", "Vertical style", "enum", "solid", {"items": [("solid", "Solid"), ("dashed", "Dashed"), ("dotted", "Dotted")]}),
+        ("horizontal", "Horizontal lines", "bool", True, {}),
+        ("hColor", "Horizontal color", "fill", "", {}),
+        ("hWidth", "Horizontal width (px)", "num", 1, {"min": 1, "max": 3}),
+    ]),
     ("header", "Column headers", [
         ("show", "Show column headers", "bool", True, {}),
         ("fontSize", "Text size", "num", 11, {"min": 8, "max": 18}),
@@ -191,6 +203,7 @@ PANE = [
     # Row levels: el visual la construye en código (un elemento por nivel presente), como el trazo por serie de Line Chart.
     ("levels", "Row levels", []),
     ("header", "Column headers", [("header", None, "show")]),
+    ("grid", "Gridlines", [("grid", None, None)]),
 ]
 
 # subTotals: lo exige "subtotals" de capabilities (propertyIdentifier). No sale en el panel (el visual lo pinta siempre).

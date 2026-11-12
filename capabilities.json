@@ -1425,6 +1425,101 @@
         }
       }
     },
+    "grid": {
+      "displayName": "Gridlines",
+      "displayNameKey": "Obj_grid",
+      "properties": {
+        "vertical": {
+          "displayName": "Vertical lines",
+          "displayNameKey": "Prop_grid_vertical",
+          "type": {
+            "enumeration": [
+              {
+                "value": "off",
+                "displayName": "Off",
+                "displayNameKey": "Enum_vertical_off"
+              },
+              {
+                "value": "groups",
+                "displayName": "Between groups",
+                "displayNameKey": "Enum_vertical_groups"
+              },
+              {
+                "value": "all",
+                "displayName": "Between all columns",
+                "displayNameKey": "Enum_vertical_all"
+              }
+            ]
+          }
+        },
+        "vColor": {
+          "displayName": "Vertical color",
+          "displayNameKey": "Prop_grid_vColor",
+          "type": {
+            "fill": {
+              "solid": {
+                "color": true
+              }
+            }
+          }
+        },
+        "vWidth": {
+          "displayName": "Vertical width (px)",
+          "displayNameKey": "Prop_grid_vWidth",
+          "type": {
+            "numeric": true
+          }
+        },
+        "vStyle": {
+          "displayName": "Vertical style",
+          "displayNameKey": "Prop_grid_vStyle",
+          "type": {
+            "enumeration": [
+              {
+                "value": "solid",
+                "displayName": "Solid",
+                "displayNameKey": "Enum_vStyle_solid"
+              },
+              {
+                "value": "dashed",
+                "displayName": "Dashed",
+                "displayNameKey": "Enum_vStyle_dashed"
+              },
+              {
+                "value": "dotted",
+                "displayName": "Dotted",
+                "displayNameKey": "Enum_vStyle_dotted"
+              }
+            ]
+          }
+        },
+        "horizontal": {
+          "displayName": "Horizontal lines",
+          "displayNameKey": "Prop_grid_horizontal",
+          "type": {
+            "bool": true
+          }
+        },
+        "hColor": {
+          "displayName": "Horizontal color",
+          "displayNameKey": "Prop_grid_hColor",
+          "type": {
+            "fill": {
+              "solid": {
+                "color": true
+              }
+            }
+          }
+        },
+        "hWidth": {
+          "displayName": "Horizontal width (px)",
+          "displayNameKey": "Prop_grid_hWidth",
+          "type": {
+            "numeric": true
+          }
+        }
+      }
+    },
     "header": {
       "displayName": "Column headers",
       "displayNameKey": "Obj_header",

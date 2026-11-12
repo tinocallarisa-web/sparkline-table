@@ -1124,6 +1124,100 @@ export const OBJECTS: Record<string, ObjSpec> = {
             }
         ]
     },
+    "grid": {
+        "name": "grid",
+        "key": "Obj_grid",
+        "label": "Gridlines",
+        "props": [
+            {
+                "name": "vertical",
+                "type": "enum",
+                "def": "groups",
+                "key": "Prop_grid_vertical",
+                "label": "Vertical lines",
+                "items": [
+                    [
+                        "off",
+                        "Enum_vertical_off",
+                        "Off"
+                    ],
+                    [
+                        "groups",
+                        "Enum_vertical_groups",
+                        "Between groups"
+                    ],
+                    [
+                        "all",
+                        "Enum_vertical_all",
+                        "Between all columns"
+                    ]
+                ]
+            },
+            {
+                "name": "vColor",
+                "type": "fill",
+                "def": "",
+                "key": "Prop_grid_vColor",
+                "label": "Vertical color"
+            },
+            {
+                "name": "vWidth",
+                "type": "num",
+                "def": 1,
+                "key": "Prop_grid_vWidth",
+                "label": "Vertical width (px)",
+                "min": 1,
+                "max": 3
+            },
+            {
+                "name": "vStyle",
+                "type": "enum",
+                "def": "solid",
+                "key": "Prop_grid_vStyle",
+                "label": "Vertical style",
+                "items": [
+                    [
+                        "solid",
+                        "Enum_vStyle_solid",
+                        "Solid"
+                    ],
+                    [
+                        "dashed",
+                        "Enum_vStyle_dashed",
+                        "Dashed"
+                    ],
+                    [
+                        "dotted",
+                        "Enum_vStyle_dotted",
+                        "Dotted"
+                    ]
+                ]
+            },
+            {
+                "name": "horizontal",
+                "type": "bool",
+                "def": true,
+                "key": "Prop_grid_horizontal",
+                "label": "Horizontal lines"
+            },
+            {
+                "name": "hColor",
+                "type": "fill",
+                "def": "",
+                "key": "Prop_grid_hColor",
+                "label": "Horizontal color"
+            },
+            {
+                "name": "hWidth",
+                "type": "num",
+                "def": 1,
+                "key": "Prop_grid_hWidth",
+                "label": "Horizontal width (px)",
+                "min": 1,
+                "max": 3
+            }
+        ]
+    },
     "header": {
         "name": "header",
         "key": "Obj_header",
@@ -1770,6 +1864,17 @@ export const PANE: CardSpec[] = [
             {
                 "obj": "header",
                 "toggle": "show"
+            }
+        ]
+    },
+    {
+        "uid": "grid",
+        "key": "Obj_grid",
+        "label": "Gridlines",
+        "groups": [
+            {
+                "obj": "grid",
+                "toggle": null
             }
         ]
     }

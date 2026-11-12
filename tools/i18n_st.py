@@ -318,3 +318,20 @@ P.update({
 P.update({
 "{0} bands per sign around {1}; darker = further away. Above grows from the bottom, below hangs from the top.": ["{0} faixas por sinal em torno de {1}; mais escuro = mais longe. Acima cresce de baixo; abaixo pende de cima.", "{0} bandes par signe autour de {1} ; plus foncé = plus éloigné. Au-dessus, croît depuis le bas ; en dessous, pend depuis le haut.", "{0} Bänder je Vorzeichen um {1}; dunkler = weiter entfernt. Darüber wächst von unten, darunter hängt von oben.", "{0} bande per segno attorno a {1}; più scuro = più lontano. Sopra cresce dal basso, sotto pende dall’alto.", "{0} banden per teken rond {1}; donkerder = verder weg. Erboven groeit van onder, eronder hangt van boven.", "{0} pasma na znak wokół {1}; ciemniejsze = dalej. Powyżej rośnie od dołu, poniżej zwisa od góry.", "{1} を基準に符号ごとに {0} 本の帯。濃いほど離れています。上は下から伸び、下は上から垂れます。", "围绕 {1} 每个符号 {0} 个分带；颜色越深 = 越远。高于基线从底部向上，低于基线从顶部向下。", "{1} 기준 부호별 {0}개 밴드, 진할수록 멀리 떨어짐. 위쪽은 아래에서 올라가고 아래쪽은 위에서 내려옵니다.", "{0} bandas por signo alrededor de {1}; más oscuro = más lejos. Por encima crece desde abajo; por debajo cuelga desde arriba."],
 })
+
+# --- líneas de cuadrícula (gratis) ---
+P.update({
+"Between all columns": ["Entre todas as colunas", "Entre toutes les colonnes", "Zwischen allen Spalten", "Tra tutte le colonne", "Tussen alle kolommen", "Między wszystkimi kolumnami", "すべての列の間", "所有列之间", "모든 열 사이", "Entre todas las columnas"],
+"Between groups": ["Entre grupos", "Entre les groupes", "Zwischen Gruppen", "Tra i gruppi", "Tussen groepen", "Między grupami", "グループ間", "组之间", "그룹 사이", "Entre grupos"],
+"Dashed": ["Tracejado", "Tirets", "Gestrichelt", "Tratteggiato", "Gestreept", "Kreskowana", "破線", "虚线", "파선", "Discontinuo"],
+"Dotted": ["Pontilhado", "Pointillé", "Gepunktet", "Punteggiato", "Gestippeld", "Kropkowana", "点線", "点线", "점선", "Punteado"],
+"Solid": ["Sólido", "Continu", "Durchgezogen", "Continuo", "Doorgetrokken", "Ciągła", "実線", "实线", "실선", "Sólido"],
+"Gridlines": ["Linhas de grade", "Quadrillage", "Gitternetzlinien", "Griglia", "Rasterlijnen", "Linie siatki", "グリッド線", "网格线", "눈금선", "Líneas de cuadrícula"],
+"Horizontal color": ["Cor horizontal", "Couleur horizontale", "Farbe horizontal", "Colore orizzontale", "Kleur horizontaal", "Kolor poziomych", "横線の色", "水平线颜色", "가로선 색", "Color horizontal"],
+"Horizontal lines": ["Linhas horizontais", "Lignes horizontales", "Horizontale Linien", "Linee orizzontali", "Horizontale lijnen", "Linie poziome", "横線", "水平线", "가로선", "Líneas horizontales"],
+"Horizontal width (px)": ["Espessura horizontal (px)", "Épaisseur horizontale (px)", "Breite horizontal (px)", "Spessore orizzontale (px)", "Dikte horizontaal (px)", "Grubość poziomych (px)", "横線の太さ (px)", "水平线粗细 (px)", "가로선 두께(px)", "Grosor horizontal (px)"],
+"Vertical color": ["Cor vertical", "Couleur verticale", "Farbe vertikal", "Colore verticale", "Kleur verticaal", "Kolor pionowych", "縦線の色", "垂直线颜色", "세로선 색", "Color vertical"],
+"Vertical lines": ["Linhas verticais", "Lignes verticales", "Vertikale Linien", "Linee verticali", "Verticale lijnen", "Linie pionowe", "縦線", "垂直线", "세로선", "Líneas verticales"],
+"Vertical style": ["Estilo vertical", "Style vertical", "Stil vertikal", "Stile verticale", "Stijl verticaal", "Styl pionowych", "縦線のスタイル", "垂直线样式", "세로선 스타일", "Estilo vertical"],
+"Vertical width (px)": ["Espessura vertical (px)", "Épaisseur verticale (px)", "Breite vertikal (px)", "Spessore verticale (px)", "Dikte verticaal (px)", "Grubość pionowych (px)", "縦線の太さ (px)", "垂直线粗细 (px)", "세로선 두께(px)", "Grosor vertical (px)"],
+})
