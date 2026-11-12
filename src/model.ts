@@ -52,6 +52,8 @@ export interface Row {
     totFmt: (string | undefined)[] | null;
     /** Highlight de la primera medida de Values, por periodo (null si no hay highlight en el dataView). */
     hl: Num[] | null;
+    /** Valor de texto del rol Row image (el primero no vacío del nodo); se valida al dibujar. */
+    img: string | null;
     /** Orden en el que lo mandó el host entre sus hermanos. */
     hostOrder: number;
     // Derivados en cada render (visual.ts)
@@ -81,6 +83,7 @@ export interface Model {
     planIdx: number;
     pyIdx: number;
     tipIdx: number[];
+    imgIdx: number;
     hasTotals: boolean;
     hasHighlights: boolean;
     leaves: number;
@@ -102,10 +105,11 @@ export function buildModel(dv: DataView, mkId: IdMaker): Model | null {
     const nM = Math.max(1, sources.length);
     const valueIdx: number[] = [];
     const tipIdx: number[] = [];
-    let targetIdx = -1, planIdx = -1, pyIdx = -1;
+    let targetIdx = -1, planIdx = -1, pyIdx = -1, imgIdx = -1;
     sources.forEach((s, i) => {
         if (hasRole(s, "values")) valueIdx.push(i);
         else if (hasRole(s, "target") && targetIdx < 0) targetIdx = i;
+        else if (hasRole(s, "rowImage") && imgIdx < 0) imgIdx = i;
         else if (hasRole(s, "plan") && planIdx < 0) planIdx = i;
         else if (hasRole(s, "previousYear") && pyIdx < 0) pyIdx = i;
         else if (hasRole(s, "tooltips")) tipIdx.push(i);
@@ -157,6 +161,7 @@ export function buildModel(dv: DataView, mkId: IdMaker): Model | null {
             if (p === undefined) continue;
             const m = v.valueSourceIndex ?? (measureLevel ? leafMeasure[leaf] : i % nM);
             if (m < 0 || m >= nM) continue;
+            if (m === imgIdx) { if (!r.img && typeof v.value === "string" && v.value) r.img = v.value; continue; }
             const num = typeof v.value === "number" && isFinite(v.value) ? v.value : null;
             const f = (v.objects as any)?.general?.formatString;
             if (p === -2) {
@@ -181,7 +186,7 @@ export function buildModel(dv: DataView, mkId: IdMaker): Model | null {
     };
     const newRow = (key: string, level: number, label: string, parent: Row | null, order: number): Row => ({
         key, level, label, isLeaf: false, expandable: false, collapsed: false, parent, children: [], id: null,
-        s: sources.map(() => new Array(nP).fill(null)), tot: sources.map(() => null), fmt: null, totFmt: null, hl: null,
+        s: sources.map(() => new Array(nP).fill(null)), tot: sources.map(() => null), fmt: null, totFmt: null, hl: null, img: null,
         hostOrder: order, index: -1, shown: [], shownFmt: [], cur: null, base: null, delta: null, deltaPct: null, small: false,
         highlighted: false, spark: null,
     });
@@ -236,7 +241,7 @@ export function buildModel(dv: DataView, mkId: IdMaker): Model | null {
     }
     void anyFmt;
     return {
-        roots, all, total, levels, rowFields, periods, sources, valueIdx, targetIdx, planIdx, pyIdx, tipIdx,
+        roots, all, total, levels, rowFields, periods, sources, valueIdx, targetIdx, planIdx, pyIdx, tipIdx, imgIdx,
         hasTotals, hasHighlights, leaves, lastLevelExpandable, lastIdx,
     };
 }

@@ -12,7 +12,9 @@
 }
 .st-header {
     flex: 0 0 auto; border-bottom: 1px solid var(--st-rule); font-size: var(--st-hfs, 11px); padding: 2px 0 3px; align-items: end;
-    .st-h { overflow: hidden; padding: 0 6px; min-width: 0; text-align: right; user-select: none; }
+    .st-h { overflow: hidden; padding: 0 0 0 var(--st-gap, 16px); min-width: 0; text-align: right; user-select: none; }
+    .st-h-name, .st-h2-name { padding-left: 6px; }
+    .st-h-spark, .st-h2-spark { padding-right: 6px; }
     .st-h-name, .st-h-spark { text-align: left; }
     .st-h1 { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     // Nombre de medida largo: hasta dos líneas antes de cortar (el nombre completo va en el title).
@@ -20,7 +22,7 @@
     &.st-h-normal .st-h1 { font-weight: 400; }
     .st-sortable { cursor: pointer; }
     .st-sortable:hover .st-h1 { text-decoration: underline; }
-    .st-h2 { font-size: 0.86em; color: var(--st-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 6px;
+    .st-h2 { font-size: 0.86em; color: var(--st-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 0 0 var(--st-gap, 16px);
         text-align: right; min-width: 0; }
     .st-h2-name, .st-h2-spark { text-align: left; }
     .st-h2-host { font-style: italic; }
@@ -48,12 +50,15 @@
     flex: 0 0 auto; border-top: 1px solid var(--st-rule); background: var(--st-sub); cursor: default;
     .st-label, .st-c-val { font-weight: 700; }
 }
-.st-c { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; padding: 0 6px; min-width: 0; box-sizing: border-box; height: 100%;
-    display: flex; align-items: center; }
-.st-c-name { padding-left: 6px; }
+// Cada columna lleva su hueco (Column spacing) a la izquierda; el texto numérico se alinea a la derecha como bloque,
+// así si no cupiera se corta por el final con "…" y nunca se pierde el signo del principio.
+.st-c { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; padding: 0 0 0 var(--st-gap, 16px); min-width: 0; box-sizing: border-box;
+    height: 100%; line-height: var(--st-rh, 24px); }
+.st-c-name { padding-left: 6px; display: flex; align-items: center; cursor: default; }
+.st-row .st-c-name.st-can-toggle { cursor: pointer; }
 .st-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .st-c-val, .st-c-delta, .st-c-pct, .st-c-m2, .st-c-m3 {
-    justify-content: flex-end; font-variant-numeric: tabular-nums; font-size: var(--st-vfs, 11px);
+    text-align: right; font-variant-numeric: tabular-nums; font-size: var(--st-vfs, 11px);
 }
 .st-c-val { font-weight: 600; }
 // Negrita fijada en Row levels: manda sobre la del subtotal y la del valor.
@@ -62,8 +67,13 @@
 .st-good { color: var(--st-up); }
 .st-bad { color: var(--st-down); }
 .st-small { opacity: 0.5; }
-.st-c-spark { padding: 0 6px; overflow: visible; }
-.st-toggle { display: inline-block; width: 14px; flex: 0 0 14px; color: var(--st-soft); text-align: center; user-select: none; }
+.st-c-spark { padding: 0 6px 0 var(--st-gap, 16px); overflow: visible; display: flex; align-items: center; }
+// El triángulo toma el tamaño de la fuente del nivel.
+.st-toggle { display: inline-block; width: 1.25em; flex: 0 0 1.25em; color: var(--st-soft); text-align: center; user-select: none; }
+.st-toggle.st-pending { opacity: 0.35; }
+.st-imgbox { display: inline-block; flex: 0 0 auto; margin-right: 6px; overflow: hidden; line-height: 0; }
+.st-imgbox.st-round { border-radius: 50%; }
+.st-imgbox svg { display: block; }
 .st-toggle.st-can { cursor: pointer; }
 .st-toggle.st-can:hover { color: var(--st-text); }
 .st-svg { display: block; overflow: visible; }
@@ -97,6 +107,12 @@
     .st-band { fill: none; stroke: var(--st-text); stroke-width: 1; }
     .st-mk-neg { fill: var(--st-bg); }
     .st-row:hover { background: transparent; outline: 1px dashed var(--st-text); outline-offset: -1px; }
+}
+// Marca de la vista previa Pro (como Line Chart): blanca con sombra, girada, sin capturar clics. Solo editando.
+.st-watermark {
+    position: absolute; inset: 0; display: none; align-items: center; justify-content: center; text-align: center;
+    pointer-events: none; z-index: 15; font-weight: 700; letter-spacing: 0.04em; white-space: nowrap; color: #FFFFFF;
+    opacity: 0.72; transform: rotate(-16deg); text-shadow: 0 0 3px rgba(46, 52, 64, 0.95), 0 2px 6px rgba(46, 52, 64, 0.75);
 }
 .st-live { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .st-stamp { position: absolute; right: 4px; bottom: 2px; font-size: 9px; color: #a19f9d; pointer-events: none; z-index: 30; }

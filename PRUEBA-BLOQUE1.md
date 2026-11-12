@@ -198,3 +198,56 @@ total of the range*.
   fondos y colores.
 - Column headers: fuente, negrita, color y fondo propios. Los nombres largos de medida pasan a dos líneas (nombre
   completo en el title).
+## 12-11 (2): alineación, expandir/contraer, tooltips, espaciado e imagen por fila
+
+**Alineación con fuentes por nivel.** El ancho de cada columna se mide con la fuente real de cada nivel (tamaño, familia
+y negrita), del total y de la cabecera, y se queda el máximo. Cada columna lleva a la izquierda su hueco (*Rows →
+Column spacing*, 16 px por defecto, mínimo 12: antes de bajar de ahí se ocultan columnas). Los números se alinean a la
+derecha como bloque: si algo no cupiera se corta por el final con "…" y no por el principio. En la captura de Tino el
+Δ del nivel 1 perdía así el signo menos ("760K €"). En el simulador, con el nivel 1 a 16 px en negrita y el 3 a 9 px,
+no desborda ninguna celda.
+
+**Expandir/contraer: un clic = un toggle.**
+- Clic en el triángulo o en el nombre de una fila expandible = expandir/contraer. Clic en el resto de la fila =
+  seleccionar. Para seleccionar un subtotal, pulsa su valor o su minigráfico. Alt + clic en el nombre = el nivel entero.
+- Un solo manejador para toda la tabla resuelve la fila por su clave en el momento del clic. Antes cada nodo de fila
+  guardaba sus datos de cuando se creó, y la virtualización recicla nodos.
+- El clic solo cuenta si se pulsa y se suelta sobre la misma fila (si entre medias llega un update, no hace nada).
+- Mientras el host no contesta a un toggle, el triángulo ya enseña el estado pedido, atenuado, y los clics repetidos
+  sobre esa fila se ignoran. El update de datos lo libera; si no llegara, se libera a los 4 s.
+- Simulador: 4 clics rápidos → 1 toggle (3 ignorados); tras el update se puede volver a pulsar; un update entre
+  pulsar y soltar → 0 toggles.
+- Qué probar: pulsar varias veces seguidas el nombre de una provincia, también mientras se cargan los segmentos con
+  id_pdv.
+
+**Tooltips.** *Rows → Tooltips*: Sparkline only (por defecto), Whole row u Off. Salen a los 300 ms, nunca sobre el nombre
+ni el triángulo, nunca con un clic en curso. Se colocan encima o debajo de la fila para no taparla. Se ocultan al
+pulsar, al hacer scroll o al salir de la celda.
+
+**Columnas y área desde cero.** Columnas y área arrancan siempre en 0, o en el mínimo si hay negativos, también con la
+escala por fila. Las columnas ya lo hacían; el área no, y ahora sí. La línea se ajusta al rango, salvo que se active
+*Start at zero*. Con datos que varían ±20 % de un mes a otro, unas columnas desde cero salen casi igual de altas: es
+lo honesto. Para ver la forma, usa línea.
+
+**Imagen al inicio de la fila (Pro, con vista previa).**
+- Pozo nuevo *Row image (Pro)*: una medida o una columna de texto con resumen *First*. Se evalúa en cada nodo: una
+  medida sirve para cualquier nivel; una columna, para su nivel.
+- Solo se dibujan valores que empiecen por `data:image/(png|jpeg|gif|webp|bmp|svg+xml);base64,`, como `<image>` SVG
+  (sin innerHTML). Una URL http(s) no se carga nunca; editando sale el aviso "Images must be embedded (Base64 data
+  URI)".
+- *Row levels*, por nivel: Show row image, Image size (0 = alto de fila − 4) e Image shape (cuadrada o redonda).
+  *Rows → Reserve space for row images* deja el hueco en los niveles que tienen alguna imagen, para que los nombres
+  queden alineados aunque a una fila le falte.
+- Por qué Pro: es la clase de gesto que expone el Pro (decoración que pide quien construye un informe para dirección).
+  En lectura sin licencia se ve la tabla gratis, sin imágenes ni hueco. Editando sin licencia: imágenes reales con la
+  marca de agua "Pro preview · row images" y el aviso de licencia de Power BI.
+- Receta (banderas):
+  - **Columna:** en la tabla de países, una columna de texto `Bandera` con el data URI de cada bandera (por ejemplo
+    `data:image/svg+xml;base64,PHN2Zy…`). Arrástrala a Row image; Power BI la resume con *First* por nodo.
+  - **Medida:** `Bandera = SWITCH(SELECTEDVALUE(dim_pdv[provincia]), "Barcelona", "data:image/png;base64,iVBOR…", …)`.
+    Ojo: en los niveles de debajo, SELECTEDVALUE sigue devolviendo la provincia, así que apaga *Show row image* en
+    esos niveles.
+  - En el modelo de prueba basta con una columna calculada en `dim_pdv` con el SWITCH por provincia.
+- Tamaño: una bandera SVG de tres franjas ocupa ~300-600 caracteres en Base64 y un PNG de 32×24 px, 1-2 KB. Caben
+  holgados. Límite (inferido, no medido aquí): las columnas de texto se truncan a 32.766 caracteres al cargar; una
+  medida DAX puede devolver cadenas más largas. Para imágenes grandes, mejor una medida.

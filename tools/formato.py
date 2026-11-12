@@ -62,7 +62,13 @@ OBJECTS = [
         # 0 = automático (el de la densidad). Si es menor que el texto, manda el texto (alto mínimo = texto + 4 px).
         ("rowHeight", "Row height (px, 0 = automatic)", "num", 0, {"min": 0, "max": 48}),
         ("indent", "Indent per level", "num", 14, {"min": 0, "max": 40}),
+        # Hueco mínimo entre columnas: antes de bajar de 12 px se ocultan columnas (prioridad de layout).
+        ("colSpacing", "Column spacing (px)", "num", 16, {"min": 12, "max": 40}),
+        # Imagen por fila (Pro): hueco reservado para que los nombres queden alineados aunque falte la imagen.
+        ("imageGap", "Reserve space for row images", "bool", True, {}),
         ("grandTotal", "Grand total", "bool", True, {}),
+        # Tooltips (Tino, 12-11): por defecto solo sobre el minigráfico, para no estorbar al pulsar ▸/▾.
+        ("tooltips", "Tooltips", "enum", "sparkline", {"items": [("sparkline", "Sparkline only"), ("row", "Whole row"), ("off", "Off")]}),
         # value/value2/value3: el visual pone en el panel el nombre de cada medida y quita las que no están.
         ("sortBy", "Sort by", "enum", "host", {"items": [("host", "Power BI order"), ("name", "Name"), ("value", "Value"),
                                                         ("value2", "Value 2"), ("value3", "Value 3"),
@@ -89,6 +95,10 @@ OBJECTS = [
         ("fontFamily", "Font", "font", "", {}),
         ("bold", "Bold", "enum", "auto", {"items": [("auto", "Automatic"), ("on", "On"), ("off", "Off")]}),
         ("italic", "Italic", "bool", False, {}),
+        # Imagen al inicio de la fila (Pro, rol Row image; solo data:image/...;base64, nunca URLs).
+        ("image", "Show row image (Pro)", "bool", True, {}),
+        ("imageSize", "Image size (px, 0 = automatic)", "num", 0, {"min": 0, "max": 48}),
+        ("imageShape", "Image shape", "enum", "square", {"items": [("square", "Square"), ("round", "Round")]}),
     ]) for obj, label in [("level1", "Level 1"), ("level2", "Level 2"), ("level3", "Level 3"), ("levelTotal", "Grand total row")]
 ]
 

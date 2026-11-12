@@ -21,6 +21,7 @@ STUB = r"""
 window.__ev = []; window.__sel = []; window.__fetch = 0; window.__fetchRet = true; window.__toggles = []; window.__persist = [];
 window.__lastSelectArg = 0; window.__tips = 0; window.__updates = 0; window.__ctx = 0;
 window.powerbi = { visuals: { plugins: {} }, extensibility: {} };
+window.__tap = (el, o) => { o = o || {}; el.dispatchEvent(new PointerEvent("pointerdown", {bubbles: true, button: 0})); el.dispatchEvent(new PointerEvent("pointerup", {bubbles: true})); el.dispatchEvent(new MouseEvent("click", Object.assign({bubbles: true}, o))); };
 (function(){
  function mkId(k){ return { __k:k, getKey(){return k;}, equals(o){return !!o && o.__k===k;}, includes(o){ return !!o && (o.__k===k || o.__k.indexOf(k+'|')===0); } }; }
  window.__pal = { isHighContrast:false, foreground:{value:'#252423'}, background:{value:'#FFFFFF'}, foregroundSelected:{value:'#1AEBFF'},
@@ -162,6 +163,48 @@ def build(n_z=8, n_c=15, n_p=17, n_per=36, expanded=None, half=False, segment=Fa
     return dv, leaves
 
 
+def _flag(c1, c2, c3):
+    import base64
+    svg = (f"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 3 2'><rect width='1' height='2' fill='{c1}'/>"
+           f"<rect x='1' width='1' height='2' fill='{c2}'/><rect x='2' width='1' height='2' fill='{c3}'/></svg>")
+    return "data:image/svg+xml;base64," + base64.b64encode(svg.encode()).decode()
+
+
+FLAGS = [_flag("#0055A4", "#FFFFFF", "#EF4135"), _flag("#009246", "#FFFFFF", "#CE2B37"), _flag("#000000", "#DD0000", "#FFCE00"),
+         "https://example.com/flag.png", _flag("#AA151B", "#F1BF00", "#AA151B"), _flag("#169B62", "#FFFFFF", "#FF883E"),
+         _flag("#21468B", "#FFFFFF", "#AE1C28"), _flag("#006600", "#FFFF00", "#FF0000")]
+
+
+def add_images(dv):
+    """Añade el rol Row image (4.ª medida, texto) y pone una 'bandera' (data URI SVG) en cada zona; la 4.ª es una URL."""
+    img = {"displayName": "Bandera", "queryName": "m.Bandera", "roles": {"rowImage": True}, "isMeasure": True}
+    mx = dv["matrix"]
+    mx["valueSources"].append(img)
+    dv["metadata"]["columns"].append(img)
+    for pnode in mx["columns"]["root"]["children"]:
+        pnode["children"].append({"level": 1, "levelSourceIndex": 3})
+    nP = len(mx["columns"]["root"]["children"])  # periodos + subtotal
+
+    def remap(vals, flag):
+        out = {}
+        for k, v in vals.items():
+            k = int(k)
+            out[str((k // 3) * 4 + k % 3)] = v
+        if flag:
+            for p in range(nP):
+                out[str(p * 4 + 3)] = {"value": flag, "valueSourceIndex": 3}
+        return out
+
+    def walk(n, flag):
+        if "values" in n:
+            n["values"] = remap(n["values"], flag)
+        for c in n.get("children", []):
+            walk(c, FLAGS[int(c["identity"]["k"][1:])] if c.get("level") == 0 else (flag if c.get("isSubtotal") else None))
+
+    walk(mx["rows"]["root"], None)
+    return dv
+
+
 async def setup(pg, W, H):
     await pg.set_content(f"<html><body style='margin:0;background:#fff'><div id='host' style='position:relative;width:{W}px;height:{H}px'></div></body></html>")
     await pg.add_script_tag(content=STUB)
@@ -238,7 +281,7 @@ async def main():
         await pg.evaluate("Object.assign(__pal, {isHighContrast: true, foreground: {value: '#FFFFFF'}, background: {value: '#000000'}, foregroundSelected: {value: '#1AEBFF'}})")
         await pg.evaluate("document.body.style.background = '#000'")
         await upd(pg, build(expanded=vista, objects={"markers": {"max": True, "min": True}})[0], W, H)
-        await pg.evaluate("() => { const r = [...document.querySelectorAll('.st-row')].find(r => r.dataset.i === '3'); r.dispatchEvent(new MouseEvent('click', {bubbles: true})); }")
+        await pg.evaluate("() => { const r = [...document.querySelectorAll('.st-row')].find(r => r.dataset.i === '3'); __tap(r); }")
         await pg.wait_for_timeout(50)
         await pg.screenshot(path=os.path.join(OUT, "06_alto_contraste.png"))
         await pg.evaluate("Object.assign(__pal, {isHighContrast: false, foreground: {value: '#252423'}, background: {value: '#FFFFFF'}}); __sel = [];")
@@ -329,11 +372,11 @@ async def main():
         # Hover con tooltip
         box = await pg.evaluate("(() => { const r = document.querySelector('.st-row[data-i=\"2\"] .st-c-spark').getBoundingClientRect(); return [r.x + r.width/2, r.y + r.height/2]; })()")
         await pg.mouse.move(box[0], box[1])
-        await pg.wait_for_timeout(50)
+        await pg.wait_for_timeout(450)
         res["tooltips_mostrados"] = await pg.evaluate("__tips")
         await pg.screenshot(path=os.path.join(OUT, "15_hover_2040_hojas.png"))
         # Selección: hoja, subtotal nivel 2, subtotal nivel 1, Ctrl, alternar
-        sel_js = "(lvl) => { const r = [...document.querySelectorAll('.st-row')].sort((a,b)=>+a.dataset.i - +b.dataset.i).find(r => r.getAttribute('aria-level') === lvl); r.dispatchEvent(new MouseEvent('click', {bubbles:true, ctrlKey: false})); return r.querySelector('.st-label').textContent; }"
+        sel_js = "(lvl) => { const r = [...document.querySelectorAll('.st-row')].sort((a,b)=>+a.dataset.i - +b.dataset.i).find(r => r.getAttribute('aria-level') === lvl); __tap(r); return r.querySelector('.st-label').textContent; }"
         await pg.evaluate(sel_js, "3"); res["ids_hoja"] = await pg.evaluate("__lastSelectArg")
         await pg.evaluate(sel_js, "2"); res["ids_subtotal_nivel2"] = await pg.evaluate("__lastSelectArg")
         await pg.evaluate(sel_js, "1"); res["ids_subtotal_nivel1"] = await pg.evaluate("__lastSelectArg")
@@ -350,7 +393,7 @@ async def main():
         res["teclado_live"] = await pg.evaluate("document.querySelector('.st-live').textContent")
         res["teclado_toggles"] = await pg.evaluate("__toggles")
         # Toggle con el ratón (y Alt = nivel entero)
-        await pg.evaluate("() => { const t = document.querySelector('.st-row[data-i=\"1\"] .st-toggle'); t.dispatchEvent(new MouseEvent('click', {bubbles:true, altKey:true})); }")
+        await pg.evaluate("() => { const t = document.querySelector('.st-row[data-i=\"1\"] .st-toggle'); __tap(t, {altKey: true}); }")
         res["toggles"] = await pg.evaluate("__toggles")
         # Menú contextual
         await pg.evaluate("() => document.querySelector('.st-row[data-i=\"4\"]').dispatchEvent(new MouseEvent('contextmenu', {bubbles:true}))")
@@ -399,6 +442,62 @@ async def main():
         res["alto_pedido_16_con_texto_14"] = await pg.evaluate("getComputedStyle(document.querySelector('.st-root')).getPropertyValue('--st-rh')")
         await upd(pg, build(expanded={"Z0", "Z0|C0", "Z1"}, objects={"rows": {"rowHeight": 44}})[0], W, H)
         await pg.screenshot(path=os.path.join(OUT, "21_alto_de_fila_44.png"))
+        # Alineación con fuentes mixtas: nivel 1 a 16 px negrita, nivel 3 a 9 px. Ninguna celda numérica debe desbordar.
+        mix = {"level1": {"fontSize": 16, "bold": "on", "background": {"solid": {"color": "#7FA6D3"}}}, "level3": {"fontSize": 9}}
+        await upd(pg, build(expanded={"Z0", "Z0|C0", "Z1"}, objects=mix)[0], W, H)
+        res["celdas_desbordadas_fuentes_mixtas"] = await pg.evaluate("""() => [...document.querySelectorAll('.st-row .st-c-val, .st-row .st-c-delta, .st-row .st-c-pct, .st-row .st-c-m2')]
+            .filter(c => getComputedStyle(c).display !== 'none' && c.scrollWidth > c.clientWidth + 1).length""")
+        await pg.screenshot(path=os.path.join(OUT, "22_fuentes_mixtas_16_y_9.png"))
+        await upd(pg, build(expanded={"Z0", "Z0|C0", "Z1"}, objects={"rows": {"colSpacing": 40}})[0], W, H)
+        await pg.screenshot(path=os.path.join(OUT, "23_espaciado_maximo_40.png"))
+        await upd(pg, build(expanded={"Z0", "Z0|C0", "Z1"}, objects={"sparkline": {"type": "column", "scale": "row"}})[0], W, H)
+        await pg.screenshot(path=os.path.join(OUT, "24_columnas_desde_cero_por_fila.png"))
+        # Expandir/contraer: un clic en el nombre de una provincia = un toggle; clics rápidos repetidos sin update del
+        # host = se ignoran; tras el update se puede volver a pulsar; clic en el valor = selección, no toggle.
+        await pg.evaluate("__toggles = []")
+        dvx = build(expanded={"Z0", "Z0|C0", "Z1"})[0]
+        await upd(pg, dvx, W, H)
+        name_js = "() => { const r = document.querySelector('.st-row[data-i=\"0\"] .st-label'); for (let i = 0; i < 4; i++) __tap(r); }"
+        await pg.evaluate(name_js)
+        res["toggle_4_clics_rapidos"] = {"toggles": await pg.evaluate("__toggles.length"), "dbg": await pg.evaluate("__v.dbg"),
+                                         "triangulo_pendiente": await pg.evaluate("document.querySelector('.st-row[data-i=\"0\"] .st-toggle').className")}
+        await upd(pg, build(expanded={"Z0|C0", "Z1"})[0], W, H)  # el host contesta: Z0 contraída
+        res["tras_update_contraida"] = await pg.evaluate("document.querySelector('.st-row[data-i=\"0\"] .st-toggle').textContent")
+        await pg.evaluate("() => __tap(document.querySelector('.st-row[data-i=\"0\"] .st-label'))")
+        res["segundo_toggle_tras_update"] = await pg.evaluate("__toggles.length")
+        await pg.evaluate("() => __tap(document.querySelector('.st-row[data-i=\"2\"] .st-c-val'))")
+        res["clic_en_valor_selecciona"] = {"toggles": await pg.evaluate("__toggles.length"), "ids": await pg.evaluate("__lastSelectArg")}
+        # Update entre pointerdown y pointerup (fetchMoreData o repintado): el clic no debe disparar nada en otra fila.
+        await upd(pg, dvx, W, H)
+        box = await pg.evaluate("(() => { const r = document.querySelector('.st-row[data-i=\"3\"] .st-label').getBoundingClientRect(); return [r.x + 5, r.y + r.height / 2]; })()")
+        t0 = await pg.evaluate("__toggles.length")
+        await pg.mouse.move(box[0], box[1]); await pg.mouse.down()
+        await upd(pg, build(expanded={"Z1"})[0], W, H)  # la fila bajo el cursor pasa a ser otra
+        await pg.mouse.up()
+        res["update_entre_down_y_up"] = {"toggles_nuevos": await pg.evaluate("__toggles.length") - t0, "dbg": await pg.evaluate("__v.dbg")}
+        # Tooltip: sobre el nombre no sale; sobre el minigráfico, tras ~300 ms
+        await upd(pg, dvx, W, H)
+        await pg.evaluate("__tips = 0")
+        nb = await pg.evaluate("(() => { const r = document.querySelector('.st-row[data-i=\"2\"] .st-label').getBoundingClientRect(); return [r.x + 5, r.y + 5]; })()")
+        await pg.mouse.move(nb[0], nb[1]); await pg.wait_for_timeout(450)
+        res["tooltip_sobre_nombre"] = await pg.evaluate("__tips")
+        sb = await pg.evaluate("(() => { const r = document.querySelector('.st-row[data-i=\"2\"] .st-c-spark').getBoundingClientRect(); return [r.x + r.width / 2, r.y + r.height / 2]; })()")
+        await pg.mouse.move(sb[0], sb[1]); await pg.wait_for_timeout(120)
+        res["tooltip_spark_a_120ms"] = await pg.evaluate("__tips")
+        await pg.wait_for_timeout(350)
+        res["tooltip_spark_a_470ms"] = await pg.evaluate("__tips")
+        ev = await pg.evaluate("__ev.join('')"); nu = await pg.evaluate("__updates")
+        res["eventos_pagina_niveles"] = {"updates": nu, "pares_1a1": ev == "SF" * nu}
+        await pg.close()
+
+        # Banderas en el nivel 1 (rol Row image, data URI); una zona con URL http (no se carga) y el aviso editando.
+        pg = await page(W, H)
+        dvi = add_images(build(expanded={"Z1"}, objects={"level1": {"imageShape": "round"}})[0])
+        await upd(pg, dvi, W, H, view=1)
+        res["imagenes_dibujadas"] = await pg.evaluate("[...document.querySelectorAll('.st-imgbox image')].filter(i => i.getAttribute('href')).length")
+        res["aviso_url"] = await pg.evaluate("document.querySelector('.st-notice').textContent")
+        await pg.evaluate("() => { const g = document.querySelector('.st-guide'); if (g) g.style.display = 'none'; }")
+        await pg.screenshot(path=os.path.join(OUT, "25_banderas_nivel1.png"))
         await pg.close()
 
         # Estrés: 10.800 hojas × 24 meses

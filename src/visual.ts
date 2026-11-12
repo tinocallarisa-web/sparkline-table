@@ -136,6 +136,25 @@ export class Visual implements IVisual {
     private loading = false;
     private ceiling = false;
     private modelMs = 0;
+    // Gestos (ver constructor) y tooltips
+    private rowsByKey = new Map<string, Row>();
+    private downKey: string | null = null;
+    private downZone = "row";
+    private pointerBusy = false;
+    private pendingToggle = new Map<string, number>();
+    private tipTimer: number | null = null;
+    /** Contadores de depuración (no se pintan; los lee el simulador). */
+    public dbg = { toggles: 0, ignoredPending: 0, ignoredMismatch: 0, released: 0 };
+    private imgUrlSeen = false;
+    private tipShown = false;
+    private imgLevels = new Set<number>();
+    private watermarkEl: HTMLDivElement | null = null;
+    private imagesDrawn = false;
+    private licenseResolved = false;
+    private licenseUnsupported = false;
+    private proPreview = false;
+    private lastNotice = "";
+    private gap = 16;
     /** El alto pedido era menor que el texto y se ha subido (se avisa en el panel). */
     private rowHClamped = false;
     private levelStyles = new Map<number, { bg: string; color: string; fs: number; ff: string; bold: string; italic: boolean }>();
@@ -211,17 +230,55 @@ export class Visual implements IVisual {
             if (this.scrollRaf) return;
             this.scrollRaf = requestAnimationFrame(() => { this.scrollRaf = 0; this.drawRows(); });
         });
+        // Un solo gesto por clic, decidido en un único sitio (Tino, 12-11: "a veces expande y a veces no"):
+        //  - pointerdown guarda la CLAVE de la fila y la zona; el clic solo cuenta si pointerup cae en la misma clave
+        //    (si entre medias llegó un update y el nodo DOM se recicló con otra fila, se ignora);
+        //  - zona nombre/triángulo de una fila expandible = expandir/contraer; resto de la fila = seleccionar;
+        //  - mientras el host no ha contestado a un toggle, otro clic sobre esa fila se ignora (el triángulo ya
+        //    enseña el estado pedido, atenuado); el update de datos lo libera.
+        this.layerEl.addEventListener("pointerdown", (e: PointerEvent) => {
+            if (e.button !== 0) return;
+            this.hideTip();
+            const rowEl = (e.target as HTMLElement).closest(".st-row") as HTMLElement | null;
+            this.downKey = rowEl ? rowEl.getAttribute("data-key") : null;
+            this.downZone = (e.target as HTMLElement).closest(".st-c-name") ? "name" : "row";
+            this.pointerBusy = true;
+        });
+        this.layerEl.addEventListener("pointerup", () => { window.setTimeout(() => { this.pointerBusy = false; }, 0); });
+        this.layerEl.addEventListener("click", (e: MouseEvent) => {
+            const rowEl = (e.target as HTMLElement).closest(".st-row") as HTMLElement | null;
+            const key = rowEl ? rowEl.getAttribute("data-key") : null;
+            const zone = (e.target as HTMLElement).closest(".st-c-name") ? "name" : "row";
+            const same = key !== null && key === this.downKey && zone === this.downZone;
+            this.downKey = null;
+            if (!same) { if (key !== null) this.dbg.ignoredMismatch++; return; }
+            const r = this.rowsByKey.get(key as string);
+            if (!r) return;
+            e.stopPropagation();
+            this.focusIdx = r.index;
+            this.focusKey = r.key;
+            if (!this.canInteract) return;
+            if (zone === "name" && r.expandable) this.onToggle(r, e.altKey);
+            else this.selectRow(r, e.ctrlKey || e.metaKey);
+        });
+        this.layerEl.addEventListener("mousemove", (e: MouseEvent) => {
+            const rowEl = (e.target as HTMLElement).closest(".st-row") as HTMLElement | null;
+            const r = rowEl ? this.rowsByKey.get(rowEl.getAttribute("data-key") || "") : undefined;
+            if (r) this.onHover(e, r, rowEl as HTMLElement); else this.hideTip();
+        });
+        this.layerEl.addEventListener("mouseleave", () => this.hideTip());
         this.scroller.addEventListener("click", (e: MouseEvent) => {
             if (e.target === this.scroller || e.target === this.spacer || e.target === this.layerEl) this.clearSelection();
         });
         this.totalEl.addEventListener("click", () => this.clearSelection());
-        this.totalEl.addEventListener("mousemove", (e: MouseEvent) => { if (this.model?.total) this.onHover(e, this.model.total); });
+        this.totalEl.addEventListener("mousemove", (e: MouseEvent) => { if (this.model?.total) this.onHover(e, this.model.total, this.totalEl); });
         this.totalEl.addEventListener("mouseleave", () => this.hideTip());
         this.root.addEventListener("contextmenu", (e: MouseEvent) => {
             e.preventDefault();
+            this.hideTip();
             if (!this.canInteract) return;
             const rowEl = (e.target as HTMLElement).closest(".st-row") as HTMLElement | null;
-            const r = rowEl ? this.rows[Number(rowEl.getAttribute("data-i"))] : null;
+            const r = rowEl ? this.rowsByKey.get(rowEl.getAttribute("data-key") || "") : null;
             this.selMgr.showContextMenu(r && r.id ? r.id : ({} as ISelectionId), { x: e.clientX, y: e.clientY });
         });
         this.root.addEventListener("keydown", (e: KeyboardEvent) => { this.kbFocus = true; this.onKey(e); });
@@ -293,12 +350,12 @@ export class Visual implements IVisual {
         } catch { return (v > 0 ? "+" : v < 0 ? MINUS : "") + (Math.abs(v) * 100).toFixed(1) + "%"; }
     }
 
-    private measure(text: string, size: number, bold = false): number {
+    private measure(text: string, size: number, bold = false, family = FONT): number {
         if (!this.canvasCtx) {
             try { this.canvasCtx = document.createElement("canvas").getContext("2d"); } catch { this.canvasCtx = null; }
         }
         if (!this.canvasCtx) return text.length * size * 0.56;
-        this.canvasCtx.font = (bold ? "600 " : "") + size + "px " + FONT;
+        this.canvasCtx.font = (bold ? "700 " : "") + size + "px " + family;
         return this.canvasCtx.measureText(text).width;
     }
 
@@ -404,6 +461,8 @@ export class Visual implements IVisual {
             this.formatMode = !!(options as any).formatMode;
             this.subSelectionHelper.setFormatMode(this.formatMode);
             this.fmtCache.clear();
+            // El update de datos que sigue a un toggle libera los toggles pendientes (ya vienen en el dato).
+            if (isData && this.pendingToggle.size) { this.pendingToggle.clear(); this.dbg.released++; }
             if (isData) {
                 // Primero se pide el siguiente segmento (antes de construir nada): si el modelo fallara, la carga sigue.
                 this.handleSegments(dv, options);
@@ -428,6 +487,7 @@ export class Visual implements IVisual {
         }
         // Fuera del try: un fallo de licencia nunca convierte un render correcto en renderingFailed.
         this.requestLicenseDeferred();
+        try { this.notifyPro(); } catch { /* best-effort */ }
     }
 
     /** Repinta con las últimas options fuera de update(): no emite rendering events. */
@@ -443,13 +503,18 @@ export class Visual implements IVisual {
         window.setTimeout(() => {
             try {
                 const lm: any = this.host.licenseManager;
-                if (!lm) return;
+                if (!lm) { this.licenseUnsupported = true; this.licenseResolved = true; return; }
                 lm.getAvailableServicePlans().then((r: any) => {
+                    if (r?.isLicenseUnsupportedEnv === true || r?.isLicenseInfoAvailable === false) this.licenseUnsupported = true;
+                    this.licenseResolved = true;
                     const pro = (r?.plans ?? []).some((p: any) => PLAN_IDS.some(id => matchesPlan(p.spIdentifier, id)) &&
                         (p.state === STATE_ACTIVE || p.state === STATE_WARNING));
-                    if (pro && !this.isPro) { this.isPro = true; this.repaint(); }
-                }, () => { /* sin licencia: gratis */ });
-            } catch { /* entorno sin licencias: gratis */ }
+                    if (pro) this.isPro = true;
+                    // Repinta sin rendering events: con la licencia resuelta ya se sabe si toca vista previa o Pro.
+                    this.repaint();
+                    try { this.notifyPro(); } catch { /* best-effort */ }
+                }, () => { this.licenseUnsupported = true; this.licenseResolved = true; });
+            } catch { this.licenseUnsupported = true; this.licenseResolved = true; }
         }, 0);
     }
 
@@ -471,6 +536,69 @@ export class Visual implements IVisual {
         if (!more) this.ceiling = true;
     }
 
+    // ── Imagen por fila (Pro, con vista previa) ─────────────────────────────
+
+    /** Solo imágenes embebidas: data:image/...;base64 (sin red). Una URL http(s) no se carga nunca. */
+    private static okImage(s: string): boolean {
+        return /^data:image\/(png|jpe?g|gif|webp|bmp|svg\+xml);base64,[A-Za-z0-9+/=\s]+$/i.test(s);
+    }
+
+    /** Se dibujan con licencia o, editando y con la licencia ya resuelta, como vista previa con marca de agua. */
+    private imagesOn(): boolean {
+        return !!this.model && this.model.imgIdx >= 0 && (this.isPro || this.proPreview);
+    }
+
+    private paintImage(name: HTMLElement, d: Row): void {
+        const box = name.querySelector(".st-imgbox") as HTMLElement;
+        const lv = Math.min(d.level, 2);
+        const st = this.settings[lv < 0 ? "levelTotal" : "level" + (lv + 1)];
+        const ok = !!d.img && Visual.okImage(d.img);
+        if (!this.imagesOn() || st.image === false || !this.imgLevels.has(lv) || (!ok && !this.settings.rows.imageGap)) { box.style.display = "none"; return; }
+        const size = Math.round(Number(st.imageSize) > 0 ? Math.min(Number(st.imageSize), this.rowH - 2) : Math.max(8, this.rowH - 4));
+        box.style.display = "inline-block";
+        box.style.width = size + "px";
+        box.style.height = size + "px";
+        box.classList.toggle("st-round", st.imageShape === "round");
+        const svg = box.firstChild as SVGSVGElement;
+        svg.setAttribute("width", String(size));
+        svg.setAttribute("height", String(size));
+        const img = svg.firstChild as SVGImageElement;
+        if (ok) {
+            if (img.getAttribute("href") !== d.img) img.setAttribute("href", d.img as string);
+            img.setAttribute("width", String(size));
+            img.setAttribute("height", String(size));
+        } else img.removeAttribute("href");
+    }
+
+    /** Marca de agua de la vista previa: solo editando sin licencia y con imágenes dibujadas. */
+    private updateWatermark(): void {
+        const on = this.proPreview && this.imagesDrawn;
+        if (!this.watermarkEl) {
+            if (!on) return;
+            this.watermarkEl = this.div("st-watermark", this.root);
+            this.watermarkEl.setAttribute("aria-hidden", "true");
+        }
+        this.watermarkEl.style.display = on ? "flex" : "none";
+        if (!on) return;
+        this.watermarkEl.textContent = this.t("UI_ProPreview", "Pro preview") + " · " + this.t("Feat_images", "row images");
+        this.watermarkEl.style.fontSize = Math.round(Math.max(18, Math.min(56, this.W / 12))) + "px";
+    }
+
+    /** Aviso de licencia del propio Power BI (sin UI de licencia propia), una vez por cambio. */
+    private notifyPro(): void {
+        const lm: any = this.host.licenseManager;
+        if (!lm || !this.licenseResolved || this.licenseUnsupported) return;
+        const want = !this.isPro && !!this.model && this.model.imgIdx >= 0;
+        const sig = want ? "img" : "";
+        if (sig === this.lastNotice) return;
+        this.lastNotice = sig;
+        if (!want) { try { lm.clearLicenseNotification?.(); } catch { /* best-effort */ } return; }
+        const msg = this.proPreview
+            ? this.tf("UI_NoticePreview", "Sparkline Table: {0} — part of the Pro plan, shown here as a watermarked preview. Reading view shows the free table.", this.t("Feat_images", "row images"))
+            : this.tf("UI_NoticeBlocked", "Sparkline Table: {0} — part of the Pro plan. Get a licence to enable it.", this.t("Feat_images", "row images"));
+        try { lm.notifyFeatureBlocked?.(msg.slice(0, 500)); } catch { /* best-effort */ }
+    }
+
     /** Un fallo de render se ve en el visual (además de renderingFailed), nunca un spinner eterno. */
     private showError(msg: string): void {
         this.root.querySelectorAll(".st-landing").forEach(n => n.remove());
@@ -490,6 +618,8 @@ export class Visual implements IVisual {
     private render(options: VisualUpdateOptions): void {
         const dv = this.dataView;
         this.settings = this.readSettings(dv);
+        // Vista previa Pro: solo editando y con la licencia ya resuelta (un cliente Pro nunca ve la marca).
+        this.proPreview = !this.isPro && this.editing && this.licenseResolved && !this.licenseUnsupported;
         this.look = this.computeLook();
         this.computeLevelStyles();
         this.W =Math.max(0, options.viewport.width);
@@ -521,6 +651,14 @@ export class Visual implements IVisual {
         }
         this.derive(m);
         this.rows = flatten(m.roots, this.comparator());
+        this.rowsByKey.clear();
+        for (const r of this.rows) this.rowsByKey.set(r.key, r);
+        this.imgUrlSeen = m.imgIdx >= 0 && m.all.some(r => !!r.img && /^https?:/i.test(r.img));
+        this.imagesDrawn = this.imagesOn() && m.all.some(r => !!r.img && Visual.okImage(r.img));
+        // El hueco de la imagen solo en los niveles que tienen alguna: así los nombres de esos niveles quedan alineados
+        // aunque a una fila le falte, y los demás niveles no se desplazan.
+        this.imgLevels.clear();
+        if (this.imagesOn()) for (const r of (m.total ? m.all.concat([m.total]) : m.all)) if (r.img && Visual.okImage(r.img)) this.imgLevels.add(Math.min(r.level, 2));
         if (this.focusKey) {
             const i = this.rows.findIndex(r => r.key === this.focusKey);
             if (i >= 0) this.focusIdx = i;
@@ -534,6 +672,7 @@ export class Visual implements IVisual {
         this.drawTotal(m);
         this.renderGuide();
         this.markSubSelectables();
+        this.updateWatermark();
         this.root.setAttribute("aria-label", "Sparkline Table by TCViz · " + m.sources[m.valueIdx[0]].displayName + " · " +
             this.tf("UI_RowsCount", "{0} rows", String(this.rows.length)));
     }
@@ -661,21 +800,47 @@ export class Visual implements IVisual {
         this.root.style.setProperty("--st-hfs", Number(s.header.fontSize) + "px");
         this.root.style.setProperty("--st-indent", Number(s.rows.indent) + "px");
 
-        // Anchos medidos con los extremos (no se formatean 12.000 valores para medir).
-        const widest = (vals: Num[], fmtOf: (v: number) => string, bold: boolean, size: number): number => {
-            let lo = Infinity, hi = -Infinity;
-            for (const v of vals) if (v !== null && v !== undefined) { if (v < lo) lo = v; if (v > hi) hi = v; }
-            if (!isFinite(lo)) return 0;
-            return Math.max(this.measure(fmtOf(lo), size, bold), this.measure(fmtOf(hi), size, bold));
-        };
+        // Hueco entre columnas (Column spacing, mínimo 12 px): va a la izquierda de cada columna numérica, así el
+        // texto alineado a la derecha nunca toca la columna anterior.
+        const gap = Math.max(12, Number(s.rows.colSpacing));
+        this.gap = gap;
+        this.root.style.setProperty("--st-gap", gap + "px");
+        // Anchos medidos con la fuente REAL de cada nivel (tamaño, familia, negrita), del total y de la cabecera; el
+        // máximo de todos. Solo se formatean los extremos de cada nivel (no 12.000 valores).
         const all = m.total ? m.all.concat([m.total]) : m.all;
-        const colOf = (k: number) => all.map(r => r.shown[k] ?? null);
-        const fmtM = (k: number) => (v: number) => this.fmtFull(v, m.sources[m.valueIdx[k]].format);
-        const hdrW = (txt: string) => this.measure(txt, Number(s.header.fontSize), true) + 2 * PAD;
-        const valW = (k: number) => Math.min(200, Math.max(widest(colOf(k), fmtM(k), k === 0, fs) + 2 * PAD,
-            Math.min(150, hdrW(m.sources[m.valueIdx[k]].displayName))));
-        const dW = Math.min(120, Math.max(widest(all.map(r => r.delta), v => this.signed(v, this.fmtCompact(v, m.sources[m.valueIdx[0]].format)), false, fs) + 2 * PAD, hdrW("Δ")));
-        const pW = Math.max(this.measure("+999.9%", fs) + 2 * PAD, hdrW("Δ%"));
+        const nV = m.valueIdx.length;
+        type Ext = { v: [number, number][]; d: [number, number] };
+        const byLv = new Map<number, Ext>();
+        const upd = (e: [number, number], x: Num | undefined) => { if (x !== null && x !== undefined) { if (x < e[0]) e[0] = x; if (x > e[1]) e[1] = x; } };
+        for (const r of all) {
+            const lv = Math.min(r.level, 2);
+            let e = byLv.get(lv);
+            if (!e) { e = { v: m.valueIdx.map(() => [Infinity, -Infinity] as [number, number]), d: [Infinity, -Infinity] }; byLv.set(lv, e); }
+            for (let k = 0; k < nV; k++) upd(e.v[k], r.shown[k]);
+            upd(e.d, r.delta);
+        }
+        const fmtD = (v: number) => this.signed(v, this.fmtCompact(v, m.sources[m.valueIdx[0]].format));
+        const textW: number[] = m.valueIdx.map(() => 0);
+        let dText = 0, pText = 0;
+        byLv.forEach((e, lv) => {
+            const st = this.levelStyles.get(lv);
+            const size = st && st.fs ? st.fs : fs;
+            const fam = st && st.ff ? st.ff : FONT;
+            const bw = st ? st.bold : "auto";
+            const ext2 = (x: [number, number], f: (v: number) => string, bold: boolean) =>
+                isFinite(x[0]) ? Math.max(this.measure(f(x[0]), size, bold, fam), this.measure(f(x[1]), size, bold, fam)) : 0;
+            for (let k = 0; k < nV; k++) {
+                const bold = bw === "on" || (bw === "auto" && (k === 0 || lv < 0));
+                textW[k] = Math.max(textW[k], ext2(e.v[k], v => this.fmtFull(v, m.sources[m.valueIdx[k]].format), bold));
+            }
+            dText = Math.max(dText, ext2(e.d, fmtD, bw === "on"));
+            pText = Math.max(pText, this.measure(this.fmtPct(-9.999), size, bw === "on", fam));
+        });
+        const hFam = s.header.fontFamily ? String(s.header.fontFamily) : FONT;
+        const hdrW = (txt: string) => this.measure(txt, Number(s.header.fontSize), s.header.bold !== false, hFam) + gap;
+        const valW = (k: number) => Math.min(240, Math.max(Math.ceil(textW[k]) + gap, Math.min(150, hdrW(m.sources[m.valueIdx[k]].displayName))));
+        const dW = Math.min(160, Math.max(Math.ceil(dText) + gap, hdrW("Δ")));
+        const pW = Math.max(Math.ceil(pText) + gap, hdrW("Δ%"));
 
         const want: Col[] = [{ id: "name", w: 0, sortKey: "name" }];
         want.push({ id: "val", w: valW(0), sortKey: "value" });
@@ -688,7 +853,11 @@ export class Visual implements IVisual {
         const fmt0 = m.sources[m.valueIdx[0]].format;
         const lastVals = all.map(r => { const sr = r.s[m.valueIdx[0]]; for (let p = sr.length - 1; p >= 0; p--) if (sr[p] !== null) return sr[p]; return null; });
         const showLast = s.sparkline.showLast !== false && s.sparkline.type !== "winloss";
-        this.labelW = showLast ? Math.min(64, widest(lastVals, v => this.fmtCompact(v, fmt0), false, Math.max(8, fs - 1)) + 6) : 0;
+        const lv = [Infinity, -Infinity];
+        for (const v of lastVals) if (v !== null) { if (v < lv[0]) lv[0] = v; if (v > lv[1]) lv[1] = v; }
+        const lblFs = Math.max(7, Math.min(fs - 1, Math.round(this.rowH * 0.55)));
+        const lblW = isFinite(lv[0]) ? Math.max(this.measure(this.fmtCompact(lv[0], fmt0), lblFs), this.measure(this.fmtCompact(lv[1], fmt0), lblFs)) : 0;
+        this.labelW = showLast ? Math.min(72, Math.ceil(lblW) + 6) : 0;
 
         // Primero el minigráfico (lo que define el producto), luego el nombre; los adornos cogen lo que sobra, y se
         // quitan en este orden: medidas 3 y 2, Δ, Δ%, valor. El minigráfico nunca.
@@ -696,7 +865,7 @@ export class Visual implements IVisual {
         const nameMin = Math.min(150, Math.max(64, this.W * 0.18));
         let spark = Math.max(56, Math.min(220, this.W * 0.3));
         const dropOrder: ColId[] = ["m3", "m2", "delta", "pct", "val"];
-        const sum = () => want.reduce((a, c) => a + c.w, 0) + 2 * PAD;
+        const sum = () => want.reduce((a, c) => a + c.w, 0) + gap + PAD;
         for (const id of dropOrder) {
             if (sum() + nameMin + spark + this.labelW <= W) break;
             const i = want.findIndex(c => c.id === id);
@@ -707,7 +876,7 @@ export class Visual implements IVisual {
             if (spark < 56 && this.labelW) { this.labelW = 0; spark = Math.max(40, W - sum() - nameMin); }
         }
         this.sparkW = Math.floor(spark);
-        want.push({ id: "spark", w: this.sparkW + this.labelW + 2 * PAD, sortKey: null });
+        want.push({ id: "spark", w: this.sparkW + this.labelW + gap + PAD, sortKey: null });
         this.cols = want;
         const tpl = want.map(c => c.id === "name" ? "minmax(0,1fr)" : c.w.toFixed(0) + "px").join(" ");
         this.root.style.setProperty("--st-cols", tpl);
@@ -845,6 +1014,8 @@ export class Visual implements IVisual {
             msgs.push({ t: this.tf("UI_Levels", "Showing {0} of {1} levels: use ▸ to open the next one.", String(shownLevels), String(total)), warn: false });
         }
         if (m.periods.length >= 400) msgs.push({ t: this.t("UI_PeriodCap", "Only the first 400 periods are drawn."), warn: false });
+        // Sin red: una URL en Row image no se carga; editando se avisa de cómo hacerlo.
+        if (this.editing && this.imgUrlSeen) msgs.push({ t: this.t("UI_ImgEmbedded", "Images must be embedded (Base64 data URI): web links are not loaded."), warn: true });
         if (this.settings.values.compare === "lastYear" && this.compareUsed !== "lastYear") {
             msgs.push({ t: this.t("UI_NoLastYear", "Same period last year is not available on this axis: compared with the previous period."), warn: false });
         }
@@ -868,6 +1039,8 @@ export class Visual implements IVisual {
     private buildRowCells(rowSel: Selection<any, any, any, any>): void {
         const name = rowSel.append("div").attr("class", "st-c st-c-name").attr("role", "gridcell");
         name.append("span").attr("class", "st-toggle").attr("aria-hidden", "true");
+        const ib = name.append("span").attr("class", "st-imgbox").attr("aria-hidden", "true").style("display", "none");
+        ib.append("svg").append("image").attr("preserveAspectRatio", "xMidYMid slice");
         name.append("span").attr("class", "st-label");
         for (const c of ["val", "delta", "pct", "m2", "m3"]) rowSel.append("div").attr("class", "st-c st-c-" + c).attr("role", "gridcell");
         const sp = rowSel.append("div").attr("class", "st-c st-c-spark").attr("role", "gridcell");
@@ -892,10 +1065,8 @@ export class Visual implements IVisual {
         sel.exit().remove();
         const enter = sel.enter().append("div").attr("class", "st-row").attr("role", "row");
         this.buildRowCells(enter);
-        enter.on("click", (e: MouseEvent, d: Row) => this.onRowClick(e, d));
-        enter.on("mousemove", (e: MouseEvent, d: Row) => this.onHover(e, d));
-        enter.on("mouseleave", () => this.hideTip());
-        enter.select(".st-toggle").on("click", (e: MouseEvent, d: Row) => { e.stopPropagation(); this.onToggle(d, e.altKey); });
+        // Sin manejadores por fila: los delegados de la capa (constructor) resuelven la fila por su CLAVE en el momento
+        // del gesto. La virtualización recicla nodos y un cierre viejo podía apuntar a otra fila.
         const all = enter.merge(sel);
         const anySel = this.sel.size > 0;
         all.each((d: Row, i: number, nodes: HTMLDivElement[]) => this.paintRow(nodes[i], d, anySel));
@@ -905,6 +1076,7 @@ export class Visual implements IVisual {
         const m = this.model as Model;
         const selected = anySel && this.isSelected(d);
         el.setAttribute("data-i", String(d.index));
+        el.setAttribute("data-key", d.key);
         el.id = "st-r-" + d.index;
         el.style.transform = "translateY(" + d.index * this.rowH + "px)";
         el.className = "st-row" + (d.isLeaf ? "" : " st-subtotal") + (selected ? " st-selected" : "") +
@@ -937,8 +1109,13 @@ export class Visual implements IVisual {
         const name = q(".st-c-name");
         name.style.paddingLeft = (PAD + Math.max(0, d.level) * Number(s.rows.indent)) + "px";
         const tg = q(".st-toggle");
-        tg.textContent = d.expandable ? (d.collapsed ? "▸" : "▾") : "";
+        // Toggle pendiente (pedido al host, aún sin update): el triángulo cambia en el acto, atenuado.
+        const pend = this.pendingToggle.has(d.key);
+        tg.textContent = d.expandable ? ((pend ? !d.collapsed : d.collapsed) ? "▸" : "▾") : "";
         tg.classList.toggle("st-can", d.expandable && this.canInteract);
+        tg.classList.toggle("st-pending", pend);
+        name.classList.toggle("st-can-toggle", d.expandable && this.canInteract && d.level >= 0);
+        this.paintImage(name, d);
         q(".st-label").textContent = d.level < 0 ? this.t("UI_GrandTotal", "Total") : d.label;
         const fmt0 = d.shownFmt[0];
         q(".st-c-val").textContent = this.fmtFull(d.shown[0] ?? null, fmt0);
@@ -1017,7 +1194,9 @@ export class Visual implements IVisual {
             e = x ? [x[0], x[1]] : [0, 1];
         }
         if (!isFinite(e[0])) e = [0, 1];
-        if (type === "column" || s.sparkline.zero) { e[0] = Math.min(0, e[0]); e[1] = Math.max(0, e[1]); }
+        // Columnas y área arrancan SIEMPRE en cero (o en el mínimo si hay negativos), también con escala por fila: una
+        // barra que no sale de cero exagera la diferencia. La línea puede ajustarse al rango (o a cero con Start at zero).
+        if (type === "column" || type === "area" || s.sparkline.zero) { e[0] = Math.min(0, e[0]); e[1] = Math.max(0, e[1]); }
         return e;
     }
 
@@ -1156,21 +1335,21 @@ export class Visual implements IVisual {
 
     // ── Interacción ──────────────────────────────────────────────────────────
 
+    /** Un clic = un toggle: si el host aún no ha contestado al anterior de esa fila, se ignora (se ve atenuado). */
     private onToggle(d: Row, entireLevel: boolean): void {
         if (!this.canInteract || !d.expandable || !d.id) return;
+        if (this.pendingToggle.has(d.key)) { this.dbg.ignoredPending++; return; }
         this.focusKey = d.key;
+        this.dbg.toggles++;
+        this.pendingToggle.set(d.key, Date.now());
+        // Si el host no contestara, se libera a los 4 s para no bloquear la fila.
+        window.setTimeout(() => { if (this.pendingToggle.delete(d.key)) this.drawRows(); }, 4000);
         // El host guarda el estado (marcadores incluidos) y manda un update nuevo. Sin persistProperties.
         this.selMgr.toggleExpandCollapse(d.id, entireLevel);
+        this.drawRows();
     }
 
     private rowKey(id: ISelectionId): string { return id.getKey(); }
-
-    private onRowClick(e: MouseEvent, d: Row): void {
-        this.focusIdx = d.index;
-        this.focusKey = d.key;
-        if (!this.canInteract) return;
-        this.selectRow(d, e.ctrlKey || e.metaKey);
-    }
 
     /**
      * Selección calculada en el visual (filtros-todas-las-filas): select(lista) no alterna como con un id suelto. Un
@@ -1241,16 +1420,29 @@ export class Visual implements IVisual {
         }
     }
 
-    private onHover(e: MouseEvent, d: Row): void {
+    /**
+     * Tooltip (Tino, 12-11: "muchas veces me activa los tooltips"): solo sobre el minigráfico (o la fila sin el nombre,
+     * según el panel), con 300 ms de retardo, nunca con un clic en curso, y fuera de la fila (encima o debajo) para no
+     * tapar lo que se está mirando. Se oculta al pulsar, al hacer scroll y al salir de la celda.
+     */
+    private onHover(e: MouseEvent, d: Row, rowEl: HTMLElement): void {
         const m = this.model;
         if (!m) return;
+        const mode = String(this.settings.rows.tooltips);
         const target = e.target as Element;
         const cell = target.closest(".st-c-spark");
-        const rect = this.element.getBoundingClientRect();
-        const coords = [e.clientX - rect.left, e.clientY - rect.top];
-        let items: VisualTooltipDataItem[];
-        const svg = (e.currentTarget as HTMLElement).querySelector("svg.st-svg") as SVGSVGElement | null;
+        const onValue = !!target.closest(".st-c-val, .st-c-delta, .st-c-pct, .st-c-m2, .st-c-m3");
+        const svg = rowEl.querySelector("svg.st-svg") as SVGSVGElement | null;
         const hover = svg ? svg.querySelector(".st-hover") as SVGPathElement : null;
+        this.layerEl.querySelectorAll(".st-hover").forEach(p => { if (p !== hover) p.removeAttribute("d"); });
+        const allowed = mode !== "off" && !this.pointerBusy && (cell || (mode === "row" && onValue));
+        if (!allowed) { this.hideTip(); return; }
+        const rect = this.element.getBoundingClientRect();
+        const rr = rowEl.getBoundingClientRect();
+        // Fuera de la fila: debajo si la fila está en la mitad de arriba; encima si está en la de abajo.
+        const below = rr.top - rect.top < this.H / 2;
+        const coords = [e.clientX - rect.left, below ? rr.bottom - rect.top + 2 : rr.top - rect.top - 2];
+        let items: VisualTooltipDataItem[];
         if (cell && svg && this.settings.sparkline.type !== "bullet") {
             const sr = svg.getBoundingClientRect();
             const px = e.clientX - sr.left;
@@ -1266,11 +1458,21 @@ export class Visual implements IVisual {
             if (hover) hover.removeAttribute("d");
             items = this.rowTip(d, m);
         }
-        this.host.tooltipService.show({ dataItems: items, identities: d.id ? [d.id] : [], coordinates: coords, isTouchEvent: false });
+        const show = () => {
+            this.tipTimer = null;
+            if (this.pointerBusy) return;
+            this.host.tooltipService.show({ dataItems: items, identities: d.id ? [d.id] : [], coordinates: coords, isTouchEvent: false });
+            this.tipShown = true;
+        };
+        if (this.tipShown) { this.host.tooltipService.move({ dataItems: items, identities: d.id ? [d.id] : [], coordinates: coords, isTouchEvent: false }); return; }
+        if (this.tipTimer !== null) window.clearTimeout(this.tipTimer);
+        this.tipTimer = window.setTimeout(show, 300);
     }
 
     private hideTip(): void {
-        try { this.host.tooltipService.hide({ immediately: true, isTouchEvent: false }); } catch { /* sin servicio */ }
+        if (this.tipTimer !== null) { window.clearTimeout(this.tipTimer); this.tipTimer = null; }
+        if (this.tipShown) { try { this.host.tooltipService.hide({ immediately: true, isTouchEvent: false }); } catch { /* sin servicio */ } }
+        this.tipShown = false;
         this.layerEl.querySelectorAll(".st-hover").forEach(p => p.removeAttribute("d"));
     }
 

@@ -33,6 +33,14 @@
       "descriptionKey": "Role_Target_Desc"
     },
     {
+      "displayName": "Row image (Pro)",
+      "displayNameKey": "Role_RowImage",
+      "name": "rowImage",
+      "kind": "Measure",
+      "description": "Image at the start of each row: a text measure or column (First) with a data:image Base64 URI. Web links are not loaded.",
+      "descriptionKey": "Role_RowImage_Desc"
+    },
+    {
       "displayName": "Plan (Pro)",
       "displayNameKey": "Role_Plan",
       "name": "plan",
@@ -81,6 +89,9 @@
           },
           "tooltips": {
             "max": 5
+          },
+          "rowImage": {
+            "max": 1
           }
         }
       ],
@@ -130,6 +141,11 @@
             {
               "for": {
                 "in": "tooltips"
+              }
+            },
+            {
+              "for": {
+                "in": "rowImage"
               }
             }
           ]
@@ -596,11 +612,48 @@
             "numeric": true
           }
         },
+        "colSpacing": {
+          "displayName": "Column spacing (px)",
+          "displayNameKey": "Prop_rows_colSpacing",
+          "type": {
+            "numeric": true
+          }
+        },
+        "imageGap": {
+          "displayName": "Reserve space for row images",
+          "displayNameKey": "Prop_rows_imageGap",
+          "type": {
+            "bool": true
+          }
+        },
         "grandTotal": {
           "displayName": "Grand total",
           "displayNameKey": "Prop_rows_grandTotal",
           "type": {
             "bool": true
+          }
+        },
+        "tooltips": {
+          "displayName": "Tooltips",
+          "displayNameKey": "Prop_rows_tooltips",
+          "type": {
+            "enumeration": [
+              {
+                "value": "sparkline",
+                "displayName": "Sparkline only",
+                "displayNameKey": "Enum_tooltips_sparkline"
+              },
+              {
+                "value": "row",
+                "displayName": "Whole row",
+                "displayNameKey": "Enum_tooltips_row"
+              },
+              {
+                "value": "off",
+                "displayName": "Off",
+                "displayNameKey": "Enum_tooltips_off"
+              }
+            ]
           }
         },
         "sortBy": {
@@ -809,6 +862,38 @@
           "type": {
             "bool": true
           }
+        },
+        "image": {
+          "displayName": "Show row image (Pro)",
+          "displayNameKey": "Prop_level1_image",
+          "type": {
+            "bool": true
+          }
+        },
+        "imageSize": {
+          "displayName": "Image size (px, 0 = automatic)",
+          "displayNameKey": "Prop_level1_imageSize",
+          "type": {
+            "numeric": true
+          }
+        },
+        "imageShape": {
+          "displayName": "Image shape",
+          "displayNameKey": "Prop_level1_imageShape",
+          "type": {
+            "enumeration": [
+              {
+                "value": "square",
+                "displayName": "Square",
+                "displayNameKey": "Enum_imageShape_square"
+              },
+              {
+                "value": "round",
+                "displayName": "Round",
+                "displayNameKey": "Enum_imageShape_round"
+              }
+            ]
+          }
         }
       }
     },
@@ -889,6 +974,38 @@
           "displayNameKey": "Prop_level2_italic",
           "type": {
             "bool": true
+          }
+        },
+        "image": {
+          "displayName": "Show row image (Pro)",
+          "displayNameKey": "Prop_level2_image",
+          "type": {
+            "bool": true
+          }
+        },
+        "imageSize": {
+          "displayName": "Image size (px, 0 = automatic)",
+          "displayNameKey": "Prop_level2_imageSize",
+          "type": {
+            "numeric": true
+          }
+        },
+        "imageShape": {
+          "displayName": "Image shape",
+          "displayNameKey": "Prop_level2_imageShape",
+          "type": {
+            "enumeration": [
+              {
+                "value": "square",
+                "displayName": "Square",
+                "displayNameKey": "Enum_imageShape_square"
+              },
+              {
+                "value": "round",
+                "displayName": "Round",
+                "displayNameKey": "Enum_imageShape_round"
+              }
+            ]
           }
         }
       }
@@ -971,6 +1088,38 @@
           "type": {
             "bool": true
           }
+        },
+        "image": {
+          "displayName": "Show row image (Pro)",
+          "displayNameKey": "Prop_level3_image",
+          "type": {
+            "bool": true
+          }
+        },
+        "imageSize": {
+          "displayName": "Image size (px, 0 = automatic)",
+          "displayNameKey": "Prop_level3_imageSize",
+          "type": {
+            "numeric": true
+          }
+        },
+        "imageShape": {
+          "displayName": "Image shape",
+          "displayNameKey": "Prop_level3_imageShape",
+          "type": {
+            "enumeration": [
+              {
+                "value": "square",
+                "displayName": "Square",
+                "displayNameKey": "Enum_imageShape_square"
+              },
+              {
+                "value": "round",
+                "displayName": "Round",
+                "displayNameKey": "Enum_imageShape_round"
+              }
+            ]
+          }
         }
       }
     },
@@ -1051,6 +1200,38 @@
           "displayNameKey": "Prop_levelTotal_italic",
           "type": {
             "bool": true
+          }
+        },
+        "image": {
+          "displayName": "Show row image (Pro)",
+          "displayNameKey": "Prop_levelTotal_image",
+          "type": {
+            "bool": true
+          }
+        },
+        "imageSize": {
+          "displayName": "Image size (px, 0 = automatic)",
+          "displayNameKey": "Prop_levelTotal_imageSize",
+          "type": {
+            "numeric": true
+          }
+        },
+        "imageShape": {
+          "displayName": "Image shape",
+          "displayNameKey": "Prop_levelTotal_imageShape",
+          "type": {
+            "enumeration": [
+              {
+                "value": "square",
+                "displayName": "Square",
+                "displayNameKey": "Enum_imageShape_square"
+              },
+              {
+                "value": "round",
+                "displayName": "Round",
+                "displayNameKey": "Enum_imageShape_round"
+              }
+            ]
           }
         }
       }

@@ -345,11 +345,51 @@ export const OBJECTS: Record<string, ObjSpec> = {
                 "max": 40
             },
             {
+                "name": "colSpacing",
+                "type": "num",
+                "def": 16,
+                "key": "Prop_rows_colSpacing",
+                "label": "Column spacing (px)",
+                "min": 12,
+                "max": 40
+            },
+            {
+                "name": "imageGap",
+                "type": "bool",
+                "def": true,
+                "key": "Prop_rows_imageGap",
+                "label": "Reserve space for row images"
+            },
+            {
                 "name": "grandTotal",
                 "type": "bool",
                 "def": true,
                 "key": "Prop_rows_grandTotal",
                 "label": "Grand total"
+            },
+            {
+                "name": "tooltips",
+                "type": "enum",
+                "def": "sparkline",
+                "key": "Prop_rows_tooltips",
+                "label": "Tooltips",
+                "items": [
+                    [
+                        "sparkline",
+                        "Enum_tooltips_sparkline",
+                        "Sparkline only"
+                    ],
+                    [
+                        "row",
+                        "Enum_tooltips_row",
+                        "Whole row"
+                    ],
+                    [
+                        "off",
+                        "Enum_tooltips_off",
+                        "Off"
+                    ]
+                ]
             },
             {
                 "name": "sortBy",
@@ -548,6 +588,41 @@ export const OBJECTS: Record<string, ObjSpec> = {
                 "def": false,
                 "key": "Prop_level1_italic",
                 "label": "Italic"
+            },
+            {
+                "name": "image",
+                "type": "bool",
+                "def": true,
+                "key": "Prop_level1_image",
+                "label": "Show row image (Pro)"
+            },
+            {
+                "name": "imageSize",
+                "type": "num",
+                "def": 0,
+                "key": "Prop_level1_imageSize",
+                "label": "Image size (px, 0 = automatic)",
+                "min": 0,
+                "max": 48
+            },
+            {
+                "name": "imageShape",
+                "type": "enum",
+                "def": "square",
+                "key": "Prop_level1_imageShape",
+                "label": "Image shape",
+                "items": [
+                    [
+                        "square",
+                        "Enum_imageShape_square",
+                        "Square"
+                    ],
+                    [
+                        "round",
+                        "Enum_imageShape_round",
+                        "Round"
+                    ]
+                ]
             }
         ]
     },
@@ -625,6 +700,41 @@ export const OBJECTS: Record<string, ObjSpec> = {
                 "def": false,
                 "key": "Prop_level2_italic",
                 "label": "Italic"
+            },
+            {
+                "name": "image",
+                "type": "bool",
+                "def": true,
+                "key": "Prop_level2_image",
+                "label": "Show row image (Pro)"
+            },
+            {
+                "name": "imageSize",
+                "type": "num",
+                "def": 0,
+                "key": "Prop_level2_imageSize",
+                "label": "Image size (px, 0 = automatic)",
+                "min": 0,
+                "max": 48
+            },
+            {
+                "name": "imageShape",
+                "type": "enum",
+                "def": "square",
+                "key": "Prop_level2_imageShape",
+                "label": "Image shape",
+                "items": [
+                    [
+                        "square",
+                        "Enum_imageShape_square",
+                        "Square"
+                    ],
+                    [
+                        "round",
+                        "Enum_imageShape_round",
+                        "Round"
+                    ]
+                ]
             }
         ]
     },
@@ -702,6 +812,41 @@ export const OBJECTS: Record<string, ObjSpec> = {
                 "def": false,
                 "key": "Prop_level3_italic",
                 "label": "Italic"
+            },
+            {
+                "name": "image",
+                "type": "bool",
+                "def": true,
+                "key": "Prop_level3_image",
+                "label": "Show row image (Pro)"
+            },
+            {
+                "name": "imageSize",
+                "type": "num",
+                "def": 0,
+                "key": "Prop_level3_imageSize",
+                "label": "Image size (px, 0 = automatic)",
+                "min": 0,
+                "max": 48
+            },
+            {
+                "name": "imageShape",
+                "type": "enum",
+                "def": "square",
+                "key": "Prop_level3_imageShape",
+                "label": "Image shape",
+                "items": [
+                    [
+                        "square",
+                        "Enum_imageShape_square",
+                        "Square"
+                    ],
+                    [
+                        "round",
+                        "Enum_imageShape_round",
+                        "Round"
+                    ]
+                ]
             }
         ]
     },
@@ -779,6 +924,41 @@ export const OBJECTS: Record<string, ObjSpec> = {
                 "def": false,
                 "key": "Prop_levelTotal_italic",
                 "label": "Italic"
+            },
+            {
+                "name": "image",
+                "type": "bool",
+                "def": true,
+                "key": "Prop_levelTotal_image",
+                "label": "Show row image (Pro)"
+            },
+            {
+                "name": "imageSize",
+                "type": "num",
+                "def": 0,
+                "key": "Prop_levelTotal_imageSize",
+                "label": "Image size (px, 0 = automatic)",
+                "min": 0,
+                "max": 48
+            },
+            {
+                "name": "imageShape",
+                "type": "enum",
+                "def": "square",
+                "key": "Prop_levelTotal_imageShape",
+                "label": "Image shape",
+                "items": [
+                    [
+                        "square",
+                        "Enum_imageShape_square",
+                        "Square"
+                    ],
+                    [
+                        "round",
+                        "Enum_imageShape_round",
+                        "Round"
+                    ]
+                ]
             }
         ]
     }
