@@ -139,3 +139,30 @@ P = {# --- reutilizadas de Line Chart (i18n_line.py) ---
 "{0} rows": ["{0} linhas", "{0} lignes", "{0} Zeilen", "{0} righe", "{0} rijen", "{0} wierszy", "{0} 行", "{0} 行", "{0}개 행", "{0} filas"],
 "Δ vs {0}": ["Δ vs {0}", "Δ vs {0}", "Δ ggü. {0}", "Δ vs {0}", "Δ t.o.v. {0}", "Δ vs {0}", "Δ (対 {0})", "Δ 对比 {0}", "Δ({0} 대비)", "Δ frente a {0}"],
 }
+
+# --- 12-11: alto de fila, formato por niveles y cabecera, escala automática, total del rango ---
+P.update({
+"Automatic": ["Automático", "Automatique", "Automatisch", "Automatico", "Automatisch", "Automatycznie", "自動", "自动", "자동", "Automático"],
+"Background": ["Plano de fundo", "Arrière-plan", "Hintergrund", "Sfondo", "Achtergrond", "Tło", "背景", "背景", "배경", "Fondo"],
+"Background opacity (%)": ["Opacidade do fundo (%)", "Opacité de l’arrière-plan (%)", "Hintergrunddeckkraft (%)", "Opacità dello sfondo (%)", "Dekking van achtergrond (%)", "Krycie tła (%)", "背景の不透明度 (%)", "背景不透明度 (%)", "배경 불투명도(%)", "Opacidad del fondo (%)"],
+"Bold": ["Negrito", "Gras", "Fett", "Grassetto", "Vet", "Pogrubienie", "太字", "加粗", "굵게", "Negrita"],
+"Font": ["Fonte", "Police", "Schriftart", "Carattere", "Lettertype", "Czcionka", "フォント", "字体", "글꼴", "Fuente"],
+"Grand total row": ["Linha do total geral", "Ligne du total général", "Zeile des Gesamtergebnisses", "Riga del totale complessivo", "Rij met eindtotaal", "Wiersz sumy końcowej", "総計の行", "总计行", "총합계 행", "Fila del total general"],
+"Italic": ["Itálico", "Italique", "Kursiv", "Corsivo", "Cursief", "Kursywa", "斜体", "倾斜", "기울임꼴", "Cursiva"],
+"Level": ["Nível", "Niveau", "Ebene", "Livello", "Niveau", "Poziom", "レベル", "层级", "수준", "Nivel"],
+"Level 1": ["Nível 1", "Niveau 1", "Ebene 1", "Livello 1", "Niveau 1", "Poziom 1", "レベル 1", "第 1 级", "수준 1", "Nivel 1"],
+"Level 2": ["Nível 2", "Niveau 2", "Ebene 2", "Livello 2", "Niveau 2", "Poziom 2", "レベル 2", "第 2 级", "수준 2", "Nivel 2"],
+"Level 3": ["Nível 3", "Niveau 3", "Ebene 3", "Livello 3", "Niveau 3", "Poziom 3", "レベル 3", "第 3 级", "수준 3", "Nivel 3"],
+"Level {0}": ["Nível {0}", "Niveau {0}", "Ebene {0}", "Livello {0}", "Niveau {0}", "Poziom {0}", "レベル {0}", "第 {0} 级", "수준 {0}", "Nivel {0}"],
+"Off": ["Desativado", "Désactivé", "Aus", "Disattivato", "Uit", "Wyłączone", "オフ", "关", "끄기", "Desactivado"],
+"On": ["Ativado", "Activé", "Ein", "Attivato", "Aan", "Włączone", "オン", "开", "켜기", "Activado"],
+"Per row in detail rows, shared in subtotals": ["Por linha no detalhe, comum nos subtotais", "Par ligne dans le détail, commune dans les sous-totaux", "Pro Zeile im Detail, gemeinsam in Zwischensummen", "Per riga nel dettaglio, comune nei subtotali", "Per rij in detail, gedeeld in subtotalen", "Na wiersz w szczegółach, wspólna w sumach częściowych", "明細は行ごと、小計は共通", "明细按行，小计共享", "세부 행은 행별, 부분합은 공통", "Por fila en el detalle, común en los subtotales"],
+"Row height (px, 0 = automatic)": ["Altura da linha (px, 0 = automática)", "Hauteur de ligne (px, 0 = automatique)", "Zeilenhöhe (px, 0 = automatisch)", "Altezza riga (px, 0 = automatica)", "Rijhoogte (px, 0 = automatisch)", "Wysokość wiersza (px, 0 = automatyczna)", "行の高さ (px、0 = 自動)", "行高（像素，0 = 自动）", "행 높이(px, 0 = 자동)", "Alto de fila (px, 0 = automático)"],
+"Row levels": ["Níveis de linha", "Niveaux de ligne", "Zeilenebenen", "Livelli di riga", "Rijniveaus", "Poziomy wierszy", "行のレベル", "行层级", "행 수준", "Niveles de fila"],
+"Scale: per row in detail rows": ["Escala: por linha no detalhe", "Échelle : par ligne dans le détail", "Skala: pro Zeile im Detail", "Scala: per riga nel dettaglio", "Schaal: per rij in detail", "Skala: na wiersz w szczegółach", "スケール: 明細は行ごと", "刻度：明细按行", "배율: 세부 행은 행별", "Escala: por fila en el detalle"],
+"Sparkline Table could not draw this data: {0}": ["O Sparkline Table não conseguiu desenhar estes dados: {0}", "Sparkline Table n’a pas pu tracer ces données : {0}", "Sparkline Table konnte diese Daten nicht zeichnen: {0}", "Sparkline Table non è riuscito a disegnare questi dati: {0}", "Sparkline Table kon deze gegevens niet tekenen: {0}", "Sparkline Table nie mógł narysować tych danych: {0}", "Sparkline Table はこのデータを描画できませんでした: {0}", "Sparkline Table 无法绘制此数据：{0}", "Sparkline Table에서 이 데이터를 그릴 수 없습니다: {0}", "Sparkline Table no ha podido dibujar estos datos: {0}"],
+"Text color": ["Cor do texto", "Couleur du texte", "Textfarbe", "Colore del testo", "Tekstkleur", "Kolor tekstu", "テキストの色", "文本颜色", "텍스트 색", "Color del texto"],
+"Text size (0 = as Rows)": ["Tamanho do texto (0 = como Linhas)", "Taille du texte (0 = comme Lignes)", "Textgröße (0 = wie Zeilen)", "Dimensione testo (0 = come Righe)", "Tekstgrootte (0 = als Rijen)", "Rozmiar tekstu (0 = jak Wiersze)", "テキストのサイズ (0 = 行と同じ)", "文本大小（0 = 与行相同）", "텍스트 크기(0 = 행과 같음)", "Tamaño del texto (0 = como Filas)"],
+"Value shows the total of the range": ["O valor mostra o total do intervalo", "La valeur affiche le total de la plage", "Wert zeigt die Summe des Bereichs", "Il valore mostra il totale dell’intervallo", "Waarde toont het totaal van het bereik", "Wartość pokazuje sumę zakresu", "値に範囲の合計を表示", "值显示范围合计", "값에 범위 합계 표시", "El valor muestra el total del rango"],
+"raised to {0} px to fit the text": ["aumentada para {0} px para caber o texto", "portée à {0} px pour le texte", "auf {0} px erhöht, damit der Text passt", "portata a {0} px per il testo", "verhoogd naar {0} px zodat de tekst past", "zwiększono do {0} px, aby zmieścić tekst", "テキストに合わせて {0} px に拡大", "已增至 {0} 像素以容纳文本", "텍스트에 맞게 {0}px로 늘림", "subido a {0} px para que quepa el texto"],
+})

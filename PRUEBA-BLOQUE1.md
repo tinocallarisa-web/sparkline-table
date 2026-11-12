@@ -40,8 +40,8 @@ agregados, rejilla virtualizada e identidad de fila con la ruta completa.
 
 ### 1. Carga y filas (A y B, todo expandido: Alt + clic en ▸ de un nivel 1 y, al repintar, de un nivel 2)
 - Mientras llegan segmentos, bajo la cabecera: **"Cargando N de …"** (N crece). Al terminar, el aviso desaparece.
-  La ventana es ahora de **5.000 filas por segmento** (era 1.000): B debería cargar en ~3 segmentos en vez de 25.
-  Apunta el tiempo hasta que desaparece el aviso. Si sale **"Límite de filas alcanzado: se muestran N filas…"**
+  Ventana de **1.000 filas por segmento** (la validada; 5.000 colgó el escenario A el 12-11 junto con los subtotales
+  de columna activados por defecto). Apunta el tiempo hasta que desaparece el aviso. Si sale **"Límite de filas alcanzado: se muestran N filas…"**
   (en rojo), apunta N: es el techo de `fetchMoreData` y debe estar por encima de 2.000 hojas.
 - Ninguna fila recortada: con A todo expandido, la tabla nativa y el visual deben tener los mismos PDV (1.798).
 - Scroll de arriba abajo en B: fluido. El analizador de rendimiento no debe mostrar entradas nuevas al hacer scroll.
@@ -51,9 +51,10 @@ agregados, rejilla virtualizada e identidad de fila con la ruta completa.
 - `Margen bruto %` en una provincia: debe coincidir con una tarjeta nativa filtrada a esa provincia y a sep-2026, y
   **no** con la suma de sus comerciales.
 - Fila **Total** fija abajo: igual que la tarjeta nativa a sep-2026. Se quita en Formato → Rows → Grand total.
-- **Nuevo:** Formato → Values → Value shows → *Total of the range*. La cabecera pasa a "Ventas netas · Total" y el
-  valor debe ser el de la tarjeta sin filtro de mes (lo da el **subtotal de columna del motor**: `columnSubtotals`
-  está ahora activado por defecto). Para `Margen bruto %` el total del rango debe ser el margen del periodo entero,
+- **Nuevo:** Formato → Values → *Value shows the total of the range* (apagado por defecto). Es el interruptor de
+  subtotales de columna del host: solo al encenderlo la consulta pide el total de cada fila. **Pruébalo aparte con A
+  todo expandido y apunta si tarda o se cuelga.** La cabecera pasa a "Ventas netas · Total" y el
+  valor debe ser el de la tarjeta sin filtro de mes. Para `Margen bruto %` el total del rango debe ser el margen del periodo entero,
   no la media de los meses. Si en Desktop sale "Total of the range did not arrive from Power BI", apúntalo: es que el
   host no manda el subtotal de columna y habría que replantearlo.
 
@@ -173,4 +174,27 @@ marcadores ni el formato de números con la cultura de Power BI. Eso es lo de ar
 - Escala común **por nivel** por defecto; **por fila** rotulada en la cabecera.
 - Orden por cabecera: local al momento; editando se guarda con persistProperties (acción explícita del usuario).
 - Plan y Prior year declarados como pozos (Pro) para no cambiar el mapeo en el bloque 2; hoy solo salen en el tooltip.
-- Ventana de filas 5.000 por segmento (la prueba usó 1.000).
+- Ventana de filas 1.000 por segmento (la validada) y subtotales de columna solo si el usuario los pide.
+- Escala por defecto *auto* (propuesta, pendiente de Tino): por fila en el último nivel, común por nivel en los
+  subtotales; rotulada "Escala: por fila en el detalle".
+
+## 12-11: cuelgue con id_pdv y opciones nuevas
+
+**Cuelgue (escenario A con id_pdv).** El simulador no lo reproduce (no tiene motor de consultas): 1.800 hojas × 24 meses
+con subtotales de filas y columnas cargadas en 3 segmentos dan 13-40 ms por update, 5/5 pares de eventos y ningún
+error. Lo que cambió respecto a la prueba de viabilidad, que cargaba A en 671 ms, era la **forma de la consulta**
+(ventana 5.000 y subtotales de columna activados por defecto) y la **regla de fetchMoreData** (solo pedir si llegaron
+filas nuevas). Las tres cosas vuelven a lo validado. Además: todo error termina en renderingFailed con mensaje en el
+visual, la selección ya no se casa con `equals` en cada update y los formateadores se cachean por unidad.
+Qué probar primero: A con id_pdv, todo expandido (debe cargar como en la prueba); luego encender *Value shows the
+total of the range*.
+
+**Opciones nuevas:**
+- Rows → *Row height (px, 0 = automatic)*: 0 = el de la densidad. Si es menor que el texto, manda el texto (texto +
+  4 px) y el panel lo dice ("subido a N px…"). Minigráfico, marcadores y último valor se escalan con el alto; la
+  cabecera y el total usan el mismo alto mínimo.
+- *Row levels*: selector Level 1 / 2 / 3 / Grand total row (según los niveles presentes) con fondo + opacidad, color
+  del texto, tamaño (0 = como Rows), fuente, negrita (Automatic = lo de siempre) y cursiva. Alto contraste ignora
+  fondos y colores.
+- Column headers: fuente, negrita, color y fondo propios. Los nombres largos de medida pasan a dos líneas (nombre
+  completo en el title).
