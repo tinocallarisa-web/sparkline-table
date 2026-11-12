@@ -76,6 +76,23 @@ const CLASSIC: Look = {
     down: "#C4314B", target: "#252423", sub: "#F7F7F7", sel: "#DEECF9", hover: "#F3F2F1", band: "#EDEBE9", neutral: "#C27C0E",
 };
 
+/**
+ * Los seis estilos de la colección (Pro, con vista previa): los MISMOS tokens que Line Chart y KPI Card (trend.color =
+ * series[0], targetColor = plan, up/down = los de la comparación), para que una página con varios visuales TCViz en
+ * Boardroom se vea como un solo informe. neutral = el color "regular" del estado por umbral en ese estilo.
+ */
+const PRO_STYLES = ["boardroom", "ledger", "editorial", "signal", "aurora", "terrace"];
+interface StyleTokens { bg: string; text: string; axis: string; grid: string; plan: string; up: string; down: string; series: string[]; font?: string; grad?: string; }
+export const STYLE_TOKENS: Record<string, StyleTokens> = {
+    boardroom: { bg: "#16263D", text: "#F2F0E8", axis: "#9FB0C6", grid: "#2A3E5C", plan: "#6FCF97", up: "#6FCF97", down: "#EB8A7B", series: ["#C9A45C", "#8FB8E8", "#EB8A7B", "#6FCF97", "#C5D3E3"] },
+    ledger: { bg: "#FBF8EF", text: "#231F16", axis: "#6E6652", grid: "#D9D2BE", plan: "#946A10", up: "#2F6B3B", down: "#A32A2A", series: ["#7A1F1F", "#3A3528", "#2F6B3B", "#946A10", "#B7AD92"], font: "Georgia, serif" },
+    editorial: { bg: "#FFFFFF", text: "#111111", axis: "#5F5F5F", grid: "#E2E2E2", plan: "#111111", up: "#111111", down: "#D7263D", series: ["#D7263D", "#111111", "#5F5F5F", "#BDBDBD", "#8C1C2B"], font: "Georgia, serif" },
+    signal: { bg: "#FFFFFF", text: "#14202B", axis: "#566472", grid: "#D9DEE4", plan: "#B7791F", up: "#1F7A4D", down: "#C0392B", series: ["#1F7A4D", "#14202B", "#B7791F", "#C0392B", "#9AA5B1"] },
+    aurora: { bg: "#10395E", text: "#FFFFFF", axis: "#C5D3E3", grid: "#3A5C7E", plan: "#FFD27D", up: "#7CE7D0", down: "#FF9DB0", series: ["#7CE7D0", "#FFD27D", "#FF9DB0", "#9DB7FF", "#C5D3E3"], grad: "linear-gradient(135deg, #1B1147, #10395E 50%, #0B5A5E)" },
+    terrace: { bg: "#FBF5EC", text: "#3A2A1E", axis: "#7A6450", grid: "#E5D6C2", plan: "#5E7128", up: "#5E7128", down: "#B5372A", series: ["#B5532A", "#5E7128", "#B5782A", "#B5372A", "#C9A77E"] },
+};
+const STYLE_NEUTRAL: Record<string, string> = { boardroom: "#C9A45C", ledger: "#946A10", editorial: "#8C6D1F", signal: "#B7791F", aurora: "#FFD27D", terrace: "#B5782A" };
+
 type ColId = "name" | "val" | "delta" | "pct" | "pl" | "py" | "fc" | "vabs" | "vbar" | "vpct" | "stat" | "m2" | "m3" | "spark" | "spark2" | "spark3";
 interface Col { id: ColId; w: number; sortKey: string | null; }
 /** Orden de las columnas = orden de las celdas en el DOM (la rejilla las coloca por orden; las ocultas no ocupan). */
@@ -486,14 +503,29 @@ export class Visual implements IVisual {
         return (h?.hostCapabilities?.allowInteractions ?? h?.allowInteractions) !== false;
     }
 
-    /** Colores del dibujo: alto contraste > ajustes del usuario > plantilla (Report theme / Classic). */
+    /** Tokens del estilo de la colección que se dibuja: solo con Pro o en la vista previa; si no, null (Report theme). */
+    private styleTokens(): StyleTokens | null {
+        if (this.hc) return null;
+        const t = String(this.settings.style?.template ?? "report");
+        return PRO_STYLES.indexOf(t) >= 0 && this.previewOf("styles") ? STYLE_TOKENS[t] : null;
+    }
+
+    /** Colores del dibujo: alto contraste > ajustes del usuario > plantilla (Report theme / Classic / estilo). */
     private computeLook(): Look {
         if (this.hc) {
             const fg = this.hcFg, bg = this.hcBg;
             return { bg, text: fg, soft: fg, rule: fg, line: fg, accent: fg, up: fg, down: fg, target: fg, sub: bg, sel: bg, hover: bg, band: bg, neutral: fg };
         }
         let base: Look;
-        if (this.settings.style.template === "classic") base = { ...CLASSIC };
+        const tok = this.styleTokens();
+        if (tok) {
+            const tpl = String(this.settings.style.template);
+            base = {
+                bg: tok.bg, text: tok.text, soft: tok.axis, rule: tok.grid, line: tok.axis, accent: tok.series[0], up: tok.up, down: tok.down,
+                target: tok.plan, sub: mix(tok.text, tok.bg, 0.06), sel: mix(tok.series[0], tok.bg, 0.22), hover: mix(tok.text, tok.bg, 0.09),
+                band: mix(tok.text, tok.bg, 0.11), neutral: STYLE_NEUTRAL[tpl] ?? CLASSIC.neutral,
+            };
+        } else if (this.settings.style.template === "classic") base = { ...CLASSIC };
         else {
             const p = this.pal;
             const fg = p?.foreground?.value ?? CLASSIC.text;
@@ -763,6 +795,8 @@ export class Visual implements IVisual {
         const v = s.variance || {};
         const varOn = !!m && this.varBaseIdx(m) >= 0 && v.show !== false && (!!v.showAbs || !!v.showPct || !!v.showBar);
         groups.push(["variance", varOn, "var=" + this.varCode(m)]);
+        const tpl = String(s.style?.template ?? "report");
+        groups.push(["styles", PRO_STYLES.indexOf(tpl) >= 0, "style=" + tpl]);
         groups.push(["status", !!m && s.status?.show === true, "st"]);
         const extra = !!m && [1, 2].some(i => this.extraSparkK(m, i) >= 0);
         groups.push(["sparklines", extra, "sp=" + (m ? [1, 2].map(i => this.extraSparkK(m, i)).join(",") : "")]);
@@ -986,10 +1020,16 @@ export class Visual implements IVisual {
         set("--st-s2", this.hc ? this.hcFg : String(sts.neutralColor || L.neutral));
         set("--st-s1", this.hc ? this.hcFg : String(sts.badColor || L.down));
         const bs = this.settings.bands;
-        set("--st-b1", this.hc ? "transparent" : String(bs.band1Color || "#F6CFCB"));
-        set("--st-b2", this.hc ? "transparent" : String(bs.band2Color || "#FBE7B5"));
-        set("--st-b3", this.hc ? "transparent" : String(bs.band3Color || "#CDE8CF")); set("--st-focus", this.hc ? this.hcSel : L.accent);
-        st.background = this.hc ? this.hcBg : (this.settings.style.template === "classic" ? CLASSIC.bg : "transparent");
+        // Con un estilo de la colección, las bandas que el usuario no ha tocado salen de sus tokens (sobre fondo oscuro
+        // los pasteles por defecto no se leen).
+        const tok = this.styleTokens();
+        const saved: any = (this.dataView?.metadata?.objects as any)?.bands ?? {};
+        const band = (k: string, def: string, fromTok: () => string) => this.hc ? "transparent" : saved[k] ? String(bs[k]) : tok ? fromTok() : String(bs[k] || def);
+        set("--st-b1", band("band1Color", "#F6CFCB", () => mix((tok as StyleTokens).down, (tok as StyleTokens).bg, 0.32)));
+        set("--st-b2", band("band2Color", "#FBE7B5", () => mix(STYLE_NEUTRAL[String(this.settings.style.template)] ?? "#C9A45C", (tok as StyleTokens).bg, 0.3)));
+        set("--st-b3", band("band3Color", "#CDE8CF", () => mix((tok as StyleTokens).up, (tok as StyleTokens).bg, 0.3))); set("--st-focus", this.hc ? this.hcSel : L.accent);
+        st.background = this.hc ? this.hcBg : tok ? (tok.grad ?? tok.bg) : (this.settings.style.template === "classic" ? CLASSIC.bg : "transparent");
+        st.fontFamily = !this.hc && tok?.font ? tok.font : "";
         this.root.classList.toggle("st-hc", this.hc);
         // El tipo va en cada svg (st-svg st-t-*): cada columna de minigráfico tiene el suyo.
         this.root.classList.toggle("st-format", this.formatMode);
@@ -1170,7 +1210,7 @@ export class Visual implements IVisual {
         byLv.forEach((e, lv) => {
             const st = this.levelStyles.get(lv);
             const size = st && st.fs ? st.fs : fs;
-            const fam = st && st.ff ? st.ff : FONT;
+            const fam = st && st.ff ? st.ff : (this.styleTokens()?.font ?? FONT);
             const bw = st ? st.bold : "auto";
             const ext2 = (x: [number, number], f: (v: number) => string, bold: boolean) =>
                 isFinite(x[0]) ? Math.max(this.measure(f(x[0]), size, bold, fam), this.measure(f(x[1]), size, bold, fam)) : 0;
@@ -1183,7 +1223,7 @@ export class Visual implements IVisual {
             for (let k = 0; k < 3; k++) if (refIdx[k] >= 0) refW[k] = Math.max(refW[k], ext2(e.r[k], v => this.fmtFull(v, m.sources[refIdx[k]].format), bw === "on"));
             vaText = Math.max(vaText, ext2(e.va, fmtD, bw === "on"));
         });
-        const hFam = s.header.fontFamily ? String(s.header.fontFamily) : FONT;
+        const hFam = s.header.fontFamily ? String(s.header.fontFamily) : (this.styleTokens()?.font ?? FONT);
         const hdrW = (txt: string) => this.measure(txt, Number(s.header.fontSize), s.header.bold !== false, hFam) + gap;
         const valW = (k: number) => Math.min(240, Math.max(Math.ceil(textW[k]) + gap, Math.min(150, hdrW(m.sources[m.valueIdx[k]].displayName))));
         const dW = Math.min(160, Math.max(Math.ceil(dText) + gap, hdrW("Δ")));

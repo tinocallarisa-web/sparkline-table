@@ -266,6 +266,32 @@ async def main():
         res["p3_eventos"] = await events(pg)
         await pg.close()
 
+        # ── Parte 4: seis estilos de la colección ──────────────────────────────────────────────────
+        pg = await page()
+        styles = ["boardroom", "ledger", "editorial", "signal", "aurora", "terrace"]
+        bg_js = "[document.querySelector('.st-root').style.background, document.querySelector('.st-root').style.fontFamily]"
+        if not FREE:
+            res["p4_fondos"] = {}
+            for i, sty in enumerate(styles):
+                await H.upd(pg, dvp({"style": {"template": sty}, "status": {"show": True}, "markers": {"max": True, "min": True}}), W, Hh)
+                await shot(pg, "13_%d_estilo_%s" % (i + 1, sty))
+                res["p4_fondos"][sty] = await pg.evaluate(bg_js)
+            await H.upd(pg, H.build(expanded=vista, objects={"style": {"template": "boardroom"}, "sparkline": {"type": "bullet", "scale": "row"}})[0], W, Hh)
+            await shot(pg, "14_boardroom_bullet_bandas")
+        else:
+            await H.upd(pg, dvp({"style": {"template": "aurora"}, "variance": {"show": False}}), W, Hh, view=0)
+            await pg.wait_for_timeout(80)
+            await H.upd(pg, dvp({"style": {"template": "aurora"}, "variance": {"show": False}}), W, Hh, view=0)
+            res["p4_lectura_fondo"] = await pg.evaluate(bg_js)
+            await shot(pg, "06_lectura_estilo_cae_a_report_theme")
+            await H.upd(pg, dvp({"style": {"template": "aurora"}, "variance": {"show": False}}), W, Hh, view=1)
+            await pg.evaluate("() => { const g = document.querySelector('.st-guide'); if (g) g.style.display = 'none'; }")
+            res["p4_edicion_fondo"] = await pg.evaluate(bg_js)
+            res["p4_edicion_marca"] = await pg.evaluate("document.querySelector('.st-watermark').textContent")
+            await shot(pg, "07_edicion_aurora_marca")
+        res["p4_eventos"] = await events(pg)
+        await pg.close()
+
         # ── Parte 1 bis (hallazgo de Tino en Desktop): filas sin real y unidades distintas ────────────
         pg = await page()
         def ghosts(dv):

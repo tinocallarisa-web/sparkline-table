@@ -15,7 +15,9 @@ import io, json, os
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # Bloque 1: Report theme (por defecto) y Classic. Los seis estilos de la colección (Pro) entran en el bloque 2.
-TEMPLATES = [("report", "Report theme"), ("classic", "Classic")]
+# Bloque 2: los seis estilos de la colección (Pro, con vista previa), con los tokens de Line Chart / KPI Card.
+TEMPLATES = [("report", "Report theme"), ("classic", "Classic"), ("boardroom", "Boardroom (Pro)"), ("ledger", "Ledger (Pro)"),
+             ("editorial", "Editorial (Pro)"), ("signal", "Signal (Pro)"), ("aurora", "Aurora (Pro)"), ("terrace", "Terrace (Pro)")]
 
 SPARK_TYPES = [("line", "Line"), ("area", "Area"), ("column", "Column"), ("winloss", "Win/loss"), ("bullet", "Bullet")]
 

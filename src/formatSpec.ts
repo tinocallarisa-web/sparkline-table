@@ -30,6 +30,36 @@ export const OBJECTS: Record<string, ObjSpec> = {
                         "classic",
                         "Enum_template_classic",
                         "Classic"
+                    ],
+                    [
+                        "boardroom",
+                        "Enum_template_boardroom",
+                        "Boardroom (Pro)"
+                    ],
+                    [
+                        "ledger",
+                        "Enum_template_ledger",
+                        "Ledger (Pro)"
+                    ],
+                    [
+                        "editorial",
+                        "Enum_template_editorial",
+                        "Editorial (Pro)"
+                    ],
+                    [
+                        "signal",
+                        "Enum_template_signal",
+                        "Signal (Pro)"
+                    ],
+                    [
+                        "aurora",
+                        "Enum_template_aurora",
+                        "Aurora (Pro)"
+                    ],
+                    [
+                        "terrace",
+                        "Enum_template_terrace",
+                        "Terrace (Pro)"
                     ]
                 ]
             },
