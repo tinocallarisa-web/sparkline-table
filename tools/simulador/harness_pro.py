@@ -334,6 +334,35 @@ async def main():
         res["p5_eventos"] = await events(pg)
         await pg.close()
 
+        # ── Bullet (gratis, hallazgo de Tino): 4 provincias de tamaños muy distintos, escala por fila ──
+        if not FREE:
+            pg = await page(1100, 260)
+            def provincias(objects):
+                dv = dvp(objects, expanded=set(), n_z=4)
+                for z, k in zip(dv["matrix"]["rows"]["root"]["children"][1:], (6.0, 1.1, 0.8, 0.2)):
+                    def mul(n):
+                        for v in (n.get("values") or {}).values():
+                            if isinstance(v.get("value"), (int, float)): v["value"] *= k
+                        for c in n.get("children", []): mul(c)
+                    mul(z)
+                return dv
+            await H.upd(pg, provincias({"sparkline": {"type": "bullet"}}), 1100, 260)
+            await shot(pg, "18_bullet_4_provincias")
+            res["bullet_etiquetas"] = await pg.evaluate("[...document.querySelectorAll('.st-row .st-c-spark .st-lastlbl')].map(t => t.textContent)")
+            res["bullet_cabecera"] = await pg.evaluate("[document.querySelector('.st-h-spark .st-h1').textContent, document.querySelector('.st-h2-spark').textContent]")
+            # La marca del objetivo cae en la misma fracción del eje en cada fila (eje = max(valor, objetivo, banda) × 1,1).
+            res["bullet_x_objetivo"] = await pg.evaluate("[...document.querySelectorAll('.st-row .st-c-spark .st-tgt')].map(p => p.getAttribute('d'))")
+            await H.upd(pg, provincias({"sparkline": {"type": "bullet", "bulletLabel": "pct"}}), 1100, 260)
+            res["bullet_solo_pct"] = await pg.evaluate("[...document.querySelectorAll('.st-row .st-c-spark .st-lastlbl')].map(t => t.textContent)")
+            await pg.evaluate("() => { window.__tipItems = null; __host.tooltipService.show = (o) => { window.__tipItems = o.dataItems; __tips++; }; }")
+            await H.upd(pg, provincias({"sparkline": {"type": "bullet"}, "bands": {"showBands": False}}), 1100, 260)
+            box = await pg.evaluate("(() => { const r = document.querySelector('.st-row[data-i=\"1\"] .st-c-spark').getBoundingClientRect(); return [r.x + r.width / 2, r.y + r.height / 2]; })()")
+            await pg.mouse.move(box[0], box[1])
+            await pg.wait_for_timeout(450)
+            res["bullet_tooltip"] = await pg.evaluate("(__tipItems || []).map(i => i.displayName + ': ' + i.value)")
+            res["bullet_eventos"] = await events(pg)
+            await pg.close()
+
         # ── Parte 1 bis (hallazgo de Tino en Desktop): filas sin real y unidades distintas ────────────
         pg = await page()
         def ghosts(dv):

@@ -797,6 +797,29 @@
             "bool": true
           }
         },
+        "bulletLabel": {
+          "displayName": "Bullet label",
+          "displayNameKey": "Prop_sparkline_bulletLabel",
+          "type": {
+            "enumeration": [
+              {
+                "value": "value",
+                "displayName": "Value",
+                "displayNameKey": "Enum_bulletLabel_value"
+              },
+              {
+                "value": "pct",
+                "displayName": "% of target",
+                "displayNameKey": "Enum_bulletLabel_pct"
+              },
+              {
+                "value": "both",
+                "displayName": "Value and % of target",
+                "displayNameKey": "Enum_bulletLabel_both"
+              }
+            ]
+          }
+        },
         "target": {
           "displayName": "Show target line",
           "displayNameKey": "Prop_sparkline_target",

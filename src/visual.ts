@@ -1304,8 +1304,15 @@ export class Visual implements IVisual {
         const lv = [Infinity, -Infinity];
         for (const v of lastVals) if (v !== null) { if (v < lv[0]) lv[0] = v; if (v > lv[1]) lv[1] = v; }
         const lblFs = Math.max(7, Math.min(fs - 1, Math.round(this.rowH * 0.55)));
-        const lblW = isFinite(lv[0]) ? Math.max(this.measure(this.fmtCompact(lv[0], fmt0), lblFs), this.measure(this.fmtCompact(lv[1], fmt0), lblFs)) : 0;
-        this.labelW = showLast ? Math.min(72, Math.ceil(lblW) + 6) : 0;
+        let lblW = isFinite(lv[0]) ? Math.max(this.measure(this.fmtCompact(lv[0], fmt0), lblFs), this.measure(this.fmtCompact(lv[1], fmt0), lblFs)) : 0;
+        let lblMax = 72;
+        if (s.sparkline.type === "bullet" && m.targetIdx >= 0) {
+            // Bullet: la etiqueta lleva la cifra a la vista y/o el % del objetivo.
+            lblW = 0;
+            for (const r of all) { const v = r.shown[0], t = this.bulletTarget(r, m); if (v !== null && v !== undefined) lblW = Math.max(lblW, this.measure(this.bulletLabel(v, fmt0, t), lblFs)); }
+            lblMax = 120;
+        }
+        this.labelW = showLast ? Math.min(lblMax, Math.ceil(lblW) + 6) : 0;
 
         // Primero el minigráfico (lo que define el producto), luego el nombre; los adornos cogen lo que sobra, y se
         // quitan en este orden: minigráficos 3 y 2, medidas 3 y 2, Forecast y Prior year, Δ, Δ%, estado, Plan, la
@@ -1367,12 +1374,18 @@ export class Visual implements IVisual {
         const type = String(s.sparkline.type);
         let sparkCtx = m.periods.length > 1 ? this.periodLabels[0] + " – " + this.periodLabels[m.periods.length - 1] : (this.periodLabels[0] ?? "");
         // Bullet: una barra con la cifra de la columna de valor (no la serie); win/loss: contra el objetivo o contra cero.
-        if (type === "bullet") sparkCtx = valCtx;
+        if (type === "bullet") {
+            sparkCtx = valCtx;
+            if (m.targetIdx >= 0 && this.showTarget(m)) {
+                sparkCtx += " · " + this.tf("UI_Vs", "vs {0}", m.sources[m.targetIdx].displayName);
+                if (String(s.sparkline.bulletLabel) !== "value") sparkCtx += " · " + this.t("Enum_bulletLabel_pct", "% of target");
+            }
+        }
         if (type === "winloss") sparkCtx += " · " + this.tf("UI_Vs", "vs {0}", this.showTarget(m) ? m.sources[m.targetIdx].displayName : "0");
-        const scaleNote = type === "winloss" ? "" : s.sparkline.scale === "row" ? this.t("UI_ScalePerRow", "Scale: per row")
+        const scaleNote = type === "bullet" && this.showTarget(m) ? this.t("UI_ScalePerRow", "Scale: per row") : type === "winloss" ? "" : s.sparkline.scale === "row" ? this.t("UI_ScalePerRow", "Scale: per row")
             : s.sparkline.scale === "auto" ? this.t("UI_ScalePerRowDetail", "Scale: per row in detail rows") : "";
         const sparkTitle = s.sparkline.type === "bullet" && m.targetIdx >= 0
-            ? m.sources[m.valueIdx[0]].displayName + " / " + m.sources[m.targetIdx].displayName
+            ? this.typeName("bullet") + " · " + m.sources[m.valueIdx[0]].displayName
             : this.typeName(String(s.sparkline.type)) + " · " + m.sources[m.valueIdx[0]].displayName;
         // Minigráficos 2 y 3: "Tipo · medida" y el rango (o la cifra a la vista en bullet), con su escala rotulada.
         const range = m.periods.length > 1 ? this.periodLabels[0] + " – " + this.periodLabels[m.periods.length - 1] : (this.periodLabels[0] ?? "");
@@ -1772,6 +1785,18 @@ export class Visual implements IVisual {
         return good ? this.look.up : this.look.down;
     }
 
+    /** Etiqueta del bullet según "Bullet label": valor, % del objetivo o los dos ("1,54M€ · 101 %"). Sin objetivo, el valor. */
+    private bulletLabel(v: number, fmt: string | undefined, t: Num): string {
+        const mode = String(this.settings.sparkline.bulletLabel);
+        const pct = t !== null && t > 0 ? this.fmtPctPlain0(v / t) : "";
+        if (!pct || mode === "value") return this.fmtCompact(v, fmt);
+        return mode === "pct" ? pct : this.fmtCompact(v, fmt) + " · " + pct;
+    }
+
+    private fmtPctPlain0(v: number): string {
+        try { return new Intl.NumberFormat(this.host.locale || "en-US", { style: "percent", maximumFractionDigits: 0 }).format(v); } catch { return Math.round(v * 100) + "%"; }
+    }
+
     /** Bandas del bullet: bordes en unidades del valor (umbrales en % del objetivo) o null si no tocan. */
     private bandEdges(t: Num, m: Model): { edges: [number, number]; lower: boolean; p1: number; p2: number } | null {
         const b = this.settings.bands;
@@ -1810,10 +1835,16 @@ export class Visual implements IVisual {
         const type = c.type;
         const key = c.slot + ":" + r.level;
         if (type === "bullet") {
-            if (this.perRow(r, c)) {
+            // Con objetivo, SIEMPRE por fila y en todos los niveles (Tino, 12-11: en los subtotales la escala común hacía
+            // que Barcelona aplastara a Girona): eje de 0 a max(valor, objetivo, banda alta) × 1,1. Las bandas van en % de
+            // su propio objetivo. Sin objetivo (minigráficos 2-3), la escala elegida.
+            const bt = c.target ? this.bulletTarget(r, m) : null;
+            if (bt !== null || this.perRow(r, c)) {
                 const b: [number, number] = [0, 0];
-                const bt = c.target ? this.bulletTarget(r, m) : null;
-                for (const v of [r.shown[c.k], bt, bt !== null && this.bandEdges(bt, m) ? bt * 1.1 : null]) if (v !== null && v !== undefined) { b[0] = Math.min(b[0], v); b[1] = Math.max(b[1], v); }
+                const bd = bt !== null ? this.bandEdges(bt, m) : null;
+                for (const v of [r.shown[c.k], bt, bd ? Math.max(bd.edges[0], bd.edges[1]) : null]) if (v !== null && v !== undefined) { b[0] = Math.min(b[0], v); b[1] = Math.max(b[1], v); }
+                b[1] *= 1.1;
+                if (b[0] < 0) b[0] *= 1.1;
                 return b;
             }
             return this.extBullet.get(key) ?? [0, 1];
@@ -1872,7 +1903,7 @@ export class Visual implements IVisual {
                 const a = Math.min(x0, x1), b = Math.max(x0, x1, a + 1);
                 const rect = "M" + f1(a) + "," + by + "H" + f1(b) + "V" + (by + bh) + "H" + f1(a) + "Z";
                 if (v < 0) g.neg = rect; else g.pos = rect;
-                g.lastText = c.label && this.labelW ? this.fmtCompact(v, r.shownFmt[0]) : "";
+                g.lastText = c.label && this.labelW ? this.bulletLabel(v, r.shownFmt[0], c.target ? this.bulletTarget(r, m) : null) : "";
             }
             const t = bt;
             if (t !== null && this.showTarget(m)) {
@@ -2152,6 +2183,10 @@ export class Visual implements IVisual {
             if (d.delta !== null && d.deltaPct === null) out.push({ displayName: "Δ%", value: this.t("UI_NoPctBase", "not shown: the base is zero or negative") });
             const band = this.bandOf(d, m);
             if (band) out.push({ displayName: this.t("UI_Band", "Band"), value: band });
+            else if (this.settings.sparkline.type === "bullet" && this.showTarget(m)) {
+                const t = this.bulletTarget(d, m), v = d.shown[0];
+                if (t !== null && t > 0 && v !== null && v !== undefined) out.push({ displayName: this.t("Enum_bulletLabel_pct", "% of target"), value: this.fmtPctPlain(v / t) });
+            }
             if (d.small) out.push({ displayName: "Δ%", value: this.tf("UI_SmallBase", "small base ({0}): read the % with care", this.fmtFull(d.base, m.sources[m0].format)) });
         }
         const vbi = this.varBaseIdx(m);

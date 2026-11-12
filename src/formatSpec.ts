@@ -485,6 +485,30 @@ export const OBJECTS: Record<string, ObjSpec> = {
                 "label": "Show last value"
             },
             {
+                "name": "bulletLabel",
+                "type": "enum",
+                "def": "both",
+                "key": "Prop_sparkline_bulletLabel",
+                "label": "Bullet label",
+                "items": [
+                    [
+                        "value",
+                        "Enum_bulletLabel_value",
+                        "Value"
+                    ],
+                    [
+                        "pct",
+                        "Enum_bulletLabel_pct",
+                        "% of target"
+                    ],
+                    [
+                        "both",
+                        "Enum_bulletLabel_both",
+                        "Value and % of target"
+                    ]
+                ]
+            },
+            {
                 "name": "target",
                 "type": "bool",
                 "def": true,

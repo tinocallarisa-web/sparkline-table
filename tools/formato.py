@@ -82,6 +82,8 @@ OBJECTS = [
         ("color", "Color", "fill", "", {}),
         ("accent", "Last point color", "fill", "", {}),
         ("showLast", "Show last value", "bool", True, {}),
+        # Etiqueta del bullet (Tino, 12-11): el valor, el % del objetivo o los dos ("1,54M€ · 101 %").
+        ("bulletLabel", "Bullet label", "enum", "both", {"items": [("value", "Value"), ("pct", "% of target"), ("both", "Value and % of target")]}),
         ("target", "Show target line", "bool", True, {}),
         ("targetColor", "Target color", "fill", "", {}),
     ]),

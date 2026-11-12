@@ -299,3 +299,10 @@ P.update({
 P.update({
 "Expand to level {0}, collapse below": ["Expandir até o nível {0} e recolher abaixo", "Développer jusqu’au niveau {0}, réduire en dessous", "Bis Ebene {0} erweitern, darunter reduzieren", "Espandi fino al livello {0}, comprimi sotto", "Uitvouwen tot niveau {0}, daaronder samenvouwen", "Rozwiń do poziomu {0}, zwiń poniżej", "レベル {0} まで展開し、それより下を折りたたむ", "展开到第 {0} 级，折叠以下级别", "{0}수준까지 확장하고 그 아래는 축소", "Expandir hasta el nivel {0} y contraer por debajo"],
 })
+
+# --- bullet: etiqueta valor / % del objetivo (gratis) ---
+P.update({
+"% of target": ["% da meta", "% de l’objectif", "% des Ziels", "% dell’obiettivo", "% van doel", "% celu", "目標比 %", "目标的 %", "목표 대비 %", "% del objetivo"],
+"Bullet label": ["Rótulo do bullet", "Étiquette du bullet", "Bullet-Beschriftung", "Etichetta bullet", "Bulletlabel", "Etykieta wykresu bullet", "ブレットのラベル", "子弹图标签", "불릿 레이블", "Etiqueta del bullet"],
+"Value and % of target": ["Valor e % da meta", "Valeur et % de l’objectif", "Wert und % des Ziels", "Valore e % dell’obiettivo", "Waarde en % van doel", "Wartość i % celu", "値と目標比 %", "值和目标的 %", "값 및 목표 대비 %", "Valor y % del objetivo"],
+})
