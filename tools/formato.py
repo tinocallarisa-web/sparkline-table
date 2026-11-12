@@ -122,6 +122,10 @@ OBJECTS = [
         # Imagen por fila (Pro): hueco reservado para que los nombres queden alineados aunque falte la imagen.
         ("imageGap", "Reserve space for row images", "bool", True, {}),
         ("grandTotal", "Grand total", "bool", True, {}),
+        # Filas sin real (Tino en Desktop, 12-11): un Plan definido a otro nivel de detalle (p. ej. por provincia) hace
+        # que el motor cree una fila por cada miembro de la dimensión con solo el plan. Gratis; Hide por defecto. Las
+        # referencias no cuentan; los subtotales siguen siendo los del motor.
+        ("noActual", "Rows without actual", "enum", "hide", {"items": [("hide", "Hide"), ("show", "Show")]}),
         # Tooltips (Tino, 12-11): por defecto solo sobre el minigráfico, para no estorbar al pulsar ▸/▾.
         ("tooltips", "Tooltips", "enum", "sparkline", {"items": [("sparkline", "Sparkline only"), ("row", "Whole row"), ("off", "Off")]}),
         # value/value2/value3: el visual pone en el panel el nombre de cada medida y quita las que no están.

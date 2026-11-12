@@ -266,6 +266,44 @@ async def main():
         res["p3_eventos"] = await events(pg)
         await pg.close()
 
+        # ── Parte 1 bis (hallazgo de Tino en Desktop): filas sin real y unidades distintas ────────────
+        pg = await page()
+        def ghosts(dv):
+            """Un comercial y un PDV que solo traen Plan (un plan definido por zona repetido en cada miembro)."""
+            mx = dv["matrix"]
+            nS = len(mx["valueSources"])
+            nPer = len(mx["columns"]["root"]["children"]) - 1
+            pi = [i for i, s in enumerate(mx["valueSources"]) if s["roles"].get("plan")][0]
+            vals = {str(p * nS + pi): {"value": 1149663.0, "valueSourceIndex": pi} for p in range(nPer + 1)}
+            z0 = [c for c in mx["rows"]["root"]["children"] if c.get("identity", {}).get("k") == "Z0"][0]
+            z0["children"].append({"level": 1, "levelValues": [{"value": "COM-09", "levelSourceIndex": 0}], "identity": {"k": "Z0|G1"},
+                                   "isCollapsed": True, "values": dict(vals)})
+            c0 = [c for c in z0["children"] if c.get("identity", {}).get("k") == "Z0|C0"][0]
+            c0["children"].append({"level": 2, "levelValues": [{"value": "TV-01", "levelSourceIndex": 0}], "identity": {"k": "Z0|C0|G2"}, "values": dict(vals)})
+            return dv
+        await H.upd(pg, ghosts(dvp()), W, Hh)
+        res["p1b_ocultas_por_defecto"] = await pg.evaluate("[__v.hiddenNoActual, __v.rows.some(r => r.label === 'COM-09' || r.label === 'TV-01')]")
+        res["p1b_nota_cabecera"] = await pg.evaluate("document.querySelector('.st-h2-name') ? document.querySelector('.st-h2-name').textContent : ''")
+        await shot(pg, "10_filas_sin_real_ocultas")
+        await H.upd(pg, ghosts(dvp({"rows": {"noActual": "show"}})), W, Hh)
+        res["p1b_mostrar"] = await pg.evaluate("[__v.hiddenNoActual, __v.rows.filter(r => r.label === 'COM-09' || r.label === 'TV-01').length]")
+        await shot(pg, "11_filas_sin_real_visibles")
+        lit = dvp()
+        for col in [lit["matrix"]["valueSources"], lit["metadata"]["columns"]]:
+            for s_ in col:
+                if s_["roles"].get("plan"):
+                    s_["displayName"] = "Plan litros"; s_["format"] = "#,0 \"L\""
+        await H.upd(pg, lit, W, Hh, view=1)
+        await pg.evaluate("() => { const g = document.querySelector('.st-guide'); if (g) g.style.display = 'none'; }")
+        res["p1b_aviso_unidades_edicion"] = await pg.evaluate("document.querySelector('.st-notice').textContent")
+        await shot(pg, "12_aviso_unidades_distintas")
+        await H.upd(pg, lit, W, Hh, view=0)
+        res["p1b_aviso_unidades_lectura"] = await pg.evaluate("document.querySelector('.st-notice').style.display")
+        await H.upd(pg, dvp(), W, Hh, view=1)
+        res["p1b_misma_unidad_sin_aviso"] = await pg.evaluate("document.querySelector('.st-notice').textContent")
+        res["p1b_eventos"] = await events(pg)
+        await pg.close()
+
         await b.close()
     res["errores"] = errs
     sys.stdout.reconfigure(encoding="utf-8")

@@ -1191,6 +1191,24 @@
             "bool": true
           }
         },
+        "noActual": {
+          "displayName": "Rows without actual",
+          "displayNameKey": "Prop_rows_noActual",
+          "type": {
+            "enumeration": [
+              {
+                "value": "hide",
+                "displayName": "Hide",
+                "displayNameKey": "Enum_noActual_hide"
+              },
+              {
+                "value": "show",
+                "displayName": "Show",
+                "displayNameKey": "Enum_noActual_show"
+              }
+            ]
+          }
+        },
         "tooltips": {
           "displayName": "Tooltips",
           "displayNameKey": "Prop_rows_tooltips",

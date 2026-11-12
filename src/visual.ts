@@ -190,6 +190,8 @@ export class Visual implements IVisual {
     private watermarkWhy: HTMLDivElement | null = null;
     /** Varianza: |Δ| máximo por nivel (escala común de la barra). */
     private varExt = new Map<number, number>();
+    /** Filas ocultas por no tener real (Rows without actual = Hide). */
+    private hiddenNoActual = 0;
     /** Estado junto al valor (en vez de en su columna). */
     private statusInline = false;
     /** Columnas de minigráfico que se dibujan (la 1.ª siempre) y ancho de la 2.ª/3.ª. */
@@ -354,6 +356,20 @@ export class Visual implements IVisual {
 
     private tf(key: string, fallback: string, ...args: string[]): string {
         return this.t(key, fallback).replace(/\{(\d+)\}/g, (_m, i) => args[Number(i)] ?? "");
+    }
+
+    /** Moneda de un formato (símbolo o [$X-...]), "" si no lleva. */
+    private static currencyOf(fmt: string | undefined): string {
+        const f = String(fmt ?? "");
+        const loc = /\[\$([^\]\-]+)/.exec(f);
+        if (loc) return loc[1].trim();
+        const sym = /[€$£¥₹₽₩₺₪฿]/.exec(f.replace(/"[^"]*"/g, ""));
+        return sym ? sym[0] : "";
+    }
+
+    /** ¿Misma unidad? Distinto si cambia la moneda, si una lleva moneda y la otra no, o si una es % y la otra no. */
+    private static sameUnit(a: string | undefined, b: string | undefined): boolean {
+        return Visual.isPct(a) === Visual.isPct(b) && Visual.currencyOf(a) === Visual.currencyOf(b);
     }
 
     private static isPct(fmt: string | undefined): boolean {
@@ -902,6 +918,22 @@ export class Visual implements IVisual {
         }
         this.derive(m);
         this.rows = flatten(m.roots, this.comparator());
+        // Filas sin real (Rows without actual = Hide): todas las medidas de Values vacías en todo el rango (y en el
+        // total del rango). Las referencias no cuentan. Se oculta la fila con sus descendientes; los subtotales que se
+        // ven siguen siendo los del motor (no se recalcula nada).
+        this.hiddenNoActual = 0;
+        if (this.settings.rows.noActual !== "show") {
+            const memo = new Map<Row, boolean>();
+            const empty = (r: Row): boolean => {
+                let v = memo.get(r);
+                if (v === undefined) { v = m.valueIdx.every(i => r.tot[i] === null && r.s[i].every(x => x === null)); memo.set(r, v); }
+                return v;
+            };
+            const before = this.rows.length;
+            this.rows = this.rows.filter(r => { for (let p: Row | null = r; p; p = p.parent) if (empty(p)) return false; return true; });
+            this.hiddenNoActual = before - this.rows.length;
+            if (this.hiddenNoActual) this.rows.forEach((r, i) => { r.index = i; });
+        }
         // Buscador: solo a la vista (no filtra el informe ni se guarda). Coincidencias en cualquier nivel con su ruta.
         this.matchSet.clear();
         const q = this.settings.header.search ? norm(this.query) : "";
@@ -1242,7 +1274,9 @@ export class Visual implements IVisual {
         const varCtx = vbi < 0 ? "" : this.tf("UI_Vs", "vs {0}", m.sources[vbi].displayName);
         const levelNames = m.levels.map(l => l.sources.map(x => x.displayName).join(" + ")).join(" › ");
         const sortName = this.sortName(by);
-        const nameCtx = by === "host" ? this.hostSortText() : this.tf("UI_SortedBy", "Sorted by {0} {1}", sortName, dir === "asc" ? "↑" : "↓");
+        const sortCtx = by === "host" ? this.hostSortText() : this.tf("UI_SortedBy", "Sorted by {0} {1}", sortName, dir === "asc" ? "↑" : "↓");
+        const hiddenCtx = this.hiddenNoActual ? this.tf("UI_NoActualHidden", "{0} rows without actual hidden", this.int(this.hiddenNoActual)) : "";
+        const nameCtx = [sortCtx, hiddenCtx].filter(x => x).join(" · ");
         const type = String(s.sparkline.type);
         let sparkCtx = m.periods.length > 1 ? this.periodLabels[0] + " – " + this.periodLabels[m.periods.length - 1] : (this.periodLabels[0] ?? "");
         // Bullet: una barra con la cifra de la columna de valor (no la serie); win/loss: contra el objetivo o contra cero.
@@ -1394,6 +1428,12 @@ export class Visual implements IVisual {
         if (this.editing && this.imgUrlSeen) msgs.push({ t: this.t("UI_ImgEmbedded", "Images must be embedded (Base64 data URI): web links are not loaded."), warn: true });
         if (this.settings.values.compare === "lastYear" && this.compareUsed !== "lastYear") {
             msgs.push({ t: this.t("UI_NoLastYear", "Same period last year is not available on this axis: compared with the previous period."), warn: false });
+        }
+        // Referencia en otra unidad (Tino en Desktop: "Plan litros" frente a "Ventas netas" en €): avisar, no bloquear.
+        const vbi = this.varBaseIdx(m);
+        if (this.editing && vbi >= 0 && this.settings.variance.show !== false && !Visual.sameUnit(m.sources[vbi].format, m.sources[m.valueIdx[0]].format)) {
+            msgs.push({ t: this.tf("UI_UnitMismatch", "{0} and {1} use different formats: the variance may not make sense", m.sources[vbi].displayName,
+                m.sources[m.valueIdx[0]].displayName), warn: true });
         }
         if (this.settings.subTotals.columnSubtotals && this.valueModeUsed !== "total") {
             msgs.push({ t: this.t("UI_NoTotal", "Total of the range did not arrive from Power BI: showing the last period."), warn: false });

@@ -66,6 +66,7 @@ export const STRINGS: Record<string, Record<string, string>> = {
         "UI_Levels": "Mostrando {0} de {1} niveles: usa ▸ para abrir el siguiente.",
         "UI_Loading": "Cargando {0} de …",
         "UI_Matches": "{0} coincidencias",
+        "UI_NoActualHidden": "{0} filas sin real ocultas",
         "UI_NoData": "No hay datos para los filtros actuales.",
         "UI_NoLastYear": "El mismo periodo del año anterior no está disponible en este eje: se compara con el periodo anterior.",
         "UI_NoPctBase": "no se muestra: la base es cero o negativa",
@@ -86,6 +87,7 @@ export const STRINGS: Record<string, Record<string, string>> = {
         "UI_Status": "Estado",
         "UI_StatusRule": "{0}: bueno desde {1}, malo por debajo de {2}",
         "UI_ToggleHint": "haz clic en la flecha para expandir o contraer; Alt + clic para todo el nivel",
+        "UI_UnitMismatch": "{0} y {1} usan formatos distintos: la desviación puede no tener sentido",
         "UI_ValueShows": "El valor muestra"
     },
     "pt-BR": {
@@ -150,6 +152,7 @@ export const STRINGS: Record<string, Record<string, string>> = {
         "UI_Levels": "Mostrando {0} de {1} níveis: use ▸ para abrir o seguinte.",
         "UI_Loading": "Carregando {0} de …",
         "UI_Matches": "{0} resultados",
+        "UI_NoActualHidden": "{0} linhas sem real ocultas",
         "UI_NoData": "Sem dados para os filtros atuais.",
         "UI_NoLastYear": "O mesmo período do ano anterior não está disponível neste eixo: comparado com o período anterior.",
         "UI_NoPctBase": "não mostrado: a base é zero ou negativa",
@@ -169,6 +172,7 @@ export const STRINGS: Record<string, Record<string, string>> = {
         "UI_SortedBy": "Ordenado por {0} {1}",
         "UI_StatusRule": "{0}: bom a partir de {1}, ruim abaixo de {2}",
         "UI_ToggleHint": "clique na seta para expandir ou recolher; Alt + clique para todo o nível",
+        "UI_UnitMismatch": "{0} e {1} usam formatos diferentes: o desvio pode não fazer sentido",
         "UI_ValueShows": "O valor mostra"
     },
     "pt-PT": {
@@ -233,6 +237,7 @@ export const STRINGS: Record<string, Record<string, string>> = {
         "UI_Levels": "Mostrando {0} de {1} níveis: use ▸ para abrir o seguinte.",
         "UI_Loading": "Carregando {0} de …",
         "UI_Matches": "{0} resultados",
+        "UI_NoActualHidden": "{0} linhas sem real ocultas",
         "UI_NoData": "Sem dados para os filtros atuais.",
         "UI_NoLastYear": "O mesmo período do ano anterior não está disponível neste eixo: comparado com o período anterior.",
         "UI_NoPctBase": "não mostrado: a base é zero ou negativa",
@@ -252,6 +257,7 @@ export const STRINGS: Record<string, Record<string, string>> = {
         "UI_SortedBy": "Ordenado por {0} {1}",
         "UI_StatusRule": "{0}: bom a partir de {1}, ruim abaixo de {2}",
         "UI_ToggleHint": "clique na seta para expandir ou recolher; Alt + clique para todo o nível",
+        "UI_UnitMismatch": "{0} e {1} usam formatos diferentes: o desvio pode não fazer sentido",
         "UI_ValueShows": "O valor mostra"
     },
     "fr-FR": {
@@ -315,6 +321,7 @@ export const STRINGS: Record<string, Record<string, string>> = {
         "UI_Levels": "{0} niveaux sur {1} affichés : utilisez ▸ pour ouvrir le suivant.",
         "UI_Loading": "Chargement de {0} sur …",
         "UI_Matches": "{0} résultats",
+        "UI_NoActualHidden": "{0} lignes sans réel masquées",
         "UI_NoData": "Aucune donnée pour les filtres actuels.",
         "UI_NoLastYear": "La même période l’an dernier n’est pas disponible sur cet axe : comparaison avec la période précédente.",
         "UI_NoPctBase": "non affiché : la base est nulle ou négative",
@@ -335,6 +342,7 @@ export const STRINGS: Record<string, Record<string, string>> = {
         "UI_Status": "État",
         "UI_StatusRule": "{0} : bon à partir de {1}, mauvais sous {2}",
         "UI_ToggleHint": "cliquez sur la flèche pour développer ou réduire ; Alt + clic pour tout le niveau",
+        "UI_UnitMismatch": "{0} et {1} utilisent des formats différents : l’écart peut ne pas avoir de sens",
         "UI_ValueShows": "La valeur affiche"
     },
     "de-DE": {
@@ -400,6 +408,7 @@ export const STRINGS: Record<string, Record<string, string>> = {
         "UI_Levels": "{0} von {1} Ebenen angezeigt: Mit ▸ öffnen Sie die nächste.",
         "UI_Loading": "{0} von … werden geladen",
         "UI_Matches": "{0} Treffer",
+        "UI_NoActualHidden": "{0} Zeilen ohne Istwert ausgeblendet",
         "UI_NoData": "Keine Daten für die aktuellen Filter.",
         "UI_NoLastYear": "Der gleiche Zeitraum im Vorjahr ist auf dieser Achse nicht verfügbar: Vergleich mit dem vorherigen Zeitraum.",
         "UI_NoPctBase": "nicht angezeigt: Die Basis ist null oder negativ",
@@ -420,6 +429,7 @@ export const STRINGS: Record<string, Record<string, string>> = {
         "UI_StatusRule": "{0}: gut ab {1}, schlecht unter {2}",
         "UI_ToggleHint": "Pfeil anklicken zum Erweitern oder Reduzieren; Alt + Klick für die ganze Ebene",
         "UI_Total": "Gesamt",
+        "UI_UnitMismatch": "{0} und {1} haben unterschiedliche Formate: die Abweichung ist möglicherweise nicht sinnvoll",
         "UI_ValueShows": "Wert zeigt",
         "UI_Vs": "ggü. {0}"
     },
@@ -486,6 +496,7 @@ export const STRINGS: Record<string, Record<string, string>> = {
         "UI_Levels": "Visualizzati {0} di {1} livelli: usa ▸ per aprire il successivo.",
         "UI_Loading": "Caricamento di {0} su …",
         "UI_Matches": "{0} risultati",
+        "UI_NoActualHidden": "{0} righe senza consuntivo nascoste",
         "UI_NoData": "Nessun dato per i filtri correnti.",
         "UI_NoLastYear": "Lo stesso periodo dell’anno precedente non è disponibile su questo asse: confronto con il periodo precedente.",
         "UI_NoPctBase": "non mostrato: la base è zero o negativa",
@@ -507,6 +518,7 @@ export const STRINGS: Record<string, Record<string, string>> = {
         "UI_StatusRule": "{0}: buono da {1}, scarso sotto {2}",
         "UI_ToggleHint": "fai clic sulla freccia per espandere o comprimere; Alt + clic per l’intero livello",
         "UI_Total": "Totale",
+        "UI_UnitMismatch": "{0} e {1} usano formati diversi: lo scostamento potrebbe non avere senso",
         "UI_ValueShows": "Il valore mostra"
     },
     "nl-NL": {
@@ -571,6 +583,7 @@ export const STRINGS: Record<string, Record<string, string>> = {
         "UI_Levels": "{0} van {1} niveaus weergegeven: gebruik ▸ om het volgende te openen.",
         "UI_Loading": "{0} van … laden",
         "UI_Matches": "{0} overeenkomsten",
+        "UI_NoActualHidden": "{0} rijen zonder werkelijk verborgen",
         "UI_NoData": "Geen gegevens voor de huidige filters.",
         "UI_NoLastYear": "Zelfde periode vorig jaar is niet beschikbaar op deze as: vergeleken met de vorige periode.",
         "UI_NoPctBase": "niet weergegeven: de basis is nul of negatief",
@@ -591,6 +604,7 @@ export const STRINGS: Record<string, Record<string, string>> = {
         "UI_StatusRule": "{0}: goed vanaf {1}, slecht onder {2}",
         "UI_ToggleHint": "klik op de pijl om uit of samen te vouwen; Alt + klik voor het hele niveau",
         "UI_Total": "Totaal",
+        "UI_UnitMismatch": "{0} en {1} gebruiken verschillende notaties: de afwijking is mogelijk niet zinvol",
         "UI_ValueShows": "Waarde toont",
         "UI_Vs": "t.o.v. {0}"
     },
@@ -657,6 +671,7 @@ export const STRINGS: Record<string, Record<string, string>> = {
         "UI_Levels": "Wyświetlono {0} z {1} poziomów: użyj ▸, aby otworzyć następny.",
         "UI_Loading": "Ładowanie {0} z …",
         "UI_Matches": "Wyniki: {0}",
+        "UI_NoActualHidden": "Ukryte wiersze bez wartości rzeczywistej: {0}",
         "UI_NoData": "Brak danych dla bieżących filtrów.",
         "UI_NoLastYear": "Ten sam okres rok wcześniej nie jest dostępny na tej osi: porównano z poprzednim okresem.",
         "UI_NoPctBase": "nie pokazano: baza jest zerowa lub ujemna",
@@ -678,6 +693,7 @@ export const STRINGS: Record<string, Record<string, string>> = {
         "UI_StatusRule": "{0}: dobry od {1}, słaby poniżej {2}",
         "UI_ToggleHint": "kliknij strzałkę, aby rozwinąć lub zwinąć; Alt + klik dla całego poziomu",
         "UI_Total": "Suma",
+        "UI_UnitMismatch": "{0} i {1} mają różne formaty: odchylenie może nie mieć sensu",
         "UI_ValueShows": "Wartość pokazuje"
     },
     "ja-JP": {
@@ -744,6 +760,7 @@ export const STRINGS: Record<string, Record<string, string>> = {
         "UI_Levels": "{1} レベル中 {0} レベルを表示中: ▸ で次のレベルを開きます。",
         "UI_Loading": "{0} / … を読み込み中",
         "UI_Matches": "{0} 件一致",
+        "UI_NoActualHidden": "実績のない行 {0} 件を非表示",
         "UI_NoData": "現在のフィルターに該当するデータはありません。",
         "UI_NoLastYear": "この軸では前年同期を使用できません。前の期間と比較しています。",
         "UI_NoPctBase": "非表示: 基準値が 0 または負です",
@@ -765,6 +782,7 @@ export const STRINGS: Record<string, Record<string, string>> = {
         "UI_StatusRule": "{0}: {1} 以上で良好、{2} 未満で不良",
         "UI_ToggleHint": "矢印をクリックして展開/折りたたみ。Alt + クリックでレベル全体",
         "UI_Total": "合計",
+        "UI_UnitMismatch": "{0} と {1} は書式が異なります。差異は意味を持たない可能性があります",
         "UI_ValueShows": "値の表示",
         "UI_Vs": "対 {0}"
     },
@@ -832,6 +850,7 @@ export const STRINGS: Record<string, Record<string, string>> = {
         "UI_Levels": "显示 {1} 个层级中的 {0} 个：使用 ▸ 打开下一级。",
         "UI_Loading": "正在加载 {0} / …",
         "UI_Matches": "{0} 个匹配项",
+        "UI_NoActualHidden": "已隐藏 {0} 行无实际值的行",
         "UI_NoData": "当前筛选器下没有数据。",
         "UI_NoLastYear": "此轴无法使用去年同期：已与上一期间比较。",
         "UI_NoPctBase": "不显示：基数为零或负数",
@@ -853,6 +872,7 @@ export const STRINGS: Record<string, Record<string, string>> = {
         "UI_StatusRule": "{0}：≥ {1} 为好，< {2} 为差",
         "UI_ToggleHint": "单击箭头展开或折叠；Alt + 单击作用于整个层级",
         "UI_Total": "合计",
+        "UI_UnitMismatch": "{0} 和 {1} 的格式不同：差异可能没有意义",
         "UI_ValueShows": "值显示",
         "UI_Vs": "对比 {0}"
     },
@@ -920,6 +940,7 @@ export const STRINGS: Record<string, Record<string, string>> = {
         "UI_Levels": "{1}개 수준 중 {0}개 표시 중: ▸로 다음 수준을 엽니다.",
         "UI_Loading": "{0}/… 로드 중",
         "UI_Matches": "{0}개 일치",
+        "UI_NoActualHidden": "실적 없는 행 {0}개 숨김",
         "UI_NoData": "현재 필터에 해당하는 데이터가 없습니다.",
         "UI_NoLastYear": "이 축에서는 전년 동기를 사용할 수 없어 이전 기간과 비교합니다.",
         "UI_NoPctBase": "표시 안 함: 기준값이 0 또는 음수입니다",
@@ -941,6 +962,7 @@ export const STRINGS: Record<string, Record<string, string>> = {
         "UI_StatusRule": "{0}: {1} 이상 좋음, {2} 미만 나쁨",
         "UI_ToggleHint": "화살표를 클릭하여 확장/축소, Alt + 클릭은 수준 전체",
         "UI_Total": "합계",
+        "UI_UnitMismatch": "{0}과(와) {1}의 서식이 다릅니다. 차이가 의미 없을 수 있습니다",
         "UI_ValueShows": "값 표시",
         "UI_Vs": "대비 {0}"
     }

@@ -891,6 +891,25 @@ export const OBJECTS: Record<string, ObjSpec> = {
                 "label": "Grand total"
             },
             {
+                "name": "noActual",
+                "type": "enum",
+                "def": "hide",
+                "key": "Prop_rows_noActual",
+                "label": "Rows without actual",
+                "items": [
+                    [
+                        "hide",
+                        "Enum_noActual_hide",
+                        "Hide"
+                    ],
+                    [
+                        "show",
+                        "Enum_noActual_show",
+                        "Show"
+                    ]
+                ]
+            },
+            {
                 "name": "tooltips",
                 "type": "enum",
                 "def": "sparkline",

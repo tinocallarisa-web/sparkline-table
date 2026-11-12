@@ -275,3 +275,12 @@ P.update({
 "Sparkline 3 (Pro)": ["Minigráfico 3 (Pro)", "Mini-graphique 3 (Pro)", "Sparkline 3 (Pro)", "Sparkline 3 (Pro)", "Sparkline 3 (Pro)", "Wykres przebiegu 3 (Pro)", "スパークライン 3 (Pro)", "迷你图 3 (Pro)", "스파크라인 3(Pro)", "Minigráfico 3 (Pro)"],
 "Value 1": ["Valor 1", "Valeur 1", "Wert 1", "Valore 1", "Waarde 1", "Wartość 1", "値 1", "值 1", "값 1", "Valor 1"],
 })
+
+# --- bloque 2: parte 1 bis, filas sin real y unidades distintas ---
+P.update({
+"Hide": ["Ocultar", "Masquer", "Ausblenden", "Nascondi", "Verbergen", "Ukryj", "非表示", "隐藏", "숨기기", "Ocultar"],
+"Show": ["Mostrar", "Afficher", "Anzeigen", "Mostra", "Weergeven", "Pokaż", "表示", "显示", "표시", "Mostrar"],
+"Rows without actual": ["Linhas sem real", "Lignes sans réel", "Zeilen ohne Istwert", "Righe senza consuntivo", "Rijen zonder werkelijk", "Wiersze bez wartości rzeczywistej", "実績のない行", "无实际值的行", "실적 없는 행", "Filas sin real"],
+"{0} and {1} use different formats: the variance may not make sense": ["{0} e {1} usam formatos diferentes: o desvio pode não fazer sentido", "{0} et {1} utilisent des formats différents : l’écart peut ne pas avoir de sens", "{0} und {1} haben unterschiedliche Formate: die Abweichung ist möglicherweise nicht sinnvoll", "{0} e {1} usano formati diversi: lo scostamento potrebbe non avere senso", "{0} en {1} gebruiken verschillende notaties: de afwijking is mogelijk niet zinvol", "{0} i {1} mają różne formaty: odchylenie może nie mieć sensu", "{0} と {1} は書式が異なります。差異は意味を持たない可能性があります", "{0} 和 {1} 的格式不同：差异可能没有意义", "{0}과(와) {1}의 서식이 다릅니다. 차이가 의미 없을 수 있습니다", "{0} y {1} usan formatos distintos: la desviación puede no tener sentido"],
+"{0} rows without actual hidden": ["{0} linhas sem real ocultas", "{0} lignes sans réel masquées", "{0} Zeilen ohne Istwert ausgeblendet", "{0} righe senza consuntivo nascoste", "{0} rijen zonder werkelijk verborgen", "Ukryte wiersze bez wartości rzeczywistej: {0}", "実績のない行 {0} 件を非表示", "已隐藏 {0} 行无实际值的行", "실적 없는 행 {0}개 숨김", "{0} filas sin real ocultas"],
+})
