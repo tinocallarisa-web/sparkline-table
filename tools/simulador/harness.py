@@ -528,7 +528,9 @@ async def main():
         await pg.fill(".st-search-in", "")
         await pg.evaluate("__toggles = []")
         await upd(pg, build(expanded=set())[0], W, H)  # todo contraído
-        await pg.click(".st-xbtn >> nth=0")
+        # Botones de nivel 1 · 2 · 3: el último = expandir todo
+        res["botones_nivel"] = await pg.evaluate("[...document.querySelectorAll('.st-xbtn')].map(b => b.textContent + ':' + b.title + (b.classList.contains('st-xbtn-on') ? ' *' : ''))")
+        await pg.click(".st-xbtn >> nth=2")
         t1 = await pg.evaluate("__toggles.slice()")
         await upd(pg, build(expanded={f"Z{z}" for z in range(8)})[0], W, H)  # el host expande el nivel 1
         await pg.wait_for_timeout(50)
@@ -536,8 +538,34 @@ async def main():
         await upd(pg, build()[0], W, H)  # y el nivel 2
         await pg.wait_for_timeout(50)
         t3 = await pg.evaluate("__toggles.slice()")
+        # "1" = contraer TODO, de abajo arriba: primero el nivel 2 (comerciales), luego el 1 (zonas).
+        await pg.evaluate("__toggles = []")
+        await pg.click(".st-xbtn >> nth=0")
+        c1 = await pg.evaluate("__toggles.slice()")
+        await upd(pg, build(expanded={f"Z{z}" for z in range(8)})[0], W, H)  # el host contrae el nivel 2
+        await pg.wait_for_timeout(50)
+        c2 = await pg.evaluate("__toggles.slice()")
+        await upd(pg, build(expanded=set())[0], W, H)  # y el nivel 1
+        await pg.wait_for_timeout(50)
+        c3 = await pg.evaluate("__toggles.slice()")
+        # "2" desde todo contraído: expande el nivel 1 y para (los comerciales llegan contraídos).
+        await pg.evaluate("__toggles = []")
         await pg.click(".st-xbtn >> nth=1")
-        res["expandir_todo"] = {"tras_clic": t1, "tras_update_1": t2, "tras_update_2": t3, "contraer_todo": await pg.evaluate("__toggles.slice(-1)")}
+        n1 = await pg.evaluate("__toggles.slice()")
+        await upd(pg, build(expanded={f"Z{z}" for z in range(8)})[0], W, H)
+        await pg.wait_for_timeout(50)
+        n2 = await pg.evaluate("__toggles.slice()")
+        res["botones_nivel_activo_tras_2"] = await pg.evaluate("[...document.querySelectorAll('.st-xbtn')].map(b => b.textContent + (b.classList.contains('st-xbtn-on') ? '*' : ''))")
+        # El host no responde a un paso: no se repite (sin bucles).
+        await pg.evaluate("__toggles = []")
+        await pg.click(".st-xbtn >> nth=0")
+        await upd(pg, build(expanded={f"Z{z}" for z in range(8)})[0], W, H)  # mismo estado: el host no contrajo
+        await pg.wait_for_timeout(50)
+        stall = await pg.evaluate("__toggles.slice()")
+        res["expandir_todo"] = {"tras_clic": t1, "tras_update_1": t2, "tras_update_2": t3}
+        res["contraer_todo"] = {"tras_clic": c1, "tras_update_1": c2, "tras_update_2": c3}
+        res["nivel_2"] = {"tras_clic": n1, "tras_update": n2}
+        res["host_no_responde"] = stall
         ev = await pg.evaluate("__ev.join('')"); nu = await pg.evaluate("__updates")
         res["eventos_pagina_faseA"] = {"updates": nu, "pares_1a1": ev == "SF" * nu}
         await pg.close()

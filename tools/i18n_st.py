@@ -294,3 +294,8 @@ P.update({
 "Value color": ["Cor do valor", "Couleur de la valeur", "Wertfarbe", "Colore del valore", "Kleur van de waarde", "Kolor wartości", "値の色", "值颜色", "값 색", "Color del valor"],
 "Value background": ["Fundo do valor", "Arrière-plan de la valeur", "Werthintergrund", "Sfondo del valore", "Achtergrond van de waarde", "Tło wartości", "値の背景", "值背景", "값 배경", "Fondo del valor"],
 })
+
+# --- botones de nivel 1 · 2 · 3 (gratis) ---
+P.update({
+"Expand to level {0}, collapse below": ["Expandir até o nível {0} e recolher abaixo", "Développer jusqu’au niveau {0}, réduire en dessous", "Bis Ebene {0} erweitern, darunter reduzieren", "Espandi fino al livello {0}, comprimi sotto", "Uitvouwen tot niveau {0}, daaronder samenvouwen", "Rozwiń do poziomu {0}, zwiń poniżej", "レベル {0} まで展開し、それより下を折りたたむ", "展开到第 {0} 级，折叠以下级别", "{0}수준까지 확장하고 그 아래는 축소", "Expandir hasta el nivel {0} y contraer por debajo"],
+})

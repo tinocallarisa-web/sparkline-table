@@ -181,7 +181,7 @@ export class Visual implements IVisual {
     private query = "";
     private matchSet = new Set<Row>();
     /** Expandir todo: un paso por nivel, el siguiente tras el update del host (nunca dentro de update). */
-    private expandChain: { steps: number } | null = null;
+    private expandChain: { target: number; steps: number; last: string; at: number } | null = null;
     // Gestos (ver constructor) y tooltips
     private rowsByKey = new Map<string, Row>();
     private downKey: string | null = null;
@@ -664,23 +664,56 @@ export class Visual implements IVisual {
      * nivel 1.
      */
     private expandAll(expand: boolean): void {
+        this.goToLevel(expand ? this.levelCount() : 1);
+    }
+
+    /** Niveles de la jerarquía (los del pozo Rows, hasta 3), aunque el host aún no los haya mandado todos. */
+    private levelCount(): number {
+        const m = this.model;
+        if (!m) return 0;
+        return Math.min(3, Math.max(m.rowFields, m.levels.length + (m.lastLevelExpandable ? 1 : 0)));
+    }
+
+    /**
+     * Botones de nivel "1 · 2 · 3" (como los niveles de agrupación de Excel): N deja expandido hasta el nivel N y
+     * contraído de ahí para abajo; 1 = contraer TODO, el último = expandir todo. Con el host: toggleExpandCollapse(id,
+     * true) sobre un nodo de cada nivel (el host aplica el cambio al nivel entero), primero CONTRAER de abajo arriba (el
+     * nivel más profundo mientras sigue cargado, para que al volver a abrir una provincia sus comerciales salgan
+     * contraídos) y luego EXPANDIR de arriba abajo. Un paso por update de datos, desde un setTimeout fuera de update()
+     * (eventos 1:1), sin bucles: tope de pasos, caducidad a los 5 s sin respuesta y nunca dos veces el mismo paso.
+     * Límite: un nivel sin ningún nodo cargado (todo su padre contraído) no se puede tocar; lo que el host guarde ahí se
+     * queda como estaba.
+     */
+    private goToLevel(n: number): void {
         if (!this.canInteract || !this.model) return;
-        if (!expand) {
-            this.expandChain = null;
-            const r = this.model.all.find(x => x.level === 0 && x.expandable && !x.collapsed && x.id);
-            if (r && r.id) this.selMgr.toggleExpandCollapse(r.id, true);
-            return;
-        }
-        this.expandChain = { steps: 0 };
+        this.expandChain = { target: Math.max(1, n), steps: 0, last: "", at: Date.now() };
         this.stepExpand();
     }
 
     private stepExpand(): void {
         const ch = this.expandChain, m = this.model;
         if (!ch || !m) return;
-        const r = m.all.find(x => x.expandable && x.collapsed && !!x.id);
-        if (!r || ch.steps >= 3) { this.expandChain = null; return; }
+        if (ch.steps >= 8 || Date.now() - ch.at > 5000) { this.expandChain = null; return; }
+        // 1) Contraer, del nivel más profundo al nivel target-1 (0-based: niveles ≥ target-1 contraídos).
+        for (let j = 2; j >= ch.target - 1; j--) {
+            const r = m.all.find(x => x.level === j && x.expandable && !x.collapsed && !!x.id);
+            if (r) return this.levelStep(ch, r, "c" + j);
+        }
+        // 2) Expandir, de arriba abajo, los niveles < target-1.
+        for (let j = 0; j <= ch.target - 2; j++) {
+            const r = m.all.find(x => x.level === j && x.expandable && x.collapsed && !!x.id);
+            if (r) return this.levelStep(ch, r, "e" + j);
+        }
+        this.expandChain = null;
+    }
+
+    private levelStep(ch: { target: number; steps: number; last: string; at: number }, r: Row, sig: string): void {
+        // El mismo paso dos veces seguidas = el host no lo aplicó: se para (nunca un bucle).
+        const key = sig + "|" + r.key;
+        if (key === ch.last) { this.expandChain = null; return; }
+        ch.last = key;
         ch.steps++;
+        ch.at = Date.now();
         this.selMgr.toggleExpandCollapse(r.id as ISelectionId, true);
     }
 
@@ -1386,8 +1419,8 @@ export class Visual implements IVisual {
             const label = this.div("st-h1", cell);
             // Una sola línea: "Ventas netas · sep 2026"
             label.textContent = (twoLines || !t2 || !span[i] || c.id === "name" || c.id === "spark" ? t1 : (t1 ? t1 + " · " : "") + t2) + (sorted ? (dir === "asc" ? " ↑" : " ↓") : "");
-            if (c.id === "name" && s.header.expandButtons !== false && this.canInteract && m.levels.length > 1) {
-                // Expandir / contraer todo (lo guarda el host). Cada botón para la propagación: el clic en la cabecera ordena.
+            if (c.id === "name" && s.header.expandButtons !== false && this.canInteract && this.levelCount() > 1) {
+                // Botones de nivel 1 · 2 · 3 (lo guarda el host). Cada botón para la propagación: el clic en la cabecera ordena.
                 const box = this.div("st-xbtns", cell);
                 const btn = (txt: string, tip: string, fn: () => void) => {
                     const b = document.createElement("button");
@@ -1396,8 +1429,18 @@ export class Visual implements IVisual {
                     b.addEventListener("click", ev => { ev.stopPropagation(); fn(); });
                     box.appendChild(b);
                 };
-                btn("⊞", this.t("UI_ExpandAll", "Expand all"), () => this.expandAll(true));
-                btn("⊟", this.t("UI_CollapseAll", "Collapse all"), () => this.expandAll(false));
+                const nL = this.levelCount();
+                // Nivel que se ve ahora: 1 + el nivel más profundo con alguna fila expandida.
+                let depth = 1;
+                for (const r of m.all) if (r.expandable && !r.collapsed && r.level + 2 > depth) depth = r.level + 2;
+                for (let n = 1; n <= nL; n++) {
+                    const tip = n === 1 ? this.t("UI_CollapseAll", "Collapse all") : n === nL ? this.t("UI_ExpandAll", "Expand all")
+                        : this.tf("UI_ExpandToLevel", "Expand to level {0}, collapse below", String(n));
+                    btn(String(n), tip, () => this.goToLevel(n));
+                    const b = box.lastChild as HTMLButtonElement;
+                    b.setAttribute("aria-pressed", String(n === Math.min(depth, nL)));
+                    b.classList.toggle("st-xbtn-on", n === Math.min(depth, nL));
+                }
             }
             cell.title = t1 + (t2 ? " · " + t2 : "") + (c.id === "spark" && scaleNote ? " · " + scaleNote : "");
             if (c.sortKey) {
