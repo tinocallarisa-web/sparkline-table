@@ -136,6 +136,9 @@ OBJECTS = [
         # que el motor cree una fila por cada miembro de la dimensión con solo el plan. Gratis; Hide por defecto. Las
         # referencias no cuentan; los subtotales siguen siendo los del motor.
         ("noActual", "Rows without actual", "enum", "hide", {"items": [("hide", "Hide"), ("show", "Show")]}),
+        # Referencias repetidas (Tino, 12-11): un Plan que solo existe por provincia llega repetido en cada comercial y
+        # PDV. Hide (por defecto): "—" en esos niveles y sin varianza contra él.
+        ("repeatedRefs", "Repeated references", "enum", "hide", {"items": [("hide", "Hide"), ("show", "Show")]}),
         # Tooltips (Tino, 12-11): por defecto solo sobre el minigráfico, para no estorbar al pulsar ▸/▾.
         ("tooltips", "Tooltips", "enum", "sparkline", {"items": [("sparkline", "Sparkline only"), ("row", "Whole row"), ("off", "Off")]}),
         # value/value2/value3: el visual pone en el panel el nombre de cada medida y quita las que no están.

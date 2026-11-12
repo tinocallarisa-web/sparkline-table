@@ -107,6 +107,8 @@ export interface Model {
     lastLevelExpandable: boolean;
     /** Último periodo con dato de la primera medida en cualquier fila. */
     lastIdx: number;
+    /** Valores que llegan en un periodo vacío del eje ((Blank)): no se dibujan ni cuentan como "último periodo". */
+    blankValues: number;
 }
 
 export type IdMaker = (path: DataViewMatrixNode[], node: DataViewMatrixNode, levels: DataViewHierarchyLevel[]) => ISelectionId | null;
@@ -142,6 +144,9 @@ export function buildModel(dv: DataView, mkId: IdMaker): Model | null {
     const periodIndex = new Map<string, number>();
     const leafPeriod: number[] = [];
     const leafMeasure: number[] = [];
+    // Periodo vacío ((Blank): filas sin fecha) fuera del eje, salvo que sea el único periodo.
+    const realCols = (mx.columns.root.children || []).filter(c => !c.isSubtotal).length;
+    const isBlank = (v: PrimitiveValue): boolean => v === null || v === undefined || v === "";
     const walkCols = (n: DataViewMatrixNode, pIdx: number, sub: boolean): void => {
         let p = pIdx;
         const isSub = sub || !!n.isSubtotal;
@@ -149,6 +154,11 @@ export function buildModel(dv: DataView, mkId: IdMaker): Model | null {
             const lv = n.levelValues && n.levelValues.length ? n.levelValues[0] : null;
             const raw = lv ? lv.value : n.value;
             const src = colLevels[periodLevel]?.sources?.[lv ? lv.levelSourceIndex || 0 : 0] || null;
+            if (isBlank(raw) && realCols > 1) {
+                if (n.children && n.children.length) { for (const c of n.children) walkCols(c, -3, isSub); return; }
+                leafPeriod.push(-3); leafMeasure.push(measureLevel ? (n.levelSourceIndex ?? 0) : -1);
+                return;
+            }
             const k = keyOf(raw);
             let i = periodIndex.get(k);
             if (i === undefined) { i = periods.length; periodIndex.set(k, i); periods.push({ raw, src, ly: -1 }); }
@@ -158,7 +168,7 @@ export function buildModel(dv: DataView, mkId: IdMaker): Model | null {
             for (const c of n.children) walkCols(c, p, isSub);
             return;
         }
-        leafPeriod.push(isSub ? -2 : (periodLevel < 0 ? 0 : p));
+        leafPeriod.push(isSub ? -2 : pIdx === -3 ? -3 : (periodLevel < 0 ? 0 : p));
         leafMeasure.push(measureLevel ? (n.levelSourceIndex ?? (n.levelValues?.[0]?.levelSourceIndex ?? 0)) : -1);
     };
     walkCols(mx.columns.root, -1, false);
@@ -166,7 +176,7 @@ export function buildModel(dv: DataView, mkId: IdMaker): Model | null {
     const nP = periods.length;
     linkLastYear(periods);
 
-    let hasTotals = false, hasHighlights = false, anyFmt = false, hasFx = false;
+    let hasTotals = false, hasHighlights = false, anyFmt = false, hasFx = false, blankValues = 0;
     const isFx = (o: any): boolean => !!o && (!!o.values || !!o.sparkline);
     const fill = (vals: { [id: number]: DataViewMatrixNodeValue } | undefined, r: Row): void => {
         if (!vals) return;
@@ -181,6 +191,7 @@ export function buildModel(dv: DataView, mkId: IdMaker): Model | null {
             if (m < 0 || m >= nM) continue;
             if (m === imgIdx) { if (!r.img && typeof v.value === "string" && v.value) r.img = v.value; continue; }
             const num = typeof v.value === "number" && isFinite(v.value) ? v.value : null;
+            if (p === -3) { if (num !== null && r.isLeaf) blankValues++; continue; }
             const f = (v.objects as any)?.general?.formatString;
             if (isFx(v.objects)) {
                 if (!r.fx) r.fx = {};
@@ -268,7 +279,7 @@ export function buildModel(dv: DataView, mkId: IdMaker): Model | null {
     void anyFmt;
     return {
         roots, all, total, levels, rowFields, periods, sources, valueIdx, targetIdx, planIdx, pyIdx, fcIdx, tipIdx, imgIdx,
-        hasTotals, hasHighlights, hasFx, leaves, lastLevelExpandable, lastIdx,
+        hasTotals, hasHighlights, hasFx, leaves, lastLevelExpandable, lastIdx, blankValues,
     };
 }
 

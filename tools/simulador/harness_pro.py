@@ -505,6 +505,80 @@ async def main():
             res["oo_eventos"] = await events(pg)
             await pg.close()
 
+        # ── Desktop 12-11: plan repetido, periodo (Blank) y etiqueta de un dato antiguo (gratis) ─────
+        if not FREE:
+            pg = await page()
+            def plan_por_zona(dv):
+                """El Plan solo existe por zona: el motor repite el de la zona en cada comercial y PDV."""
+                mx = dv["matrix"]; nS = len(mx["valueSources"])
+                pi = [i for i, s in enumerate(mx["valueSources"]) if s["roles"].get("plan")][0]
+                def own(n):
+                    if "values" in n: return n["values"]
+                    sub = [c for c in n.get("children", []) if c.get("isSubtotal")]
+                    return sub[0]["values"] if sub else {}
+                for z in mx["rows"]["root"]["children"]:
+                    if z.get("isSubtotal"): continue
+                    zp = {k: v for k, v in own(z).items() if v.get("valueSourceIndex") == pi}
+                    def put(n):
+                        if "values" in n and n is not z:
+                            for k in [k for k, v in n["values"].items() if v.get("valueSourceIndex") == pi]: del n["values"][k]
+                            n["values"].update(copy.deepcopy(zp))
+                        for c in n.get("children", []):
+                            if c is not z: put(c)
+                    for c in z.get("children", []): put(c)
+                return dv
+            await H.upd(pg, plan_por_zona(dvp({"status": {"show": True}}, expanded={"Z0", "Z0|C0", "Z1", "Z1|C2"})), W, Hh)
+            await shot(pg, "29_plan_solo_por_zona")
+            res["rep_niveles"] = await pg.evaluate("__v.refUndef")
+            res["rep_nota"] = await pg.evaluate("document.querySelector('.st-h2-name').textContent")
+            res["rep_filas"] = await pg.evaluate("__v.rows.slice(0, 4).map(r => [r.label, r.level, document.querySelector('.st-row[data-key=\"' + r.key.replace(/\\u001f/g, '\\\\u001f') + '\"]') ? 1 : 0, r.refs[0], r.vabs, r.status])")
+            res["rep_celdas"] = await pg.evaluate("[...document.querySelectorAll('.st-row')].sort((a,b)=>+a.dataset.i - +b.dataset.i).slice(0, 4).map(r => r.querySelector('.st-label').textContent + ' | ' + r.querySelector('.st-c-pl').textContent + ' | ' + r.querySelector('.st-c-vpct').textContent)")
+            await H.upd(pg, plan_por_zona(dvp({"rows": {"repeatedRefs": "show"}}, expanded={"Z0", "Z0|C0", "Z1", "Z1|C2"})), W, Hh)
+            res["rep_mostrar"] = await pg.evaluate("__v.refUndef")
+            # Un plan normal (aditivo, distinto por fila) no se toca
+            await H.upd(pg, dvp(expanded={"Z0", "Z0|C0", "Z1"}), W, Hh)
+            res["rep_plan_normal"] = await pg.evaluate("__v.refUndef")
+            # Periodo vacío al final del eje con valores en algunas hojas
+            def con_blank(dv):
+                mx = dv["matrix"]; nS = len(mx["valueSources"])
+                cols = mx["columns"]["root"]["children"]
+                nLeaf = len(cols) * nS
+                cols.append({"level": 0, "levelValues": [{"value": None, "levelSourceIndex": 0}], "children": [{"level": 1, "levelSourceIndex": m} for m in range(nS)]})
+                cnt = [0]
+                def walk(n):
+                    if "values" in n and n.get("level") == 2 and cnt[0] < 5:
+                        n["values"][str(nLeaf)] = {"value": 999.0, "valueSourceIndex": 0}; cnt[0] += 1
+                    for c in n.get("children", []): walk(c)
+                walk(mx["rows"]["root"])
+                return dv
+            await H.upd(pg, con_blank(H.build(expanded=vista)[0]), W, Hh, view=1)
+            await pg.evaluate("() => { const g = document.querySelector('.st-guide'); if (g) g.style.display = 'none'; }")
+            res["blank_cabecera"] = await pg.evaluate("document.querySelector('.st-h2-spark').textContent")
+            res["blank_aviso"] = await pg.evaluate("document.querySelector('.st-notice').textContent")
+            res["blank_periodos"] = await pg.evaluate("[__v.model.periods.length, __v.model.blankValues]")
+            await H.upd(pg, con_blank(H.build(expanded=vista, objects={"subTotals": {"columnSubtotals": True}})[0]), W, Hh, view=1)
+            res["blank_total_cabecera"] = await pg.evaluate("document.querySelector('.st-h2-val').textContent")
+            await shot(pg, "30_periodo_vacio_fuera_del_eje")
+            # Hojas sin dato en el último mes: etiqueta con su mes y atenuada; el punto en su mes real
+            def sin_ultimo(dv):
+                mx = dv["matrix"]; nS = len(mx["valueSources"]); nPer = len(mx["columns"]["root"]["children"]) - 1
+                cnt = [0]
+                def walk(n):
+                    if "values" in n and n.get("level") == 2 and cnt[0] < 3:
+                        for p in (nPer - 1, nPer - 2):
+                            for m_ in range(nS): n["values"].pop(str(p * nS + m_), None)
+                        cnt[0] += 1
+                    for c in n.get("children", []): walk(c)
+                walk(mx["rows"]["root"])
+                return dv
+            await H.upd(pg, sin_ultimo(H.build(expanded=vista)[0]), W, Hh)
+            res["stale_etiquetas"] = await pg.evaluate("[...document.querySelectorAll('.st-row .st-c-spark .st-lastlbl.st-stale')].map(t => t.textContent).slice(0, 3)")
+            res["stale_punto_en_su_mes"] = await pg.evaluate("""() => { const t = document.querySelector('.st-row .st-c-spark .st-lastlbl.st-stale'); if (!t) return null;
+                const svg = t.closest('svg'); const mk = svg.querySelector('.st-mk-last').getAttribute('d'); return [mk ? +mk.slice(1).split(',')[0] : null, +svg.getAttribute('width')]; }""")
+            await shot(pg, "31_etiqueta_dato_antiguo")
+            res["desk3_eventos"] = await events(pg)
+            await pg.close()
+
         # ── Parte 1 bis (hallazgo de Tino en Desktop): filas sin real y unidades distintas ────────────
         pg = await page()
         def ghosts(dv):

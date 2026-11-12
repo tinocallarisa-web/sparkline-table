@@ -121,6 +121,8 @@ interface Geo {
     lastX: number; lastY: number; lastText: string;
     /** Horizon: [positivas banda 1..n, negativas banda 1..n] y nº de bandas. */
     hz: string[]; hzN: number;
+    /** El último dato de la fila no es el último periodo del eje. */
+    stale: boolean;
 }
 
 export class Visual implements IVisual {
@@ -210,6 +212,8 @@ export class Visual implements IVisual {
     private watermarkWhy: HTMLDivElement | null = null;
     /** Varianza: |Δ| máximo por nivel (escala común de la barra). */
     private varExt = new Map<number, number>();
+    /** Referencias repetidas: [Plan, PY, FC] = primer nivel (0-based) en el que ya no están definidas (Infinity = todas). */
+    private refUndef: number[] = [Infinity, Infinity, Infinity];
     /** Filas ocultas por no tener real (Rows without actual = Hide). */
     private hiddenNoActual = 0;
     /** Estado junto al valor (en vez de en su columna). */
@@ -783,6 +787,45 @@ export class Visual implements IVisual {
         return pick(r.fx?.[key]) || pick(r.fxNode);
     }
 
+    /**
+     * Referencias repetidas (Tino, 12-11: el plan de la demo solo existe por provincia y cada comercial y cada PDV
+     * enseñaban el plan de toda la provincia, con ΔPL% de −90 %). Por NIVEL, no por fila: en un nivel de hijos, la
+     * referencia "no está definida" si en TODOS los nodos padre con ≥ 2 hijos cada hijo trae exactamente la serie del
+     * padre (todos los periodos con dato), y hay ≥ 2 padres así o ≥ 3 puntos iguales (un empate casual no basta). Una
+     * vez detectado en un nivel, vale para los de debajo. Los subtotales no se tocan (son los del motor).
+     */
+    private detectRepeatedRefs(m: Model): number[] {
+        const out = [Infinity, Infinity, Infinity];
+        if (String(this.settings.rows.repeatedRefs) === "show") return out;
+        [m.planIdx, m.pyIdx, m.fcIdx].forEach((i, k) => {
+            if (i < 0) return;
+            const byLv = new Map<number, { ok: number; bad: number; pts: number }>();
+            for (const p of m.all) {
+                if (p.children.length < 2) continue;
+                const ps = p.s[i];
+                let pts = 0, eq = true;
+                for (const c of p.children) {
+                    const cs = c.s[i];
+                    for (let t = 0; t < ps.length && eq; t++) {
+                        const a = ps[t], b = cs[t];
+                        if (a === null && b === null) continue;
+                        if (a === null || b === null || Math.abs(a - b) > 1e-9 * Math.max(1, Math.abs(a))) eq = false; else pts++;
+                    }
+                    if (!eq) break;
+                }
+                const lv = p.level + 1;
+                const e = byLv.get(lv) ?? { ok: 0, bad: 0, pts: 0 };
+                if (eq && pts > 0) { e.ok++; e.pts += pts; } else e.bad++;
+                byLv.set(lv, e);
+            }
+            for (const lv of Array.from(byLv.keys()).sort((a, b) => a - b)) {
+                const e = byLv.get(lv) as { ok: number; bad: number; pts: number };
+                if (e.bad === 0 && e.ok > 0 && (e.ok >= 2 || e.pts >= 3)) { out[k] = lv; break; }
+            }
+        });
+        return out;
+    }
+
     /** Posición en Values de la medida del minigráfico 2 (i = 1) o 3 (i = 2), o -1 si está apagado o no existe. */
     private extraSparkK(m: Model, i: number): number {
         const st = this.settings["spark" + (i + 1)];
@@ -1122,9 +1165,16 @@ export class Visual implements IVisual {
         const vb = this.varBaseIdx(m);
         const at = (r: Row, i: number): Num => i < 0 ? null : this.valueModeUsed === "total" ? r.tot[i] : (last >= 0 ? r.s[i][last] : null);
         this.varExt.clear();
+        // Referencia que no baja a un nivel (el motor repite el valor del padre): "—" y sin varianza contra ella ahí.
+        this.refUndef = this.detectRepeatedRefs(m);
+        const refI = [m.planIdx, m.pyIdx, m.fcIdx];
+        const atRef = (r: Row, i: number): Num => {
+            const k = i < 0 ? -1 : refI.indexOf(i);
+            return k >= 0 && r.level >= this.refUndef[k] ? null : at(r, i);
+        };
         for (const r of all) {
-            r.refs = [at(r, m.planIdx), at(r, m.pyIdx), at(r, m.fcIdx)];
-            r.vref = at(r, vb);
+            r.refs = [atRef(r, m.planIdx), atRef(r, m.pyIdx), atRef(r, m.fcIdx)];
+            r.vref = atRef(r, vb);
             const real = this.valueModeUsed === "total" ? r.tot[m0] : (last >= 0 ? r.s[m0][last] : null);
             r.vabs = real !== null && r.vref !== null ? real - r.vref : null;
             r.vpct = r.vabs !== null && r.vref !== null && r.vref > 0 ? r.vabs / r.vref : null;
@@ -1328,6 +1378,15 @@ export class Visual implements IVisual {
         const lblFs = Math.max(7, Math.min(fs - 1, Math.round(this.rowH * 0.55)));
         let lblW = isFinite(lv[0]) ? Math.max(this.measure(this.fmtCompact(lv[0], fmt0), lblFs), this.measure(this.fmtCompact(lv[1], fmt0), lblFs)) : 0;
         let lblMax = 72;
+        // Filas cuyo último dato es anterior al último periodo: su etiqueta lleva el mes ("1,22K€ · jun 2026").
+        if (s.sparkline.type !== "bullet") {
+            for (let q = 0; q < all.length; q++) {
+                const sr = all[q].s[m.valueIdx[0]];
+                let lp = -1;
+                for (let p = sr.length - 1; p >= 0; p--) if (sr[p] !== null) { lp = p; break; }
+                if (lp >= 0 && lp < m.lastIdx) { lblW = Math.max(lblW, this.measure(this.fmtCompact(sr[lp] as number, fmt0) + " · " + (this.periodLabels[lp] ?? ""), lblFs)); lblMax = 120; }
+            }
+        }
         if (s.sparkline.type === "bullet" && m.targetIdx >= 0) {
             // Bullet: la etiqueta lleva la cifra a la vista y/o el % del objetivo.
             lblW = 0;
@@ -1394,7 +1453,8 @@ export class Visual implements IVisual {
         const { by, dir } = this.effectiveSort();
         const lastLbl = this.periodLabels[m.lastIdx] ?? "";
         const baseLbl = this.periodLabels[this.baseIdx] ?? "";
-        const valCtx = this.valueModeUsed === "total" ? this.t("UI_Total", "Total") : lastLbl;
+        // El total del rango es el del motor: si hay valores sin fecha, los incluye (se dice; no se resta nada).
+        const valCtx = this.valueModeUsed === "total" ? this.t("UI_Total", "Total") + (m.blankValues > 0 ? " (" + this.t("UI_InclNoDate", "incl. no date") + ")" : "") : lastLbl;
         const dCtx = this.baseIdx < 0 ? "" : (this.valueModeUsed === "total" ? lastLbl + " " : "") + this.tf("UI_Vs", "vs {0}", baseLbl);
         const vbi = this.varBaseIdx(m);
         const varCtx = vbi < 0 ? "" : this.tf("UI_Vs", "vs {0}", m.sources[vbi].displayName);
@@ -1402,7 +1462,11 @@ export class Visual implements IVisual {
         const sortName = this.sortName(by);
         const sortCtx = by === "host" ? this.hostSortText() : this.tf("UI_SortedBy", "Sorted by {0} {1}", sortName, dir === "asc" ? "↑" : "↓");
         const hiddenCtx = this.hiddenNoActual ? this.tf("UI_NoActualHidden", "{0} rows without actual hidden", this.int(this.hiddenNoActual)) : "";
-        const nameCtx = [sortCtx, hiddenCtx].filter(x => x).join(" · ");
+        const refI = [m.planIdx, m.pyIdx, m.fcIdx];
+        const downTo = refI.map((i, k) => i >= 0 && isFinite(this.refUndef[k]) && this.refUndef[k] >= 1
+            ? this.tf("UI_RefDownTo", "{0}: available down to {1}", m.sources[i].displayName,
+                (m.levels[this.refUndef[k] - 1]?.sources || []).map(x => x.displayName).join(" + ")) : "").filter(x => x);
+        const nameCtx = [sortCtx, hiddenCtx].concat(downTo).filter(x => x).join(" · ");
         const type = String(s.sparkline.type);
         let sparkCtx = m.periods.length > 1 ? this.periodLabels[0] + " – " + this.periodLabels[m.periods.length - 1] : (this.periodLabels[0] ?? "");
         // Bullet: una barra con la cifra de la columna de valor (no la serie); win/loss: contra el objetivo o contra cero.
@@ -1567,6 +1631,7 @@ export class Visual implements IVisual {
         if (total > shownLevels) {
             msgs.push({ t: this.tf("UI_Levels", "Showing {0} of {1} levels: use ▸ to open the next one.", String(shownLevels), String(total)), warn: false });
         }
+        if (this.editing && m.blankValues > 0) msgs.push({ t: this.tf("UI_NoDate", "{0} values without a date on the axis are not drawn", this.int(m.blankValues)), warn: false });
         if (m.periods.length >= 400) msgs.push({ t: this.t("UI_PeriodCap", "Only the first 400 periods are drawn."), warn: false });
         // Sin red: una URL en Row image no se carga; editando se avisa de cómo hacerlo.
         if (this.editing && this.imgUrlSeen) msgs.push({ t: this.t("UI_ImgEmbedded", "Images must be embedded (Base64 data URI): web links are not loaded."), warn: true });
@@ -1709,7 +1774,9 @@ export class Visual implements IVisual {
         const refIdx = [m.planIdx, m.pyIdx, m.fcIdx];
         REF_COLS.forEach((id, k) => {
             const i = refIdx[k];
-            q(".st-c-" + id).textContent = i < 0 ? "" : this.fmtFull(d.refs[k], this.valueModeUsed === "total" ? (d.totFmt?.[i] ?? m.sources[i].format)
+            const undef = i >= 0 && d.level >= this.refUndef[k];
+            q(".st-c-" + id).classList.toggle("st-undef", undef);
+            q(".st-c-" + id).textContent = i < 0 ? "" : undef ? "—" : this.fmtFull(d.refs[k], this.valueModeUsed === "total" ? (d.totFmt?.[i] ?? m.sources[i].format)
                 : (d.fmt?.[i]?.[m.lastIdx] ?? m.sources[i].format));
         });
         // Varianza contra la base (Pro): verde/rojo según "A decrease is good".
@@ -1811,6 +1878,7 @@ export class Visual implements IVisual {
         line.style.strokeWidth = String(this.settings.sparkline.width);
         const t = svg.querySelector(".st-lastlbl") as SVGTextElement;
         t.textContent = g.lastText;
+        t.classList.toggle("st-stale", g.stale);
         t.setAttribute("x", String(w - 2));
         t.setAttribute("y", String(Math.round(h / 2)));
         t.style.fontSize = Math.max(7, Math.min(Number(this.settings.values.fontSize) - 1, Math.round(h * 0.55))) + "px";
@@ -1918,7 +1986,7 @@ export class Visual implements IVisual {
     private geo(r: Row, m: Model, c: SparkCfg): Geo {
         const s = this.settings;
         const type = c.type;
-        const g: Geo = { gen: this.gen, line: "", area: "", pos: "", neg: "", tgt: "", band: "", b1: "", b2: "", b3: "", bandName: "", color: "", mkFirst: "", mkMax: "", mkMin: "", mkNeg: "", mkLast: "", lastX: -1, lastY: -1, lastText: "", hz: [], hzN: 0 };
+        const g: Geo = { gen: this.gen, line: "", area: "", pos: "", neg: "", tgt: "", band: "", b1: "", b2: "", b3: "", bandName: "", color: "", mkFirst: "", mkMax: "", mkMin: "", mkNeg: "", mkLast: "", lastX: -1, lastY: -1, lastText: "", hz: [], hzN: 0, stale: false };
         const sr = r.s[c.mi];
         const nP = sr.length;
         const w = c.slot === 0 ? this.sparkW : this.sparkW2, H = this.rowH;
@@ -2047,7 +2115,10 @@ export class Visual implements IVisual {
             if (mk.min && iMin >= 0 && sr[iMax] !== sr[iMin]) g.mkMin = tri(iMin, ms, false);
             if (mk.last) g.mkLast = circ(last, ms);
             g.lastX = x(last); g.lastY = y(sr[last] as number);
-            if (c.label && this.labelW) g.lastText = this.fmtCompact(sr[last] as number, r.fmt?.[c.mi]?.[last] ?? fmt0);
+            // Como Line Chart: si el último dato no es el último periodo del eje, la etiqueta dice de cuándo y va atenuada
+            // (el punto ya se dibuja en su mes real).
+            g.stale = last < m.lastIdx;
+            if (c.label && this.labelW) g.lastText = this.fmtCompact(sr[last] as number, r.fmt?.[c.mi]?.[last] ?? fmt0) + (g.stale ? " · " + (this.periodLabels[last] ?? "") : "");
         }
         return g;
     }
@@ -2081,7 +2152,8 @@ export class Visual implements IVisual {
         const fmt0 = m.sources[c.mi].format;
         let last = -1;
         for (let p = nP - 1; p >= 0; p--) if (sr[p] !== null) { last = p; break; }
-        if (c.label && this.labelW && last >= 0) g.lastText = this.fmtCompact(sr[last] as number, r.fmt?.[c.mi]?.[last] ?? fmt0);
+        g.stale = last >= 0 && last < m.lastIdx;
+        if (c.label && this.labelW && last >= 0) g.lastText = this.fmtCompact(sr[last] as number, r.fmt?.[c.mi]?.[last] ?? fmt0) + (g.stale ? " · " + (this.periodLabels[last] ?? "") : "");
         if (!(mx > 0)) return;
         const u = mx / n, ph = bot - top;
         const x = (p: number) => nP > 1 ? 3 + p * (w - 6) / (nP - 1) : w / 2;
@@ -2302,7 +2374,10 @@ export class Visual implements IVisual {
             out.push({ displayName: this.t("UI_Status", "Status"), value: this.statusLook(d.status).glyph + " " + this.statusLook(d.status).name + " · " + this.statusRuleText(m) });
         }
         const tIdx = [m.targetIdx, m.planIdx, m.pyIdx, m.fcIdx].concat(m.tipIdx);
+        const refI = [m.planIdx, m.pyIdx, m.fcIdx];
         for (const i of tIdx) if (i >= 0) {
+            const k = refI.indexOf(i);
+            if (k >= 0 && d.level >= this.refUndef[k]) { out.push({ displayName: m.sources[i].displayName, value: "— · " + this.t("UI_RefNotHere", "not defined at this level (repeated from the level above)") }); continue; }
             const v = this.valueModeUsed === "total" ? d.tot[i] : (m.lastIdx >= 0 ? d.s[i][m.lastIdx] : null);
             out.push({ displayName: m.sources[i].displayName, value: this.fmtFull(v, m.sources[i].format) || this.t("UI_Blank", "(Blank)") });
         }

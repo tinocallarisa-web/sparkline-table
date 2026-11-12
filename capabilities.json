@@ -1329,6 +1329,24 @@
             ]
           }
         },
+        "repeatedRefs": {
+          "displayName": "Repeated references",
+          "displayNameKey": "Prop_rows_repeatedRefs",
+          "type": {
+            "enumeration": [
+              {
+                "value": "hide",
+                "displayName": "Hide",
+                "displayNameKey": "Enum_repeatedRefs_hide"
+              },
+              {
+                "value": "show",
+                "displayName": "Show",
+                "displayNameKey": "Enum_repeatedRefs_show"
+              }
+            ]
+          }
+        },
         "tooltips": {
           "displayName": "Tooltips",
           "displayNameKey": "Prop_rows_tooltips",

@@ -335,3 +335,12 @@ P.update({
 "Vertical style": ["Estilo vertical", "Style vertical", "Stil vertikal", "Stile verticale", "Stijl verticaal", "Styl pionowych", "縦線のスタイル", "垂直线样式", "세로선 스타일", "Estilo vertical"],
 "Vertical width (px)": ["Espessura vertical (px)", "Épaisseur verticale (px)", "Breite vertikal (px)", "Spessore verticale (px)", "Dikte verticaal (px)", "Grubość pionowych (px)", "縦線の太さ (px)", "垂直线粗细 (px)", "세로선 두께(px)", "Grosor vertical (px)"],
 })
+
+# --- referencias repetidas, periodo vacío (gratis) ---
+P.update({
+"Repeated references": ["Referências repetidas", "Références répétées", "Wiederholte Referenzen", "Riferimenti ripetuti", "Herhaalde referenties", "Powtórzone odniesienia", "繰り返される参照", "重复的参考值", "반복된 참조", "Referencias repetidas"],
+"incl. no date": ["inclui sem data", "y compris sans date", "inkl. ohne Datum", "incl. senza data", "incl. zonder datum", "wraz z bez daty", "日付なしを含む", "含无日期", "날짜 없음 포함", "incl. sin fecha"],
+"not defined at this level (repeated from the level above)": ["não definido neste nível (repetido do nível acima)", "non défini à ce niveau (répété depuis le niveau supérieur)", "auf dieser Ebene nicht definiert (von der Ebene darüber wiederholt)", "non definito a questo livello (ripetuto dal livello superiore)", "niet gedefinieerd op dit niveau (herhaald van het niveau erboven)", "nie zdefiniowano na tym poziomie (powtórzone z poziomu wyżej)", "このレベルでは未定義 (上のレベルの繰り返し)", "此级别未定义（重复自上一级）", "이 수준에서는 정의되지 않음(상위 수준에서 반복)", "no definido en este nivel (repetido del nivel superior)"],
+"{0} values without a date on the axis are not drawn": ["{0} valores sem data no eixo não são desenhados", "{0} valeurs sans date sur l’axe ne sont pas tracées", "{0} Werte ohne Datum auf der Achse werden nicht gezeichnet", "{0} valori senza data sull’asse non vengono disegnati", "{0} waarden zonder datum op de as worden niet getekend", "Wartości bez daty na osi nie są rysowane: {0}", "軸に日付のない値 {0} 件は描画されません", "{0} 个轴上没有日期的值未绘制", "축에 날짜가 없는 값 {0}개는 그리지 않습니다", "{0} valores sin fecha en el eje no se dibujan"],
+"{0}: available down to {1}": ["{0}: disponível até {1}", "{0} : disponible jusqu’à {1}", "{0}: verfügbar bis {1}", "{0}: disponibile fino a {1}", "{0}: beschikbaar tot {1}", "{0}: dostępne do poziomu {1}", "{0}: {1} まで利用可能", "{0}：可用至 {1}", "{0}: {1}까지 사용 가능", "{0}: disponible hasta {1}"],
+})

@@ -196,6 +196,37 @@ su barra de formato y, con "Más opciones" / doble clic, abrir **su** tarjeta:
 - Limitación: el atajo de Row levels abre la tarjeta, pero no preselecciona el nivel en el selector (la API de
   navegación solo admite tarjeta y grupo).
 
+## 12. Gratis: plan repetido, periodo (Blank) y etiqueta de un dato antiguo (Desktop, 12-11)
+
+**Plan repetido en niveles inferiores.** En la demo el plan solo existe por provincia, y el motor lo repite en cada
+comercial y en cada PDV (1.531.584 € en todos), con ΔPL% de −90 % que no significan nada.
+- Rows → *Repeated references*: **Hide** (por defecto) / Show. Con Hide, el visual detecta el nivel en el que la
+  referencia ya no está definida y desde ahí pinta "—" en gris, sin ΔPL, sin barra, sin ΔPL% ni estado contra ella.
+  La cabecera de nombres dice "Plan ventas netas: disponible hasta provincia". Provincias y total no cambian (son los
+  del motor).
+- Regla (honesta, por nivel y no por fila): en un nivel de hijos, la referencia se da por no definida si en TODOS los
+  nodos padre con ≥ 2 hijos cada hijo trae exactamente la misma serie que el padre en todos los periodos con dato, y hay
+  ≥ 2 padres así o ≥ 3 puntos iguales. Un empate casual en una fila no lo dispara.
+- Comprobar: expande Barcelona y un comercial; los comerciales y PDV deben salir con "—". Con un plan que sí baja a
+  comercial, nada cambia.
+- Causa y receta (también para la FAQ de `support.html`): la medida de plan no tiene detalle por debajo de provincia y
+  Power BI repite su valor en cada fila hija. Para que solo aparezca donde corresponde:
+
+```DAX
+Plan ventas netas (hasta provincia) =
+IF ( ISINSCOPE ( dim_pdv[id_comercial] ) || ISINSCOPE ( dim_pdv[id_pdv] ), BLANK (), [Plan ventas netas] )
+```
+
+**Periodo (Blank).** Las filas sin fecha de la demo traían un periodo vacío y la cabecera decía "(Blank) – Sep 2026".
+- El periodo vacío sale del eje de minigráficos, del rango de la cabecera, del "último periodo" y del Δ.
+- Editando, aviso "n valores sin fecha en el eje no se dibujan".
+- *Value shows the total of the range*: el total es el del motor y SÍ incluye esos valores; la cabecera lo dice
+  ("Total (incl. sin fecha)"). No se resta nada.
+
+**Etiqueta final de un dato antiguo.** PDV-00189, -00196, -00232 sin dato en sep 2026: la columna de valor sale vacía y
+la etiqueta del minigráfico dice ahora su mes y va atenuada ("1,22K€ · jun 2026"). El punto se dibuja en su mes real.
+Igual en las columnas de minigráfico 2 y 3 y en horizon.
+
 ## Rendimiento y certificación (repetir con todo puesto)
 
 - Analizador de rendimiento: un par de eventos por update; el scroll no emite nada.

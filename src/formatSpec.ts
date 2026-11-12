@@ -1026,6 +1026,25 @@ export const OBJECTS: Record<string, ObjSpec> = {
                 ]
             },
             {
+                "name": "repeatedRefs",
+                "type": "enum",
+                "def": "hide",
+                "key": "Prop_rows_repeatedRefs",
+                "label": "Repeated references",
+                "items": [
+                    [
+                        "hide",
+                        "Enum_repeatedRefs_hide",
+                        "Hide"
+                    ],
+                    [
+                        "show",
+                        "Enum_repeatedRefs_show",
+                        "Show"
+                    ]
+                ]
+            },
+            {
                 "name": "tooltips",
                 "type": "enum",
                 "def": "sparkline",
